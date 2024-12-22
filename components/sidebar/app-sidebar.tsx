@@ -1,6 +1,9 @@
 "use client";
 
 import * as React from "react";
+import { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
+import { createClient } from "@/utils/supabase/client";
 import {
   AudioWaveform,
   BookOpen,
@@ -157,6 +160,31 @@ const data = {
 };
 
 export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+  const [user, setUser] = useState<any>(null);
+  const supabase = createClient();
+  const router = useRouter();
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
+  }, [router, supabase]);
+
+  const fullName = user?.user_metadata?.full_name ?? "";
+  const email = user?.user_metadata?.email ?? "";
+  const avatar_url = user?.user_metadata?.avatar_url ?? "";
+
+  const supabaseData = {
+    user: {
+      name: fullName,
+      email: email,
+      avatar: avatar_url,
+    },
+  };
+
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader>
@@ -167,7 +195,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <NavProjects projects={data.projects} />
       </SidebarContent>
       <SidebarFooter>
-        <NavUser user={data.user} />
+        <NavUser user={supabaseData.user} />
       </SidebarFooter>
       <SidebarRail />
     </Sidebar>

@@ -1,8 +1,29 @@
+"use client";
 import LoginButton from "@/components/LoginLogoutButton";
 import UserGreetText from "@/components/UserGreetText";
+import Loading from "@/components/Loading";
 import Image from "next/image";
+import React, { useEffect, useState } from "react";
+import Routes from "@/components/routes";
+import { createClient } from "@/utils/supabase/client";
+import { useRouter } from "next/navigation"; // For client-side navigation
 
 export default function Home() {
+  const [user, setUser] = useState<any>(null);
+  const supabase = createClient();
+  const router = useRouter();
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+      if (user) {
+        router.push(Routes.Page);
+      }
+    };
+    fetchUser();
+  }, [router, supabase]);
   return (
     <main className="flex min-h-screen flex-col items-center justify-between p-24">
       <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">

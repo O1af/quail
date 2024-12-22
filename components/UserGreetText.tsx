@@ -11,7 +11,6 @@ const UserGreetText = () => {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-      console.log(user?.user_metadata?.full_name);
     };
     fetchUser();
   }, []);

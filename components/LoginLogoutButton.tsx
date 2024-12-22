@@ -22,6 +22,7 @@ const LoginButton = () => {
   if (user) {
     return (
       <Button
+        variant="outline"
         onClick={() => {
           signout();
           setUser(null);
