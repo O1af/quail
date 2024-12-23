@@ -1,10 +1,8 @@
 "use client";
 import LoginButton from "@/components/LoginLogoutButton";
 import UserGreetText from "@/components/UserGreetText";
-import Loading from "@/components/Loading";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
-import Routes from "@/components/routes";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
 
@@ -18,9 +16,6 @@ export default function Home() {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-      if (user) {
-        router.push(Routes.Page);
-      }
     };
     fetchUser();
   }, [router, supabase]);
