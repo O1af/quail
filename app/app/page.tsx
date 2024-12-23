@@ -6,6 +6,7 @@ import { ModeToggle } from "@/components/mode-toggle";
 import Routes from "@/components/routes";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
+import { RunButton } from "@/components/run-button";
 
 export default function Page() {
   const [user, setUser] = useState<any>(null);
@@ -30,6 +31,13 @@ export default function Page() {
           <SidebarTrigger className="-ml-1" />
         </div>
         <div className="flex items-center gap-2 px-4 ml-auto">
+          <RunButton
+            onExecute={async () => {
+              //MOCK FUNCTION
+              console.log("Run button clicked");
+              await new Promise((resolve) => setTimeout(resolve, 1000));
+            }}
+          />
           <ModeToggle />
         </div>
       </header>
