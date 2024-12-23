@@ -3,22 +3,32 @@
 import Editor, { OnMount } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
-import React, { useCallback } from "react";
+import React, { useCallback, useEffect, useState } from "react";
 import { setupSQLAutocomplete } from "./utils/autocomplete";
 import { TableDefinition } from "./utils/autocomplete";
 export interface SQLEditorProps {
-  initialValue?: string;
   onExecute?: (query: string) => void;
   tables?: TableDefinition[];
 }
 
-export default function SQLEditor({
-  initialValue = "",
-  onExecute,
-  tables = [],
-}: SQLEditorProps) {
+export default function SQLEditor({ onExecute, tables = [] }: SQLEditorProps) {
   const { theme } = useTheme();
   const editorRef = React.useRef<editor.IStandaloneCodeEditor | null>(null);
+  const [value, setValue] = useState("");
+
+  useEffect(() => {
+    // Load saved value from localStorage on mount
+    const savedValue = localStorage.getItem("sqlEditorValue");
+    if (savedValue) {
+      setValue(savedValue);
+    }
+  }, []);
+
+  const handleEditorChange = (value: string | undefined) => {
+    const newValue = value || "";
+    setValue(newValue);
+    localStorage.setItem("sqlEditorValue", newValue);
+  };
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
@@ -41,7 +51,8 @@ export default function SQLEditor({
   return (
     <Editor
       defaultLanguage="sql"
-      defaultValue={initialValue}
+      value={value}
+      onChange={handleEditorChange}
       theme={theme === "dark" ? "vs-dark" : "vs-light"}
       onMount={handleEditorDidMount}
       options={{
