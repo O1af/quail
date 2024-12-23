@@ -4,20 +4,25 @@ import Editor, { OnMount } from "@monaco-editor/react";
 import { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
 import React, { useCallback } from "react";
+import { setupSQLAutocomplete } from "./utils/autocomplete";
+import { TableDefinition } from "./utils/autocomplete";
 export interface SQLEditorProps {
   initialValue?: string;
   onExecute?: (query: string) => void;
+  tables?: TableDefinition[];
 }
 
 export default function SQLEditor({
   initialValue = "",
   onExecute,
+  tables = [],
 }: SQLEditorProps) {
   const { theme } = useTheme();
   const editorRef = React.useRef<editor.IStandaloneCodeEditor | null>(null);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     editorRef.current = editor;
+    setupSQLAutocomplete(monaco, tables);
 
     // Add keyboard shortcut for query execution
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
@@ -42,7 +47,7 @@ export default function SQLEditor({
       options={{
         minimap: { enabled: false },
         scrollBeyondLastLine: false,
-        fontSize: 14,
+        fontSize: 12,
         wordWrap: "on",
         automaticLayout: true,
         tabSize: 2,
