@@ -40,6 +40,7 @@ export async function signup(formData: FormData) {
         full_name: `${firstName + " " + lastName}`,
         email: formData.get("email") as string,
       },
+      emailRedirectTo: "https://localhost:3000/login",
     },
   };
 
@@ -50,7 +51,7 @@ export async function signup(formData: FormData) {
   }
 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect("/login");
 }
 
 export async function signout() {
@@ -71,7 +72,7 @@ export async function signInWithGoogle() {
     options: {
       queryParams: {
         access_type: "offline",
-        prompt: "consent",
+        prompt: "select_account",
       },
     },
   });
