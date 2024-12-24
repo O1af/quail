@@ -1,33 +1,31 @@
 "use client";
-import { Loader2, Play } from "lucide-react";
+import { AlertCircle, Loader2, Play } from "lucide-react";
 import { Button } from "@/components/ui/button";
-import { useState } from "react";
+import { useEditorStore } from "./stores/editor_store";
+import { useEffect } from "react";
 
-interface RunButtonProps {
-  onExecute: () => Promise<void>;
-}
+export function RunButton() {
+  const { executeQuery, isExecuting, error, clearError } = useEditorStore();
 
-export function RunButton({ onExecute }: RunButtonProps) {
-  const [isLoading, setIsLoading] = useState(false);
-
-  const handleClick = async () => {
-    setIsLoading(true);
-    try {
-      await onExecute();
-    } finally {
-      setIsLoading(false);
+  useEffect(() => {
+    if (error) {
+      const timer = setTimeout(clearError, 3000);
+      return () => clearTimeout(timer);
     }
-  };
+  }, [error, clearError]);
 
   return (
     <Button
-      variant="outline"
+      variant={error ? "destructive" : "outline"}
       size="icon"
-      onClick={handleClick}
-      disabled={isLoading}
+      onClick={() => executeQuery()}
+      disabled={isExecuting}
+      title={error || undefined}
     >
-      {isLoading ? (
+      {isExecuting ? (
         <Loader2 className="h-[1.2rem] w-[1.2rem] animate-spin" />
+      ) : error ? (
+        <AlertCircle className="h-[1.2rem] w-[1.2rem]" />
       ) : (
         <Play className="h-[1.2rem] w-[1.2rem]" />
       )}

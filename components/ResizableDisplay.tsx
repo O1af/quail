@@ -4,20 +4,9 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import SQLEditor, { SQLEditorProps } from "./editor/Editor";
+import SQLEditor from "./editor/Editor";
 
-interface ResizableDisplayOwnProps {
-  // Add any ResizableDisplay-specific props here
-}
-
-interface ResizableDisplayProps extends ResizableDisplayOwnProps {
-  editorProps?: SQLEditorProps;
-  // Add future component props interfaces here like:
-  // resultProps?: ResultComponentProps;
-  // visualizationProps?: VisualizationProps;
-}
-
-export function ResizableDisplay({ editorProps = {} }: ResizableDisplayProps) {
+export function ResizableDisplay() {
   return (
     <ResizablePanelGroup direction="horizontal" className="flex-1">
       <ResizablePanel defaultSize={50}>
@@ -29,7 +18,7 @@ export function ResizableDisplay({ editorProps = {} }: ResizableDisplayProps) {
       <ResizablePanel defaultSize={50}>
         <ResizablePanelGroup direction="vertical">
           <ResizablePanel defaultSize={50}>
-            <SQLEditor {...editorProps} />
+            <SQLEditor />
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={50}>

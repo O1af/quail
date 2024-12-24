@@ -31,13 +31,7 @@ export default function Page() {
           <SidebarTrigger className="-ml-1" />
         </div>
         <div className="flex items-center gap-2 px-4 ml-auto">
-          <RunButton
-            onExecute={async () => {
-              //MOCK FUNCTION
-              console.log("Run button clicked");
-              await new Promise((resolve) => setTimeout(resolve, 1000));
-            }}
-          />
+          <RunButton />
           <ModeToggle />
         </div>
       </header>
