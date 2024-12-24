@@ -1,58 +1,53 @@
 "use client";
 
 import Editor, { OnMount } from "@monaco-editor/react";
-import { editor } from "monaco-editor";
 import { useTheme } from "next-themes";
-import React, { useCallback, useEffect, useState } from "react";
+import React, { useEffect } from "react";
 import { setupSQLAutocomplete } from "./utils/autocomplete";
-import { TableDefinition } from "./utils/autocomplete";
-export interface SQLEditorProps {
-  onExecute?: (query: string) => void;
-  tables?: TableDefinition[];
-}
+import { useEditorStore } from "../stores/editor_store";
 
-export default function SQLEditor({ onExecute, tables = [] }: SQLEditorProps) {
+export default function SQLEditor() {
   const { theme } = useTheme();
-  const editorRef = React.useRef<editor.IStandaloneCodeEditor | null>(null);
-  const [value, setValue] = useState("");
+  const { value, setValue, setEditorRef, tables, setQueryHandler } =
+    useEditorStore();
 
+  // Setup mock query handler
   useEffect(() => {
-    // Load saved value from localStorage on mount
-    const savedValue = localStorage.getItem("sqlEditorValue");
-    if (savedValue) {
-      setValue(savedValue);
-    }
-  }, []);
-
-  const handleEditorChange = (value: string | undefined) => {
-    const newValue = value || "";
-    setValue(newValue);
-    localStorage.setItem("sqlEditorValue", newValue);
-  };
+    setQueryHandler(async (query: string) => {
+      console.log("Handling query:", query);
+      // Simulate network delay and random error
+      await new Promise((resolve) => setTimeout(resolve, 1000));
+      if (Math.random() > 0.7) {
+        // 30% chance of error for testing
+        throw new Error("Mock query execution failed");
+      }
+    });
+  }, [setQueryHandler]);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
-    editorRef.current = editor;
+    setEditorRef(editor);
     setupSQLAutocomplete(monaco, tables);
 
-    // Add keyboard shortcut for query execution
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
-      if (onExecute) {
-        onExecute(editor.getValue());
-      }
+      useEditorStore.getState().executeQuery();
     });
   };
 
-  const handleExecuteQuery = useCallback(() => {
-    if (onExecute && editorRef.current) {
-      onExecute(editorRef.current.getValue());
+  // Update autocomplete when tables change
+  useEffect(() => {
+    const { editorRef } = useEditorStore.getState();
+    if (!editorRef) return;
+    const monaco = (window as any).monaco;
+    if (monaco) {
+      setupSQLAutocomplete(monaco, tables);
     }
-  }, [onExecute]);
+  }, [tables]);
 
   return (
     <Editor
       defaultLanguage="sql"
       value={value}
-      onChange={handleEditorChange}
+      onChange={(value) => setValue(value || "")}
       theme={theme === "dark" ? "vs-dark" : "vs-light"}
       onMount={handleEditorDidMount}
       options={{
