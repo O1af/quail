@@ -5,6 +5,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import SQLEditor from "./editor/Editor";
+import Table from "@/app/table/table";
 
 export function ResizableDisplay() {
   return (
@@ -22,8 +23,8 @@ export function ResizableDisplay() {
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={50}>
-            <div className="flex h-full items-center justify-center p-6">
-              <span className="font-semibold">Three</span>
+            <div className="flex h-full items-center justify-center p-3">
+              <Table />
             </div>
           </ResizablePanel>
         </ResizablePanelGroup>
