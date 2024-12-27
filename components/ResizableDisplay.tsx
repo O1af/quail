@@ -6,14 +6,13 @@ import {
 } from "@/components/ui/resizable";
 import SQLEditor from "./editor/Editor";
 import Table from "@/app/table/table";
+import Chat from "./Chat";
 
 export function ResizableDisplay() {
   return (
     <ResizablePanelGroup direction="horizontal" className="flex-1">
-      <ResizablePanel defaultSize={50}>
-        <div className="flex h-[200px] items-center justify-center p-6">
-          <span className="font-semibold">One</span>
-        </div>
+      <ResizablePanel defaultSize={50} className="h-full overflow-hidden">
+        <Chat />
       </ResizablePanel>
       <ResizableHandle />
       <ResizablePanel defaultSize={50}>
