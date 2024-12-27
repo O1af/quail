@@ -1,7 +1,7 @@
 "use client";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import Loading from "@/components/Loading";
+import Loading from "@/components/Loading/Loading";
 import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardLayout({

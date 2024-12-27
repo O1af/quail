@@ -1,10 +1,10 @@
 "use client";
-import LoginButton from "@/components/LoginLogoutButton";
-import UserGreetText from "@/components/UserGreetText";
+import LoginButton from "@/components/Landing/LoginLogoutButton";
+import UserGreetText from "@/components/Landing/UserGreetText";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation"; // For client-side navigation
+import { useRouter } from "next/navigation";
 
 export default function Home() {
   const [user, setUser] = useState<any>(null);
