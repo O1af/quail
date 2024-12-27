@@ -2,81 +2,91 @@
 
 import { useChat } from "ai/react";
 import { Button } from "@/components/ui/button";
-import { Textarea } from "@/components/ui/textarea"; // Import Shadcn Textarea
-import { useState } from "react";
+import { ChatInput } from "@/components/ui/chat/chat-input"; // Importing ChatInput from shadcn-chat-cli
+import { ChatMessageList } from "./ui/chat/chat-message-list";
+import { ChatBubble } from "./ui/chat/chat-bubble";
+import { ChatBubbleMessage } from "./ui/chat/chat-bubble";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
+import { useEffect, useState } from "react";
+import { createClient } from "@/utils/supabase/client";
 
 export default function Chat() {
   const { messages, input, handleInputChange, handleSubmit } = useChat();
-  const [localInput, setLocalInput] = useState(input);
-
-  const handleLocalInputChange = (
-    event: React.ChangeEvent<HTMLTextAreaElement>,
-  ) => {
-    setLocalInput(event.target.value);
-    handleInputChange(event);
-  };
-
-  const handleKeyDown = (event: React.KeyboardEvent<HTMLTextAreaElement>) => {
-    if (event.key === "Enter" && event.shiftKey) {
-      setLocalInput(localInput + "\n");
-      event.preventDefault();
-    } else if (event.key === "Enter") {
-      handleSubmit(event);
-      setLocalInput("");
-    }
-  };
 
   const handleFormSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    handleSubmit(event);
-    setLocalInput("");
+    event.preventDefault(); // Prevent default form submission
+    handleSubmit(event); // Submit the message
   };
 
+  const [user, setUser] = useState<any>(null);
+  const supabase = createClient();
+  useEffect(() => {
+    const fetchUser = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+    };
+    fetchUser();
+  }, [supabase]);
+
+  const avatar_url = user?.user_metadata?.avatar_url ?? "";
+
   return (
-    <div className="flex flex-col w-full  border shadow-md">
+    <div className="flex flex-col w-full h-[825] border shadow-md">
       {/* Header */}
       <div className="p-3 text-center font-semibold text-lg">
         Chat with Quail
       </div>
 
       {/* Scrollable Area for Chat Messages */}
-      <div className="flex-grow px-4 py-2 h-[600] overflow-y-auto">
-        <div className="space-y-4">
+      <div className="flex-grow px-4 py-2 overflow-y-auto">
+        <ChatMessageList>
           {messages.map((m) => (
-            <div
+            <ChatBubble
               key={m.id}
-              className={`whitespace-pre-wrap ${
-                m.role === "user"
-                  ? "text-right text-blue-500 pr-1"
-                  : "text-left text-gray-700 pl-1"
-              }`}
+              variant={m.role === "user" ? "sent" : "received"} // Determine message variant based on the sender
             >
-              <span className="font-medium">
-                {m.role === "user" ? "User:" : "AI:"}
-              </span>{" "}
-              {m.content}
-            </div>
+              <Avatar>
+                <AvatarImage
+                  src={
+                    m.role === "user" ? avatar_url : "/path/to/ai-avatar.png"
+                  }
+                  alt={m.role === "user" ? "User Avatar" : "AI Avatar"}
+                />
+                <AvatarFallback>
+                  {m.role === "user" ? "CN" : "AI"}
+                </AvatarFallback>
+              </Avatar>
+
+              <ChatBubbleMessage
+                variant={m.role === "user" ? "sent" : "received"}
+              >
+                {m.content}
+              </ChatBubbleMessage>
+            </ChatBubble>
           ))}
-        </div>
+        </ChatMessageList>
       </div>
 
-      {/* Input Area with Textarea */}
+      {/* Input Area with ChatInput */}
       <div className="p-4 border-t">
         <form
           onSubmit={handleFormSubmit}
-          className="flex items-center space-x-2 w-full"
+          className="relative rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring p-1"
         >
-          <Textarea
-            className="w-full resize-none"
-            value={localInput}
-            placeholder="Say something..."
-            onChange={handleLocalInputChange}
-            onKeyDown={handleKeyDown} // Handle key press for multiline
-            rows={4} // Set the height of the Textarea to 4 lines
+          <ChatInput
+            placeholder="Type your message here..."
+            value={input}
+            onChange={handleInputChange}
+            className="min-h-12 resize-none rounded-lg bg-background border-0 p-3 shadow-none focus-visible:ring-0"
           />
-          <Button type="submit" variant="outline" className="px-4">
-            Send
-          </Button>
+
+          <div className="flex items-center p-3 pt-0">
+            <Button size="sm" className="ml-auto gap-1.5" type="submit">
+              Send Message
+            </Button>
+          </div>
         </form>
       </div>
     </div>
