@@ -98,7 +98,7 @@ export function DataTable<TData, TValue>({
   };
 
   return (
-    <div className="rounded-md border p-4">
+    <div className="p-2">
       <Button
         variant="outline"
         className="self-start"

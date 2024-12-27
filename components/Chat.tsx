@@ -50,7 +50,7 @@ export default function Chat() {
             const variant = m.role === "user" ? "sent" : "received";
             return (
               <ChatBubble key={m.id} variant={variant} layout="ai">
-                <Avatar>
+                <Avatar className="w-8 h-8">
                   <AvatarImage
                     src={
                       m.role === "user" ? avatar_url : "/path/to/ai-avatar.png"
@@ -98,7 +98,7 @@ export default function Chat() {
           className="relative rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring p-1"
         >
           <ChatInput
-            placeholder="Type your message here..."
+            placeholder="Ask Quail anything..."
             value={input}
             onChange={handleInputChange}
             className="min-h-12 resize-none rounded-lg bg-background border-0 p-3 shadow-none focus-visible:ring-0"
