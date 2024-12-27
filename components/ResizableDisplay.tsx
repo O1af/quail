@@ -6,7 +6,7 @@ import {
 } from "@/components/ui/resizable";
 import SQLEditor from "./editor/Editor";
 import Table from "@/app/table/table";
-import Chat from "./Chat";
+import Chat from "@/components/Custom/ChatBot/Chat";
 
 export function ResizableDisplay() {
   return (

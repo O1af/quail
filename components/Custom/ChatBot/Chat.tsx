@@ -105,7 +105,12 @@ export default function Chat() {
           />
 
           <div className="flex items-center p-2">
-            <Button size="sm" className="ml-auto" type="submit">
+            <Button
+              size="sm"
+              variant="secondary"
+              className="ml-auto"
+              type="submit"
+            >
               <FaArrowUp className="text-lg" />
             </Button>
           </div>

@@ -1,6 +1,6 @@
 "use client";
-import LoginButton from "@/components/Landing/LoginLogoutButton";
-import UserGreetText from "@/components/Landing/UserGreetText";
+import LoginButton from "@/components/Custom/Landing/LoginLogoutButton";
+import UserGreetText from "@/components/Custom/Landing/UserGreetText";
 import Image from "next/image";
 import React, { useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
