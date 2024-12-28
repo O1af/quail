@@ -7,7 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useEditorStore } from "./stores/editor_store";
+import { useEditorStore } from "../stores/editor_store";
 import { useEffect } from "react";
 
 export function RunButton() {

@@ -2,11 +2,12 @@
 import React, { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ResizableDisplay } from "@/components/ResizableDisplay";
-import { ModeToggle } from "@/components/mode-toggle";
+import { ModeToggle } from "@/components/header/mode-toggle";
 import Routes from "@/components/routes";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
-import { RunButton } from "@/components/run-button";
+import { RunButton } from "@/components/header/run-button";
+import { DownloadButton } from "@/components/header/download-button";
 
 export default function Page() {
   const [user, setUser] = useState<any>(null);
@@ -31,6 +32,7 @@ export default function Page() {
           <SidebarTrigger className="-ml-1" />
         </div>
         <div className="flex items-center gap-2 px-4 ml-auto">
+          <DownloadButton />
           <RunButton />
           <ModeToggle />
         </div>
