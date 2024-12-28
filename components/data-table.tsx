@@ -1,28 +1,14 @@
 "use client";
 
 import * as React from "react";
-import { Button } from "@/components/ui/button";
-import { Input } from "@/components/ui/input";
-import Papa from "papaparse";
-
+import { useTableStore } from "./stores/table_store";
+import { ArrowUpDown, ArrowUp, ArrowDown } from "lucide-react";
 import {
-  ColumnDef,
-  ColumnFiltersState,
-  getFilteredRowModel,
-  getSortedRowModel,
-  SortingState,
-  VisibilityState,
   flexRender,
   getCoreRowModel,
-  getPaginationRowModel,
+  getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Table,
   TableBody,
@@ -32,188 +18,99 @@ import {
   TableRow,
 } from "@/components/ui/table";
 
-interface DataTableProps<TData, TValue> {
-  columns: ColumnDef<TData, TValue>[];
-  data: TData[];
+// Reusable SortIcon component
+const SortIcon = ({ sortDirection }: { sortDirection: string | false }) => {
+  if (sortDirection === "desc") return <ArrowUp className="h-4 w-4" />;
+  if (sortDirection === "asc") return <ArrowDown className="h-4 w-4" />;
+  return <ArrowUpDown className="h-4 w-4" />;
+};
+
+function handleHeaderClick(column: any) {
+  if (column.getCanSort()) {
+    column.toggleSorting(column.getIsSorted() === "asc");
+  }
 }
 
-export function DataTable<TData, TValue>({
-  columns,
-  data,
-}: DataTableProps<TData, TValue>) {
-  const [sorting, setSorting] = React.useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = React.useState<ColumnFiltersState>(
-    [],
+export function DataTable() {
+  const { data, columns, sorting, columnVisibility, rowSelection, setSorting } =
+    useTableStore();
+
+  const handleSortingChange = React.useCallback(
+    (updater: any) => {
+      setSorting(typeof updater === "function" ? updater(sorting) : updater);
+    },
+    [setSorting, sorting]
   );
-  const [columnVisibility, setColumnVisibility] =
-    React.useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = React.useState({});
 
   const table = useReactTable({
     data,
     columns,
     getCoreRowModel: getCoreRowModel(),
-    getPaginationRowModel: getPaginationRowModel(),
-    onSortingChange: setSorting,
-    getSortedRowModel: getSortedRowModel(),
-    onColumnFiltersChange: setColumnFilters,
-    getFilteredRowModel: getFilteredRowModel(),
-    onColumnVisibilityChange: setColumnVisibility,
-    onRowSelectionChange: setRowSelection,
-
+    getSortedRowModel: getSortedRowModel(), // add this
+    onSortingChange: handleSortingChange,
+    enableSorting: true,
     state: {
       sorting,
-      columnFilters,
       columnVisibility,
       rowSelection,
     },
   });
 
-  const exportSelectedData = () => {
-    const selectedRows = table.getSelectedRowModel().rows;
-
-    const rowsToExport = selectedRows.length
-      ? selectedRows
-      : table.getRowModel().rows;
-
-    const visibleColumns = table
-      .getVisibleFlatColumns()
-      .map((col) => col.id)
-      .filter((colId) => colId !== "__select__");
-
-    const exportData = rowsToExport.map((row) =>
-      visibleColumns.reduce((acc, colId) => {
-        acc[colId] = row.original[colId];
-        return acc;
-      }, {}),
-    );
-
-    const csv = Papa.unparse(exportData);
-
-    const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" });
-    const link = document.createElement("a");
-    link.href = URL.createObjectURL(blob);
-    link.download = "exported_data.csv";
-    link.click();
-  };
-
   return (
-    <div className="p-2">
-      <Button
-        variant="outline"
-        className="self-start"
-        onClick={exportSelectedData}
-      >
-        Export Selected as CSV
-      </Button>
-      <div className="flex items-center py-4">
-        <Input
-          placeholder="Filter"
-          value={table.getState().globalFilter ?? ""}
-          onChange={(event) => table.setGlobalFilter(event.target.value)}
-          className="max-w-sm"
-        />{" "}
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="outline" className="ml-auto">
-              Columns
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            {table
-              .getAllColumns()
-              .filter((column) => column.getCanHide())
-              .map((column) => {
-                return (
-                  <DropdownMenuCheckboxItem
-                    key={column.id}
-                    className="capitalize"
-                    checked={column.getIsVisible()}
-                    onCheckedChange={(value) =>
-                      column.toggleVisibility(!!value)
-                    }
-                  >
-                    {column.id}
-                  </DropdownMenuCheckboxItem>
-                );
-              })}
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-      <div>
-        <Table>
-          <TableHeader>
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow key={headerGroup.id}>
-                {headerGroup.headers.map((header) => {
-                  return (
-                    <TableHead key={header.id}>
-                      {header.isPlaceholder
-                        ? null
-                        : flexRender(
-                            header.column.columnDef.header,
-                            header.getContext(),
-                          )}
-                    </TableHead>
-                  );
-                })}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row) => (
-                <TableRow
-                  key={row.id}
-                  data-state={row.getIsSelected() && "selected"}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id}>
+    <div className="relative h-full w-full overflow-auto rounded-md border">
+      <Table>
+        <TableHeader className="sticky top-0 z-10 bg-background">
+          {table.getHeaderGroups().map((headerGroup) => (
+            <TableRow key={headerGroup.id} className="hover:bg-transparent">
+              {headerGroup.headers.map((header) => (
+                <TableHead key={header.id} className="whitespace-nowrap">
+                  {!header.isPlaceholder && (
+                    <div
+                      className={`flex items-center ${
+                        header.column.getCanSort()
+                          ? "cursor-pointer select-none"
+                          : ""
+                      }`}
+                      onClick={() => handleHeaderClick(header.column)}
+                    >
                       {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext(),
+                        header.column.columnDef.header,
+                        header.getContext()
                       )}
-                    </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-24 text-center"
-                >
-                  No results.
-                </TableCell>
+                      {header.column.getCanSort() && (
+                        <span className="ml-2">
+                          <SortIcon
+                            sortDirection={header.column.getIsSorted()}
+                          />
+                        </span>
+                      )}
+                    </div>
+                  )}
+                </TableHead>
+              ))}
+            </TableRow>
+          ))}
+        </TableHeader>
+        <TableBody>
+          {table.getRowModel().rows?.length ? (
+            table.getRowModel().rows.map((row) => (
+              <TableRow key={row.id}>
+                {row.getVisibleCells().map((cell) => (
+                  <TableCell key={cell.id} className="whitespace-nowrap">
+                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                  </TableCell>
+                ))}
               </TableRow>
-            )}
-          </TableBody>
-        </Table>
-        <div className="flex items-center justify-end space-x-2 py-4">
-          <div className="flex-1 text-sm text-muted-foreground">
-            {table.getFilteredSelectedRowModel().rows.length} of{" "}
-            {table.getFilteredRowModel().rows.length} row(s) selected.
-          </div>
-          <div className="space-x-2">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.previousPage()}
-              disabled={!table.getCanPreviousPage()}
-            >
-              Previous
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => table.nextPage()}
-              disabled={!table.getCanNextPage()}
-            >
-              Next
-            </Button>
-          </div>
-        </div>{" "}
-      </div>
+            ))
+          ) : (
+            <TableRow>
+              <TableCell colSpan={columns.length} className="h-24 text-center">
+                No results.
+              </TableCell>
+            </TableRow>
+          )}
+        </TableBody>
+      </Table>
     </div>
   );
 }

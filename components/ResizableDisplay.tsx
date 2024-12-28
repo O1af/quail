@@ -5,7 +5,7 @@ import {
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
 import SQLEditor from "./editor/Editor";
-import Table from "@/app/table/table";
+import { DataTable } from "./data-table";
 import Chat from "@/components/Custom/ChatBot/Chat";
 
 export function ResizableDisplay() {
@@ -22,9 +22,7 @@ export function ResizableDisplay() {
           </ResizablePanel>
           <ResizableHandle />
           <ResizablePanel defaultSize={50}>
-            <div className="flex h-full items-center justify-center p-3">
-              <Table />
-            </div>
+            <DataTable />
           </ResizablePanel>
         </ResizablePanelGroup>
       </ResizablePanel>
