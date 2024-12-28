@@ -1,41 +1,26 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { Messages } from "./Messages";
-import { Input } from "./Input";
 
 export default function Chat() {
   const { messages, input, handleInputChange, handleSubmit } = useChat();
-  const [user, setUser] = useState<any>(null);
-  const supabase = createClient();
-
-  useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    fetchUser();
-  }, [supabase]);
-
-  const avatar_url = user?.user_metadata?.avatar_url ?? "";
-
-  const handleFormSubmit = (event: React.FormEvent) => {
-    event.preventDefault();
-    handleSubmit(event);
-  };
-
   return (
-    <div className="flex flex-col w-full h-[600px] border shadow-md">
-      <Messages messages={messages} avatar_url={avatar_url} />
-      <Input
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={handleFormSubmit}
-      />
+    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
+      {messages.map((m) => (
+        <div key={m.id} className="whitespace-pre-wrap">
+          {m.role === "user" ? "User: " : "AI: "}
+          {m.content}
+        </div>
+      ))}
+
+      <form onSubmit={handleSubmit}>
+        <input
+          className="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
+          value={input}
+          placeholder="Say something..."
+          onChange={handleInputChange}
+        />
+      </form>
     </div>
   );
 }
