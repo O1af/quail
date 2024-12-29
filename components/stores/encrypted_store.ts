@@ -28,8 +28,11 @@ function decrypt(data: string): string {
   );
 }
 
+const isClient = typeof window !== "undefined";
+
 export const encryptedStorage: StateStorage = {
   getItem: (name: string) => {
+    if (!isClient) return null;
     try {
       const encrypted = localStorage.getItem(name);
       return encrypted ? decrypt(encrypted) : null;
@@ -39,11 +42,15 @@ export const encryptedStorage: StateStorage = {
     }
   },
   setItem: (name: string, value: string) => {
+    if (!isClient) return;
     try {
       localStorage.setItem(name, encrypt(value));
     } catch (e) {
       console.error("Encryption failed:", e);
     }
   },
-  removeItem: (name: string) => localStorage.removeItem(name),
+  removeItem: (name: string) => {
+    if (!isClient) return;
+    localStorage.removeItem(name);
+  },
 };

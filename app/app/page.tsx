@@ -8,6 +8,8 @@ import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
 import { RunButton } from "@/components/header/run-button";
 import { DownloadButton } from "@/components/header/download-button";
+import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
 export default function Page() {
   const [user, setUser] = useState<any>(null);
@@ -26,18 +28,21 @@ export default function Page() {
     fetchUser();
   }, [router, supabase]);
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-        <div className="flex items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-        </div>
-        <div className="flex items-center gap-2 px-4 ml-auto">
-          <DownloadButton />
-          <RunButton />
-          <ModeToggle />
-        </div>
-      </header>
-      <ResizableDisplay />
-    </>
+    <SidebarProvider>
+      <AppSidebar />
+      <SidebarInset>
+        <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+          </div>
+          <div className="flex items-center gap-2 px-4 ml-auto">
+            <DownloadButton />
+            <RunButton />
+            <ModeToggle />
+          </div>
+        </header>
+        <ResizableDisplay />
+      </SidebarInset>
+    </SidebarProvider>
   );
 }

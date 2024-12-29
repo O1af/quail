@@ -1,4 +1,6 @@
 import { create } from "zustand";
+import { persist, createJSONStorage } from "zustand/middleware";
+import { encryptedStorage } from "./encrypted_store";
 import {
   ColumnDef,
   SortingState,
@@ -62,15 +64,23 @@ const mockColumns: ColumnDef<SQLData, any>[] = [
   },
 ];
 
-export const useTableStore = create<TableStore>((set) => ({
-  data: mockData,
-  columns: mockColumns,
-  sorting: [] as SortingState, // explicitly type as SortingState
-  columnVisibility: {},
-  rowSelection: {},
-  setSorting: (sorting: SortingState) => set(() => ({ sorting })),
-  setColumnVisibility: (columnVisibility) => set({ columnVisibility }),
-  setRowSelection: (rowSelection) => set({ rowSelection }),
-  setData: (data) => set({ data }),
-  setColumns: (columns) => set({ columns }),
-}));
+export const useTableStore = create<TableStore>()(
+  persist(
+    (set) => ({
+      data: mockData,
+      columns: mockColumns,
+      sorting: [] as SortingState,
+      columnVisibility: {},
+      rowSelection: {},
+      setSorting: (sorting: SortingState) => set(() => ({ sorting })),
+      setColumnVisibility: (columnVisibility) => set({ columnVisibility }),
+      setRowSelection: (rowSelection) => set({ rowSelection }),
+      setData: (data) => set({ data }),
+      setColumns: (columns) => set({ columns }),
+    }),
+    {
+      name: "table-storage",
+      storage: createJSONStorage(() => encryptedStorage),
+    }
+  )
+);
