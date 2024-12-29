@@ -1,67 +1,30 @@
-import { Message } from "ai";
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import { ChatMessageList } from "@/components/ui/chat/chat-message-list";
-import {
-  ChatBubble,
-  ChatBubbleMessage,
-  ChatBubbleAction,
-} from "@/components/ui/chat/chat-bubble";
+import { Avatar } from "@/components/ui/avatar";
+import { AvatarImage } from "@radix-ui/react-avatar";
 
-interface MessagesProps {
-  messages: Message[];
-  avatar_url: string;
-}
-
-const actionIcons = [
-  { icon: "Copy", type: "Copy" },
-  { icon: "RefreshCcw", type: "Regenerate" },
-];
-
-export function Messages({ messages, avatar_url }: MessagesProps) {
+export default function Messages({ messages }: { messages: any[] }) {
   return (
-    <div className="flex-grow px-4 py-2 overflow-y-auto h-[calc(100%-100px)]">
-      <ChatMessageList>
-        {messages.map((m) => {
-          const variant = m.role === "user" ? "sent" : "received";
-          return (
-            <ChatBubble key={m.id} variant={variant} layout="ai">
-              <Avatar className="w-8 h-8">
-                <AvatarImage
-                  src={
-                    m.role === "user" ? avatar_url : "/path/to/ai-avatar.png"
-                  }
-                  alt={m.role === "user" ? "User Avatar" : "AI Avatar"}
-                />
-                <AvatarFallback>
-                  {m.role === "user" ? "CN" : "AI"}
-                </AvatarFallback>
+    <div className="flex flex-col w-full px-2 space-y-6">
+      {messages.map((m) => (
+        <div
+          key={m.id}
+          className={`flex space-x-2 p-2 rounded-lg ${
+            m.role === "user"
+              ? "bg-white flex text-black self-end justify-end max-w-[75%]" // User messages aligned to the right
+              : "bg-transparent flex text-white self-start justify-start max-w-[75%]" // Bot messages aligned to the left
+          }`}
+        >
+          {m.role !== "user" && (
+            <div className="flex-shrink-0">
+              <Avatar className="w-6 h-6">
+                <AvatarImage src="/BotIcon.png" alt="QuailAI" />
               </Avatar>
-
-              <ChatBubbleMessage
-                className="text-white text-right"
-                variant={variant}
-              >
-                {m.content}
-                {m.role === "assistant" && (
-                  <div className="mt-2 flex space-x-2">
-                    {actionIcons.map(({ icon, type }) => (
-                      <ChatBubbleAction
-                        key={type}
-                        icon={<span>{icon}</span>}
-                        onClick={() =>
-                          console.log(
-                            `Action ${type} clicked for message ${m.id}`
-                          )
-                        }
-                      />
-                    ))}
-                  </div>
-                )}
-              </ChatBubbleMessage>
-            </ChatBubble>
-          );
-        })}
-      </ChatMessageList>
+            </div>
+          )}
+          <div className="flex-1">
+            <p className="text-sm">{m.content}</p>
+          </div>
+        </div>
+      ))}
     </div>
   );
 }

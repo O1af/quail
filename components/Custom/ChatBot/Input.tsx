@@ -1,36 +1,50 @@
 import { Button } from "@/components/ui/button";
-import { ChatInput } from "@/components/ui/chat/chat-input";
-import { FaArrowUp } from "react-icons/fa";
+import { SendHorizontal, Loader2 } from "lucide-react";
+import { Textarea } from "@/components/ui/textarea";
 
 interface InputProps {
   input: string;
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: React.FormEvent) => void;
+  handleKeyDown: (e: React.KeyboardEvent) => void;
+  isLoading: boolean;
+  stop: () => void;
 }
 
-export function Input({ input, handleInputChange, handleSubmit }: InputProps) {
+export function Input({
+  input,
+  handleInputChange,
+  handleSubmit,
+  handleKeyDown,
+  isLoading,
+  stop,
+}: InputProps) {
   return (
-    <div className="p-4 border-t mt-auto">
+    <div className="w-full">
       <form
         onSubmit={handleSubmit}
-        className="relative rounded-lg border bg-background focus-within:ring-1 focus-within:ring-ring p-1"
+        className="flex items-center w-full mx-auto px-4 py-4 space-x-2"
       >
-        <ChatInput
-          placeholder="Ask Quail anything..."
-          value={input}
-          onChange={handleInputChange}
-          className="min-h-12 resize-none rounded-lg bg-background border-0 p-3 shadow-none focus-visible:ring-0"
-        />
-        <div className="flex items-center p-2">
-          <Button
-            size="sm"
-            variant="secondary"
-            className="ml-auto"
-            type="submit"
-          >
-            <FaArrowUp className="text-lg" />
-          </Button>
+        <div className="relative flex-1">
+          <Textarea
+            onKeyDown={handleKeyDown}
+            value={input}
+            onChange={handleInputChange}
+            placeholder="Send a message..."
+          />
         </div>
+        {isLoading ? (
+          <Button type="button" size="icon" onClick={stop}>
+            <div className="relative">
+              <Loader2 className="h-4 w-4 animate-spin" />
+            </div>
+          </Button>
+        ) : (
+          <Button type="submit" size="icon" disabled={!input}>
+            <SendHorizontal className="h-4 w-4" />
+          </Button>
+        )}
+        <span className="sr-only">Send message</span>
       </form>
     </div>
   );

@@ -1,26 +1,40 @@
 "use client";
 
 import { useChat } from "ai/react";
+import { ScrollArea } from "@/components/ui/scroll-area";
+import Messages from "./Messages";
+import ExampleMessages from "./ExampleMessages";
+import { Input } from "./Input";
 
 export default function Chat() {
-  const { messages, input, handleInputChange, handleSubmit } = useChat();
-  return (
-    <div className="flex flex-col w-full max-w-md py-24 mx-auto stretch">
-      {messages.map((m) => (
-        <div key={m.id} className="whitespace-pre-wrap">
-          {m.role === "user" ? "User: " : "AI: "}
-          {m.content}
-        </div>
-      ))}
+  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } =
+    useChat();
 
-      <form onSubmit={handleSubmit}>
-        <input
-          className="fixed bottom-0 w-full max-w-md p-2 mb-8 border border-gray-300 rounded shadow-xl"
-          value={input}
-          placeholder="Say something..."
-          onChange={handleInputChange}
-        />
-      </form>
+  const handleKeyDown = (e: React.KeyboardEvent) => {
+    if (e.key === "Enter" && !e.shiftKey) {
+      e.preventDefault();
+      handleSubmit();
+    }
+  };
+
+  return (
+    <div className="flex flex-col items-center w-full h-full bg-background p-4">
+      <ScrollArea className="h-[700px] w-full">
+        {messages.length === 0 ? (
+          <ExampleMessages handleInputChange={handleInputChange} />
+        ) : (
+          <Messages messages={messages} />
+        )}
+      </ScrollArea>
+
+      <Input
+        input={input}
+        handleInputChange={handleInputChange}
+        handleSubmit={handleSubmit}
+        handleKeyDown={handleKeyDown}
+        isLoading={isLoading}
+        stop={stop}
+      />
     </div>
   );
 }
