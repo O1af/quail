@@ -1,0 +1,60 @@
+"use client";
+
+import { useState } from "react";
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import { SidebarNav } from "./sidebar-nav";
+
+const sidebarNavItems = [
+  {
+    title: "Profile",
+    href: "profile",
+  },
+  {
+    title: "Account",
+    href: "account",
+  },
+  {
+    title: "Database Connections",
+    href: "database",
+  },
+  {
+    title: "Billing",
+    href: "billing",
+  },
+];
+
+interface SettingsDialogProps {
+  open?: boolean;
+  onOpenChange?: (open: boolean) => void;
+}
+
+export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+  const [activeSection, setActiveSection] = useState("profile");
+
+  return (
+    <Dialog open={open} onOpenChange={onOpenChange}>
+      <DialogContent className="sm:max-w-[90vw] md:max-w-[800px] max-h-[90vh] flex flex-col">
+        <DialogHeader>
+          <DialogTitle className="text-2xl font-bold tracking-tight">
+            Settings
+          </DialogTitle>
+        </DialogHeader>
+        <div className="pt-8 flex flex-row flex-grow overflow-hidden">
+          <aside className="w-1/3 max-w-[200px] pr-6 overflow-y-auto">
+            <SidebarNav
+              items={sidebarNavItems}
+              activeSection={activeSection}
+              setActiveSection={setActiveSection}
+            />
+          </aside>
+          <div className="flex-1 overflow-y-auto pr-6"></div>
+        </div>
+      </DialogContent>
+    </Dialog>
+  );
+}
