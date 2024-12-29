@@ -5,7 +5,7 @@ import {
   VisibilityState,
 } from "@tanstack/react-table";
 
-interface SQLData {
+export interface SQLData {
   [key: string]: string | number | boolean | null;
 }
 

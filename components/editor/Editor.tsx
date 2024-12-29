@@ -8,21 +8,7 @@ import { useEditorStore } from "../stores/editor_store";
 
 export default function SQLEditor() {
   const { theme } = useTheme();
-  const { value, setValue, setEditorRef, tables, setQueryHandler } =
-    useEditorStore();
-
-  // Setup mock query handler
-  useEffect(() => {
-    setQueryHandler(async (query: string) => {
-      console.log("Handling query:", query);
-      // Simulate network delay and random error
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      if (Math.random() > 0.7) {
-        // 30% chance of error for testing
-        throw new Error("Mock query execution failed");
-      }
-    });
-  }, [setQueryHandler]);
+  const { value, setValue, setEditorRef, tables } = useEditorStore();
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     setEditorRef(editor);
