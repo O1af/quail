@@ -19,13 +19,6 @@ export default function Chat() {
     reload,
   } = useChat();
 
-  const handleKeyDown = (e: React.KeyboardEvent) => {
-    if (e.key === "Enter" && !e.shiftKey) {
-      e.preventDefault();
-      handleSubmit();
-    }
-  };
-
   return (
     <div className="flex flex-col min-w-0 h-[90dvh] bg-background">
       {messages.length === 0 ? (
