@@ -1,30 +1,53 @@
-import { Avatar } from "@/components/ui/avatar";
-import { AvatarImage } from "@radix-ui/react-avatar";
+import { ChatRequestOptions, Message } from "ai";
+import { PreviewMessage, ThinkingMessage } from "./message";
+import { useScrollToBottom } from "./use-scroll-to-bottom";
+import { memo } from "react";
+import equal from "fast-deep-equal";
 
-export default function Messages({ messages }: { messages: any[] }) {
+interface MessagesProps {
+  isLoading: boolean;
+  messages: Array<Message>;
+  reload: (
+    chatRequestOptions?: ChatRequestOptions,
+  ) => Promise<string | null | undefined>;
+}
+
+function PureMessages({ isLoading, messages, reload }: MessagesProps) {
+  const [messagesContainerRef, messagesEndRef] =
+    useScrollToBottom<HTMLDivElement>();
+
   return (
-    <div className="flex flex-col w-full px-2 space-y-6">
-      {messages.map((m) => (
-        <div
-          key={m.id}
-          className={`flex space-x-2 p-2 rounded-lg ${
-            m.role === "user"
-              ? "bg-white flex text-black self-end justify-end max-w-[75%]" // User messages aligned to the right
-              : "bg-transparent flex text-white self-start justify-start max-w-[75%]" // Bot messages aligned to the left
-          }`}
-        >
-          {m.role !== "user" && (
-            <div className="flex-shrink-0">
-              <Avatar className="w-6 h-6">
-                <AvatarImage src="/BotIcon.png" alt="QuailAI" />
-              </Avatar>
-            </div>
-          )}
-          <div className="flex-1">
-            <p className="text-sm">{m.content}</p>
-          </div>
-        </div>
+    <div
+      ref={messagesContainerRef}
+      className="flex flex-col min-w-0 gap-6 flex-1 overflow-y-scroll pt-4"
+    >
+      {/* {messages.length === 0 && <Overview />} */}
+
+      {messages.map((message, index) => (
+        <PreviewMessage
+          key={message.id}
+          message={message}
+          isLoading={isLoading && messages.length - 1 === index}
+          reload={reload}
+        />
       ))}
+
+      {isLoading &&
+        messages.length > 0 &&
+        messages[messages.length - 1].role === "user" && <ThinkingMessage />}
+
+      <div
+        ref={messagesEndRef}
+        className="shrink-0 min-w-[24px] min-h-[24px]"
+      />
     </div>
   );
 }
+
+export const Messages = memo(PureMessages, (prevProps, nextProps) => {
+  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  if (prevProps.isLoading && nextProps.isLoading) return false;
+  if (prevProps.messages.length !== nextProps.messages.length) return false;
+
+  return true;
+});
