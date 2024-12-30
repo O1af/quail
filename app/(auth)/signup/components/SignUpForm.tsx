@@ -1,4 +1,8 @@
 "use client";
+import { useState } from "react";
+import { useForm } from "react-hook-form";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { z } from "zod";
 import Link from "next/link";
 
 import { Button } from "@/components/ui/button";
@@ -14,7 +18,51 @@ import { Label } from "@/components/ui/label";
 import { signup } from "@/lib/auth-actions";
 import Routes from "@/components/routes";
 
+// Zod schema for validation
+const formSchema = z.object({
+  "first-name": z.string().min(1, { message: "First name is required." }),
+  "last-name": z.string().min(1, { message: "Last name is required." }),
+  email: z.string().email({ message: "Please enter a valid email." }),
+  password: z.string().min(6, {
+    message: "Password must contain at least 6 characters.",
+  }),
+});
+
 export function SignUpForm() {
+  const [error, setError] = useState<string | null>(null);
+
+  const form = useForm({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      "first-name": "",
+      "last-name": "",
+      email: "",
+      password: "",
+    },
+  });
+
+  const onSubmit = async (data: {
+    "first-name": string;
+    "last-name": string;
+    email: string;
+    password: string;
+  }) => {
+    setError(null); // Reset the error before submission
+
+    try {
+      // Call signup with the data directly
+      const formData = new FormData();
+      formData.append("first-name", data["first-name"]);
+      formData.append("last-name", data["last-name"]);
+      formData.append("email", data.email);
+      formData.append("password", data.password);
+
+      await signup(formData);
+    } catch (err) {
+      console.log(err);
+      setError("There was an error creating your account. Please try again.");
+    }
+  };
   return (
     <Card className="mx-auto max-w-sm">
       <CardHeader className="text-center">
@@ -24,47 +72,69 @@ export function SignUpForm() {
         </CardDescription>
       </CardHeader>
       <CardContent>
-        <form action="">
+        <form onSubmit={form.handleSubmit(onSubmit)}>
           <div className="grid gap-4">
             <div className="grid grid-cols-2 gap-4">
               <div className="grid gap-2">
                 <Label htmlFor="first-name">First name</Label>
                 <Input
-                  name="first-name"
                   id="first-name"
+                  {...form.register("first-name")}
                   placeholder="John"
-                  required
                 />
+                {form.formState.errors["first-name"] && (
+                  <div className="text-red-500 text-sm">
+                    {form.formState.errors["first-name"]?.message}
+                  </div>
+                )}
               </div>
               <div className="grid gap-2">
                 <Label htmlFor="last-name">Last name</Label>
                 <Input
-                  name="last-name"
                   id="last-name"
+                  {...form.register("last-name")}
                   placeholder="Doe"
-                  required
                 />
+                {form.formState.errors["last-name"] && (
+                  <div className="text-red-500 text-sm">
+                    {form.formState.errors["last-name"]?.message}
+                  </div>
+                )}
               </div>
             </div>
             <div className="grid gap-2">
               <Label htmlFor="email">Email</Label>
               <Input
-                name="email"
                 id="email"
                 type="email"
+                {...form.register("email")}
                 placeholder="user@quailclient.com"
-                required
               />
+              {form.formState.errors.email && (
+                <div className="text-red-500 text-sm">
+                  {form.formState.errors.email?.message}
+                </div>
+              )}
             </div>
             <div className="grid gap-2">
               <Label htmlFor="password">Password</Label>
-              <Input name="password" id="password" type="password" />
+              <Input
+                id="password"
+                type="password"
+                {...form.register("password")}
+              />
+              {form.formState.errors.password && (
+                <div className="text-red-500 text-sm">
+                  {form.formState.errors.password?.message}
+                </div>
+              )}
             </div>
-            <Button formAction={signup} type="submit" className="w-full">
+            <Button type="submit" className="w-full">
               Create an account
             </Button>
           </div>
         </form>
+        {error && <div className="text-red-500 text-center">{error}</div>}
         <div className="mt-4 text-center text-sm">
           Already have an account?{" "}
           <Link href={Routes.LoginPage} className="underline">

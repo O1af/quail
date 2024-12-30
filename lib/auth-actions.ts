@@ -19,7 +19,7 @@ export async function login(formData: FormData) {
 
   if (error) {
     console.log("Error: ", error);
-    redirect("/login");
+    throw new Error("Invalid email or password.");
   }
 
   revalidatePath("/", "layout");
@@ -29,17 +29,18 @@ export async function login(formData: FormData) {
 export async function signup(formData: FormData) {
   const supabase = createClient();
 
-  // type-casting here for convenience
-  // in practice, you should validate your inputs
   const firstName = formData.get("first-name") as string;
   const lastName = formData.get("last-name") as string;
+  const email = formData.get("email") as string;
+  const password = formData.get("password") as string;
+
   const data = {
-    email: formData.get("email") as string,
-    password: formData.get("password") as string,
+    email,
+    password,
     options: {
       data: {
-        full_name: `${firstName + " " + lastName}`,
-        email: formData.get("email") as string,
+        full_name: `${firstName} ${lastName}`,
+        email,
       },
       emailRedirectTo: "https://localhost:3000/login",
     },
@@ -48,7 +49,7 @@ export async function signup(formData: FormData) {
   const { error } = await supabase.auth.signUp(data);
 
   if (error) {
-    redirect("/error");
+    throw new Error("An error occurred while creating your account.");
   }
 
   revalidatePath("/", "layout");
