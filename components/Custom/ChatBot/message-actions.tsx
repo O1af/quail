@@ -1,5 +1,4 @@
 import type { Message } from "ai";
-import { toast } from "sonner";
 import { useCopyToClipboard } from "usehooks-ts";
 
 import { CopyIcon } from "./icons";
@@ -11,6 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { memo } from "react";
+import { useToast } from "@/hooks/use-toast";
 
 export function PureMessageActions({
   message,
@@ -20,6 +20,7 @@ export function PureMessageActions({
   isLoading: boolean;
 }) {
   const [_, copyToClipboard] = useCopyToClipboard();
+  const { toast } = useToast();
 
   if (isLoading) return null;
   if (message.role === "user") return null;
@@ -36,7 +37,10 @@ export function PureMessageActions({
               variant="outline"
               onClick={async () => {
                 await copyToClipboard(message.content as string);
-                toast.success("Copied to clipboard!");
+                toast({
+                  description: "Copied to clipboard!",
+                  duration: 1500, // Adjust duration as needed
+                });
               }}
             >
               <CopyIcon />

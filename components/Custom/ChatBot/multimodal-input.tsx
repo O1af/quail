@@ -12,15 +12,14 @@ import {
   type SetStateAction,
   memo,
 } from "react";
-import { toast } from "sonner";
+import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 
 import { sanitizeUIMessages } from "@/lib/utils";
 
-import { ArrowUpIcon, PaperclipIcon, StopIcon } from "./icons";
+import { ArrowUpIcon, StopIcon } from "./icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import equal from "fast-deep-equal";
 
 function PureMultimodalInput({
   input,
@@ -53,6 +52,7 @@ function PureMultimodalInput({
 }) {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
+  const { toast } = useToast();
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -132,7 +132,11 @@ function PureMultimodalInput({
             event.preventDefault();
 
             if (isLoading) {
-              toast.error("Please wait for the model to finish its response!");
+              toast({
+                title: "Please wait for the model to finish its response!",
+                duration: 1500,
+                variant: "destructive",
+              });
             } else {
               submitForm();
             }

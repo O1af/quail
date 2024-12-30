@@ -1,9 +1,8 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { ScrollArea } from "@/components/ui/scroll-area";
 import { Messages } from "./messages";
-import ExampleMessages from "./ExampleMessages";
+import ExampleMessages from "./example-messages";
 import { MultimodalInput } from "./multimodal-input";
 
 export default function Chat() {

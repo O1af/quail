@@ -1,7 +1,10 @@
 "use client";
 
 import { useState } from "react";
-import { MessageActions } from "./message-actions";
+import { Button } from "@/components/ui/button";
+import { Copy } from "lucide-react";
+import { useCopyToClipboard } from "usehooks-ts";
+import { useToast } from "@/hooks/use-toast";
 
 interface CodeBlockProps {
   node: any;
@@ -19,6 +22,16 @@ export function CodeBlock({
 }: CodeBlockProps) {
   const [output, setOutput] = useState<string | null>(null);
   const [tab, setTab] = useState<"code" | "run">("code");
+  const [_, copyToClipboard] = useCopyToClipboard();
+  const { toast } = useToast(); // Initialize the toast hook
+
+  const handleCopy = async () => {
+    await copyToClipboard(children);
+    toast({
+      description: "Copied to clipboard!",
+      duration: 2000, // Adjust duration as needed
+    });
+  };
 
   if (!inline) {
     return (
@@ -33,12 +46,14 @@ export function CodeBlock({
                 {children}
               </code>
             </pre>
-            <div className="absolute top-2 right-2">
-              <MessageActions
-                message={{ content: children }}
-                isLoading={false}
-              />
-            </div>
+            <Button
+              variant="ghost"
+              size="icon"
+              className="absolute top-2 right-2"
+              onClick={handleCopy}
+            >
+              <Copy className="h-4 w-4" />
+            </Button>
           </>
         )}
 
