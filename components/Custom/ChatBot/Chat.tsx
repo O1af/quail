@@ -20,7 +20,7 @@ export default function Chat() {
   } = useChat();
 
   return (
-    <div className="flex flex-col min-w-0 h-[90dvh] bg-background">
+    <div className="flex flex-col min-w-0 h-[91dvh] bg-background">
       {messages.length === 0 ? (
         <ExampleMessages handleInputChange={handleInputChange} />
       ) : (

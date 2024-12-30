@@ -5,6 +5,7 @@ import Image from "next/image";
 import { ResetPasswordForm } from "./components/ResetPasswordForm";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
+import { useTheme } from "next-themes";
 
 const ResetPasswordPage = () => {
   const [user, setUser] = useState<any>(null);
@@ -22,6 +23,8 @@ const ResetPasswordPage = () => {
     };
     fetchUser();
   }, [router, supabase]);
+  const { theme } = useTheme();
+  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
@@ -33,7 +36,7 @@ const ResetPasswordPage = () => {
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <div className="relative h-full w-full">
               <Image
-                src="/BotIcon.png"
+                src={avatarSrc}
                 fill
                 className="object-contain"
                 alt="Avatar"

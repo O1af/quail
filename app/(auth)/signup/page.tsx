@@ -5,6 +5,7 @@ import Routes from "@/components/routes";
 import Image from "next/image";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
+import { useTheme } from "next-themes";
 
 const SignUpPage = () => {
   const [user, setUser] = useState<any>(null);
@@ -23,6 +24,9 @@ const SignUpPage = () => {
     fetchUser();
   }, [router, supabase]);
 
+  const theme = useTheme();
+  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
+
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -33,7 +37,7 @@ const SignUpPage = () => {
           <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <div className="relative h-full w-full">
               <Image
-                src="/BotIcon.png"
+                src={avatarSrc}
                 fill
                 className="object-contain"
                 alt="Avatar"

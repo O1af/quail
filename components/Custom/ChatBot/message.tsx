@@ -17,6 +17,7 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useTheme } from "next-themes";
 
 const PurePreviewMessage = ({
   message,
@@ -25,10 +26,13 @@ const PurePreviewMessage = ({
   message: Message;
   isLoading: boolean;
   reload: (
-    chatRequestOptions?: ChatRequestOptions
+    chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
+
+  const { theme } = useTheme();
+  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
 
   return (
     <AnimatePresence>
@@ -44,14 +48,14 @@ const PurePreviewMessage = ({
             {
               "w-full": mode === "edit",
               "group-data-[role=user]/message:w-fit": mode !== "edit",
-            }
+            },
           )}
         >
           {message.role === "assistant" && (
             <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
               <div className="translate-y-px">
-                <Avatar className="w-6 h-6">
-                  <AvatarImage src="/BotIcon.png" alt="QuailAI" />
+                <Avatar className="w-8 h-">
+                  <AvatarImage src={avatarSrc} alt="QuailAI" />
                 </Avatar>
               </div>
             </div>
@@ -79,8 +83,9 @@ const PurePreviewMessage = ({
 
                 <div
                   className={cn("flex flex-col gap-4", {
-                    "bg-primary text-primary-foreground px-3 py-2 rounded-xl":
+                    "text-sm bg-primary text-primary-foreground p-2 rounded-xl":
                       message.role === "user",
+                    "text-sm": message.role === "assistant",
                   })}
                 >
                   <Markdown>{message.content as string}</Markdown>
@@ -110,17 +115,19 @@ export const PreviewMessage = memo(
     if (
       !equal(
         prevProps.message.toolInvocations,
-        nextProps.message.toolInvocations
+        nextProps.message.toolInvocations,
       )
     )
       return false;
 
     return true;
-  }
+  },
 );
 
 export const ThinkingMessage = () => {
   const role = "assistant";
+  const { theme } = useTheme();
+  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
 
   return (
     <motion.div
@@ -134,12 +141,12 @@ export const ThinkingMessage = () => {
           "flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl",
           {
             "group-data-[role=user]/message:bg-muted": true,
-          }
+          },
         )}
       >
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
           <Avatar className="w-6 h-6">
-            <AvatarImage src="/BotIcon.png" alt="QuailAI" />
+            <AvatarImage src={avatarSrc} alt="QuailAI" />
           </Avatar>
         </div>
 

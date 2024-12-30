@@ -1,5 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Avatar, AvatarImage } from "@/components/ui/avatar";
+import { useTheme } from "next-themes";
 const exampleMessages = [
   {
     heading: "How do I select",
@@ -24,11 +25,13 @@ export default function ExampleMessages({
 }: {
   handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
+  const { theme } = useTheme();
+  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
   return (
     <div className="flex-1 w-full px-4 py-24 space-y-6">
       <div className="flex items-center justify-center space-x-2">
         <Avatar>
-          <AvatarImage src="/BotIcon.png" alt="QuailAI" />
+          <AvatarImage src={avatarSrc} alt="QuailAI" />
         </Avatar>
         <span className="text-xl font-semibold">Quail AI</span>
       </div>
