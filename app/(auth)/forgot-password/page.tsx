@@ -1,12 +1,12 @@
 "use client";
 import React, { useEffect, useState } from "react";
-import { SignUpForm } from "./components/SignUpForm";
 import Routes from "@/components/routes";
 import Image from "next/image";
+import { ForgotPasswordForm } from "./components/ForgotPasswordForm";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
 
-const SignUpPage = () => {
+const ForgotPasswordPage = () => {
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
   const router = useRouter();
@@ -42,10 +42,10 @@ const SignUpPage = () => {
           </div>
           Quail
         </a>
-        <SignUpForm />
+        <ForgotPasswordForm />
       </div>
     </div>
   );
 };
 
-export default SignUpPage;
+export default ForgotPasswordPage;

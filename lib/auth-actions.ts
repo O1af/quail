@@ -42,7 +42,7 @@ export async function signup(formData: FormData) {
         full_name: `${firstName} ${lastName}`,
         email,
       },
-      emailRedirectTo: "https://localhost:3000/login",
+      emailRedirectTo: "http://localhost:3000/login",
     },
   };
 
@@ -85,4 +85,50 @@ export async function signInWithGoogle() {
   }
 
   redirect(data.url);
+}
+
+export async function forgotPassword(formData: FormData) {
+  const email = formData.get("email") as string;
+  const supabase = createClient();
+
+  const { error } = await supabase.auth.resetPasswordForEmail(email, {
+    redirectTo: `http://localhost:3000/reset-password`,
+  });
+
+  if (error) {
+    throw new Error(
+      "An error occurred while attempting to reset your password.",
+    );
+  }
+}
+
+export async function resetPassword(
+  formData: FormData,
+  searchParams: { code?: string },
+) {
+  const password = formData.get("password") as string;
+  const supabase = createClient();
+
+  if (searchParams.code) {
+    const { error } = await supabase.auth.exchangeCodeForSession(
+      searchParams.code,
+    );
+
+    if (error) {
+      return redirect(
+        `/reset-password?message=Unable to reset Password. Link expired!`,
+      );
+    }
+  }
+
+  const { error } = await supabase.auth.updateUser({
+    password,
+  });
+
+  if (error) {
+    console.log(error);
+    return redirect(
+      `/reset-password?message=Unable to reset Password. Try again!`,
+    );
+  }
 }
