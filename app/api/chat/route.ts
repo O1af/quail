@@ -1,5 +1,6 @@
 import { streamText } from "ai";
-import { createAzure } from '@ai-sdk/azure';
+import { createAzure } from "@ai-sdk/azure";
+import { createClient } from "@/utils/supabase/server";
 
 const azure = createAzure({
   resourceName: process.env.AZURE_RESOURCE_NAME, // Azure resource name
@@ -10,6 +11,15 @@ const azure = createAzure({
 export const maxDuration = 30;
 
 export async function POST(req: Request) {
+  const supabase = createClient();
+  const { data: user, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return new Response(JSON.stringify({ message: "Unauthorized" }), {
+      status: 401,
+    });
+  }
+
   const { messages } = await req.json();
 
   const result = streamText({
