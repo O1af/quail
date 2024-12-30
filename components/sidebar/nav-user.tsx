@@ -108,7 +108,9 @@ export function NavUser({
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   onSelect={() => {
-                    const event = new Event("openSettings");
+                    const event = new CustomEvent("openSettings", {
+                      detail: { section: "profile" },
+                    });
                     window.dispatchEvent(event);
                   }}
                 >

@@ -17,13 +17,14 @@ const sidebarNavItems = [
     href: "profile",
   },
   {
+    title: "Databases",
+    href: "database",
+  },
+  {
     title: "Account",
     href: "account",
   },
-  {
-    title: "Database Connections",
-    href: "database",
-  },
+
   {
     title: "Billing",
     href: "billing",
@@ -40,8 +41,11 @@ export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
 
   useEffect(() => {
     const handleOpenSettings = (e: Event) => {
-      const customEvent = e as CustomEvent<{ section: string }>;
-      setActiveSection(customEvent.detail.section || "profile");
+      if (e instanceof CustomEvent && e.detail?.section) {
+        setActiveSection(e.detail.section);
+      } else {
+        setActiveSection("profile"); // fallback to profile if no section specified
+      }
       setOpen(true);
     };
     window.addEventListener("openSettings", handleOpenSettings);
