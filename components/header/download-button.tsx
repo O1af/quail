@@ -13,7 +13,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { cn } from "@/lib/utils";
 
 export function DownloadButton() {
@@ -31,6 +31,17 @@ export function DownloadButton() {
       setIsDownloading(false);
     }
   };
+
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key.toLowerCase() === "s") {
+        e.preventDefault();
+        setIsOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener("keydown", handleKeyDown);
+    return () => window.removeEventListener("keydown", handleKeyDown);
+  }, []); // Remove selectedType dependency since we're not using it anymore
 
   return (
     <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
@@ -77,8 +88,8 @@ export function DownloadButton() {
           <div className="mt-2 space-y-2">
             {selectedType === "sql" ? (
               <Button
-                variant="secondary"
-                className="w-full justify-start"
+                variant="outline"
+                className="w-full justify-start hover:bg-secondary"
                 onClick={() => handleDownload("SQL")}
                 disabled={isDownloading}
               >
@@ -87,16 +98,16 @@ export function DownloadButton() {
             ) : (
               <div className="space-y-2">
                 <Button
-                  variant="secondary"
-                  className="w-full justify-start"
+                  variant="outline"
+                  className="w-full justify-start hover:bg-secondary"
                   onClick={() => handleDownload("CSV")}
                   disabled={isDownloading}
                 >
                   Download CSV
                 </Button>
                 <Button
-                  variant="secondary"
-                  className="w-full justify-start"
+                  variant="outline"
+                  className="w-full justify-start hover:bg-secondary"
                   onClick={() => handleDownload("PDF")}
                   disabled={isDownloading}
                 >

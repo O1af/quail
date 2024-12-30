@@ -111,19 +111,46 @@ export function setupSQLAutocomplete(
       const suggestions: languages.CompletionItem[] = [];
 
       // Add keywords with better context awareness
-      if (
-        !lineContent.trim().includes(" ") ||
-        lineContent.trim().endsWith(" ")
-      ) {
-        suggestions.push(
-          ...keywords.map((keyword) => ({
-            label: keyword,
-            kind: monaco.languages.CompletionItemKind.Keyword,
-            insertText: keyword,
-            range,
-          }))
-        );
-      }
+      const wordBeforePosition = lineContent
+        .slice(0, position.column - 1)
+        .trim()
+        .split(/\s+/)
+        .pop()
+        ?.toUpperCase();
+
+      // Filter keywords based on context
+      const relevantKeywords = keywords.filter((keyword) => {
+        // After SELECT, suggest FROM, DISTINCT, TOP
+        if (wordBeforePosition === "SELECT") {
+          return ["FROM", "DISTINCT", "TOP"].includes(keyword);
+        }
+        // After FROM, suggest JOIN variants
+        if (wordBeforePosition === "FROM") {
+          return keyword.includes("JOIN") || keyword === "WHERE";
+        }
+        // After WHERE, suggest comparison operators and logical operators
+        if (wordBeforePosition === "WHERE") {
+          return [
+            "AND",
+            "OR",
+            "IN",
+            "LIKE",
+            "BETWEEN",
+            "IS NULL",
+            "IS NOT NULL",
+          ].includes(keyword);
+        }
+        return true;
+      });
+
+      suggestions.push(
+        ...relevantKeywords.map((keyword) => ({
+          label: keyword,
+          kind: monaco.languages.CompletionItemKind.Keyword,
+          insertText: keyword,
+          range,
+        }))
+      );
 
       // Add table names with better context awareness
       const isTableContext = /\b(from|join|update|into)\s+$/i.test(lineContent);
