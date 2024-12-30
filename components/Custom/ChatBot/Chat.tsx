@@ -1,7 +1,7 @@
 "use client";
 
 import { useChat } from "ai/react";
-import { Messages } from "./messages";
+import { Messages } from "./Messages";
 import ExampleMessages from "./example-messages";
 import { MultimodalInput } from "./multimodal-input";
 
