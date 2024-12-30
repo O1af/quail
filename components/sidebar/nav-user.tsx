@@ -41,7 +41,6 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
-  const [isSettingsOpen, setIsSettingsOpen] = useState(false);
 
   const [clientUser, setClientUser] = useState<any>(null);
   const supabase = createClient();
@@ -107,7 +106,12 @@ export function NavUser({
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem onSelect={() => setIsSettingsOpen(true)}>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    const event = new Event("openSettings");
+                    window.dispatchEvent(event);
+                  }}
+                >
                   <Settings2 />
                   Settings
                 </DropdownMenuItem>
@@ -134,7 +138,7 @@ export function NavUser({
           </DropdownMenu>
         </SidebarMenuItem>
       </SidebarMenu>
-      <SettingsDialog open={isSettingsOpen} onOpenChange={setIsSettingsOpen} />
+      <SettingsDialog />
     </>
   );
 }

@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import {
   Dialog,
   DialogContent,
@@ -31,12 +31,24 @@ const sidebarNavItems = [
 ];
 
 interface SettingsDialogProps {
-  open?: boolean;
   onOpenChange?: (open: boolean) => void;
 }
 
-export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
+export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
+  const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("profile");
+
+  useEffect(() => {
+    const handleOpenSettings = (e: Event) => {
+      const customEvent = e as CustomEvent<{ section: string }>;
+      setActiveSection(customEvent.detail.section || "profile");
+      setOpen(true);
+    };
+    window.addEventListener("openSettings", handleOpenSettings);
+    return () => {
+      window.removeEventListener("openSettings", handleOpenSettings);
+    };
+  }, []);
 
   const renderContent = () => {
     switch (activeSection) {
@@ -50,7 +62,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={onOpenChange}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[800px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight">
