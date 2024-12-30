@@ -1,12 +1,15 @@
 import { DatabaseConfig, useDbStore } from "../stores/db_store";
 import { Button } from "@/components/ui/button";
-import { Pencil, Trash2, CheckCircle, Circle } from "lucide-react";
+import { Pencil, Trash2, CheckCircle, Circle, Loader2 } from "lucide-react";
 import { DatabaseDialog } from "./DatabaseDialog";
 import {
   Tooltip,
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { useState } from "react";
+import { useToast } from "@/hooks/use-toast";
+import { testConnection, queryMetadata } from "../stores/query";
 
 interface DatabaseCardProps {
   db: DatabaseConfig;
@@ -15,8 +18,28 @@ interface DatabaseCardProps {
 }
 
 export function DatabaseCard({ db, onEdit, onDelete }: DatabaseCardProps) {
+  const [activating, setActivating] = useState(false);
+  const { toast } = useToast();
   const { currentDatabaseId, setCurrentDatabase } = useDbStore();
   const isActive = db.id === currentDatabaseId;
+
+  const handleSetActive = async () => {
+    if (isActive) return;
+    setActivating(true);
+    try {
+      await queryMetadata(db.connectionString, db.type);
+      setCurrentDatabase(db.id);
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Connection failed",
+        description:
+          err instanceof Error ? err.message : "Failed to connect to database",
+      });
+    } finally {
+      setActivating(false);
+    }
+  };
 
   return (
     <div
@@ -71,9 +94,12 @@ export function DatabaseCard({ db, onEdit, onDelete }: DatabaseCardProps) {
               variant="ghost"
               size="icon"
               className="h-8 w-8"
-              onClick={() => setCurrentDatabase(db.id)}
+              onClick={handleSetActive}
+              disabled={activating || isActive}
             >
-              {isActive ? (
+              {activating ? (
+                <Loader2 className="w-4 h-4 animate-spin" />
+              ) : isActive ? (
                 <CheckCircle className="w-4 h-4 text-primary" />
               ) : (
                 <Circle className="w-4 h-4" />
@@ -81,7 +107,11 @@ export function DatabaseCard({ db, onEdit, onDelete }: DatabaseCardProps) {
             </Button>
           </TooltipTrigger>
           <TooltipContent>
-            {isActive ? "Current database" : "Set as current"}
+            {isActive
+              ? "Current database"
+              : activating
+              ? "Testing connection..."
+              : "Set as current"}
           </TooltipContent>
         </Tooltip>
       </div>

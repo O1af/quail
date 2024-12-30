@@ -17,18 +17,25 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus } from "lucide-react";
+import { Plus, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState } from "react";
 import { DatabaseConfig } from "../stores/db_store";
+import { testConnection } from "../stores/query";
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
   type: z.enum(["postgres", "mysql", "sqlite"]),
   connectionString: z.string().min(1, "Connection string is required"),
 });
+
+const CONNECTION_FORMATS = {
+  postgres: "postgresql://[username]:[password]@[host]:[port]/[database]",
+  mysql: "mysql://[username]:[password]@[host]:[port]/[database]",
+  sqlite: "[path_to_database]",
+} as const;
 
 type FormValues = z.infer<typeof formSchema>;
 
@@ -40,6 +47,9 @@ interface Props {
 
 export function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
   const [open, setOpen] = useState(false);
+  const [testing, setTesting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
+
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
     defaultValues: defaultValues || {
@@ -49,10 +59,19 @@ export function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
     },
   });
 
-  const handleSubmit = (values: FormValues) => {
-    onSubmit(values);
-    setOpen(false);
-    form.reset();
+  const handleSubmit = async (values: FormValues) => {
+    try {
+      setTesting(true);
+      setError(null);
+      await testConnection(values.connectionString, values.type);
+      onSubmit(values);
+      setOpen(false);
+      form.reset();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : String(err));
+    } finally {
+      setTesting(false);
+    }
   };
 
   return (
@@ -96,19 +115,29 @@ export function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
             </Select>
           </div>
           <div className="grid gap-2">
-            <Label htmlFor="connection">Connection</Label>
+            <Label htmlFor="connection">Connection string</Label>
             <Input
               id="connection"
-              placeholder="Enter your connection string"
+              placeholder={CONNECTION_FORMATS[form.watch("type")]}
               {...form.register("connectionString")}
             />
           </div>
+          {error && <div className="text-sm text-destructive">{error}</div>}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
             </Button>
-            <Button type="submit">
-              {defaultValues ? "Save Changes" : "Add Database"}
+            <Button type="submit" disabled={testing}>
+              {testing ? (
+                <>
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                  Testing connection...
+                </>
+              ) : defaultValues ? (
+                "Save Changes"
+              ) : (
+                "Add Database"
+              )}
             </Button>
           </div>
         </form>

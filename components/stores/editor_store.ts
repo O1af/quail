@@ -1,19 +1,16 @@
 import { create } from "zustand";
 import { persist } from "zustand/middleware";
-import { TableDefinition } from "../editor/utils/autocomplete";
 import { editor } from "monaco-editor";
 import { handleQuery } from "./query";
 
 interface EditorStore {
   value: string;
-  tables: TableDefinition[];
   editorRef: editor.IStandaloneCodeEditor | null;
   queryHandler: (() => Promise<void>) | null;
   isExecuting: boolean;
   error: string | null;
 
   setValue: (value: string) => void;
-  setTables: (tables: TableDefinition[]) => void;
   setEditorRef: (editor: editor.IStandaloneCodeEditor | null) => void;
   executeQuery: () => Promise<void>;
   clearError: () => void;
@@ -23,14 +20,12 @@ export const useEditorStore = create<EditorStore>()(
   persist(
     (set, get) => ({
       value: "",
-      tables: [],
       editorRef: null,
       queryHandler: handleQuery,
       isExecuting: false,
       error: null,
 
       setValue: (value) => set({ value }),
-      setTables: (tables) => set({ tables }),
       setEditorRef: (editor) => set({ editorRef: editor }),
       executeQuery: async () => {
         const { editorRef, queryHandler } = get();

@@ -5,29 +5,44 @@ import { useTheme } from "next-themes";
 import React, { useEffect } from "react";
 import { setupSQLAutocomplete } from "./utils/autocomplete";
 import { useEditorStore } from "../stores/editor_store";
+import { useTableStore } from "../stores/table_store";
 
 export default function SQLEditor() {
   const { theme } = useTheme();
-  const { value, setValue, setEditorRef, tables } = useEditorStore();
+  const { value, setValue, setEditorRef } = useEditorStore();
+  const databaseStructure = useTableStore((state) => state.databaseStructure);
 
   const handleEditorDidMount: OnMount = (editor, monaco) => {
     setEditorRef(editor);
-    setupSQLAutocomplete(monaco, tables);
+    setupSQLAutocomplete(monaco, databaseStructure);
 
     editor.addCommand(monaco.KeyMod.CtrlCmd | monaco.KeyCode.Enter, () => {
       useEditorStore.getState().executeQuery();
     });
+
+    editor.updateOptions({
+      suggestOnTriggerCharacters: true,
+      quickSuggestions: { other: true, comments: true, strings: true },
+    });
   };
 
-  // Update autocomplete when tables change
+  // Update autocomplete when database structure changes
   useEffect(() => {
-    const { editorRef } = useEditorStore.getState();
-    if (!editorRef) return;
-    const monaco = (window as any).monaco;
-    if (monaco) {
-      setupSQLAutocomplete(monaco, tables);
+    try {
+      const { editorRef } = useEditorStore.getState();
+      console.log("databaseStructure", databaseStructure);
+      if (!editorRef) return;
+
+      // Ensure Monaco is available and initialized
+      if (typeof window !== "undefined" && (window as any).monaco) {
+        const monaco = (window as any).monaco;
+        console.log("setting up autocomplete");
+        setupSQLAutocomplete(monaco, databaseStructure);
+      }
+    } catch (error) {
+      console.error("Error setting up SQL autocomplete:", error);
     }
-  }, [tables]);
+  }, [databaseStructure]);
 
   return (
     <Editor

@@ -1,14 +1,17 @@
-import { languages } from "monaco-editor";
+import { languages, IDisposable } from "monaco-editor";
+import { DatabaseStructure } from "../../stores/table_store";
 
-export interface TableDefinition {
-  name: string;
-  columns: string[];
-}
+let previousDisposable: IDisposable | null = null;
 
 export function setupSQLAutocomplete(
   monaco: typeof import("monaco-editor"),
-  tables: TableDefinition[]
+  structure: DatabaseStructure
 ) {
+  // Dispose of previous provider if it exists
+  if (previousDisposable) {
+    previousDisposable.dispose();
+  }
+
   const keywords = [
     "ADD",
     "ADD CONSTRAINT",
@@ -91,62 +94,78 @@ export function setupSQLAutocomplete(
     "WHERE",
   ];
 
-  monaco.languages.registerCompletionItemProvider("sql", {
+  previousDisposable = monaco.languages.registerCompletionItemProvider("sql", {
     triggerCharacters: [" ", ".", "("],
     provideCompletionItems: (model, position) => {
-      const word = model.getWordUntilPosition(position);
-      const line = model.getValueInRange({
-        startLineNumber: position.lineNumber,
-        startColumn: 1,
-        endLineNumber: position.lineNumber,
-        endColumn: position.column,
-      });
+      const wordUntilPosition = model.getWordUntilPosition(position);
+      const word = wordUntilPosition.word;
+      const lineContent = model.getLineContent(position.lineNumber);
 
       const range = {
         startLineNumber: position.lineNumber,
         endLineNumber: position.lineNumber,
-        startColumn: word.startColumn,
-        endColumn: word.endColumn,
+        startColumn: wordUntilPosition.startColumn,
+        endColumn: wordUntilPosition.endColumn,
       };
 
       const suggestions: languages.CompletionItem[] = [];
 
-      // Add keywords
-      suggestions.push(
-        ...keywords.map((keyword) => ({
-          label: keyword,
-          kind: monaco.languages.CompletionItemKind.Keyword,
-          insertText: keyword,
-          range,
-        }))
-      );
-
-      // Add table names
+      // Add keywords with better context awareness
       if (
-        line.trim().toLowerCase().endsWith("from") ||
-        line.trim().toLowerCase().endsWith("join")
+        !lineContent.trim().includes(" ") ||
+        lineContent.trim().endsWith(" ")
       ) {
         suggestions.push(
-          ...tables.map((table) => ({
-            label: table.name,
-            kind: monaco.languages.CompletionItemKind.Class,
-            insertText: table.name,
+          ...keywords.map((keyword) => ({
+            label: keyword,
+            kind: monaco.languages.CompletionItemKind.Keyword,
+            insertText: keyword,
             range,
           }))
         );
       }
 
-      // Add column names
-      if (
-        line.trim().toLowerCase().includes("select") ||
-        line.trim().toLowerCase().includes("where")
-      ) {
-        const allColumns = tables.flatMap((t) => t.columns);
+      // Add table names with better context awareness
+      const isTableContext = /\b(from|join|update|into)\s+$/i.test(lineContent);
+      if (isTableContext) {
+        structure.schemas.forEach((schema) => {
+          schema.tables.forEach((table) => {
+            const fullName = `${schema.name}.${table.name}`;
+            suggestions.push({
+              label: fullName,
+              kind: monaco.languages.CompletionItemKind.Class,
+              insertText: fullName,
+              documentation: `Table in schema ${schema.name}`,
+              range,
+            });
+          });
+        });
+      }
+
+      // Add column names with better context awareness
+      const isColumnContext = /\b(select|where|on|by|having)\b/i.test(
+        lineContent
+      );
+      if (isColumnContext) {
+        const allColumns = new Set(
+          structure.schemas.flatMap((schema) =>
+            schema.tables.flatMap((table) =>
+              table.columns.map((col) => ({
+                name: col.name,
+                type: col.dataType,
+                table: table.name,
+                schema: schema.name,
+              }))
+            )
+          )
+        );
+
         suggestions.push(
-          ...Array.from(new Set(allColumns)).map((column) => ({
-            label: column,
+          ...Array.from(allColumns).map((col) => ({
+            label: col.name,
             kind: monaco.languages.CompletionItemKind.Field,
-            insertText: column,
+            insertText: col.name,
+            documentation: `Column from ${col.schema}.${col.table} (${col.type})`,
             range,
           }))
         );
