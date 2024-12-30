@@ -2,13 +2,20 @@
 
 import { useChat } from "ai/react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-import Messages from "./Messages";
+import { Messages } from "./messages";
 import ExampleMessages from "./ExampleMessages";
 import { Input } from "./Input";
 
 export default function Chat() {
-  const { messages, input, handleInputChange, handleSubmit, isLoading, stop } =
-    useChat();
+  const {
+    messages,
+    input,
+    handleInputChange,
+    handleSubmit,
+    isLoading,
+    stop,
+    reload,
+  } = useChat();
 
   const handleKeyDown = (e: React.KeyboardEvent) => {
     if (e.key === "Enter" && !e.shiftKey) {
@@ -23,7 +30,7 @@ export default function Chat() {
         {messages.length === 0 ? (
           <ExampleMessages handleInputChange={handleInputChange} />
         ) : (
-          <Messages messages={messages} />
+          <Messages isLoading={isLoading} messages={messages} reload={reload} />
         )}
       </ScrollArea>
 
