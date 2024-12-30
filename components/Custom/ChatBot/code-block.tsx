@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import { MessageActions } from "./message-actions";
 
 interface CodeBlockProps {
   node: any;
@@ -21,14 +22,24 @@ export function CodeBlock({
 
   if (!inline) {
     return (
-      <div className="not-prose flex flex-col">
+      <div className="not-prose flex flex-col relative">
         {tab === "code" && (
-          <pre
-            {...props}
-            className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
-          >
-            <code className="whitespace-pre-wrap break-words">{children}</code>
-          </pre>
+          <>
+            <pre
+              {...props}
+              className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
+            >
+              <code className="whitespace-pre-wrap break-words">
+                {children}
+              </code>
+            </pre>
+            <div className="absolute top-2 right-2">
+              <MessageActions
+                message={{ content: children }}
+                isLoading={false}
+              />
+            </div>
+          </>
         )}
 
         {tab === "run" && output && (

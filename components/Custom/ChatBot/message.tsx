@@ -6,7 +6,7 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AvatarImage, Avatar } from "@/components/ui/avatar";
 import { memo, useState } from "react";
 
-import { PencilEditIcon, SparklesIcon } from "./icons";
+import { PencilEditIcon } from "./icons";
 import { Markdown } from "./markdown";
 import { MessageActions } from "./message-actions";
 import equal from "fast-deep-equal";
@@ -21,14 +21,12 @@ import {
 const PurePreviewMessage = ({
   message,
   isLoading,
-  isReadonly,
 }: {
   message: Message;
   isLoading: boolean;
   reload: (
-    chatRequestOptions?: ChatRequestOptions,
+    chatRequestOptions?: ChatRequestOptions
   ) => Promise<string | null | undefined>;
-  isReadonly: boolean;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
 
@@ -46,7 +44,7 @@ const PurePreviewMessage = ({
             {
               "w-full": mode === "edit",
               "group-data-[role=user]/message:w-fit": mode !== "edit",
-            },
+            }
           )}
         >
           {message.role === "assistant" && (
@@ -62,7 +60,7 @@ const PurePreviewMessage = ({
           <div className="flex flex-col gap-2 w-full">
             {message.content && mode === "view" && (
               <div className="flex flex-row gap-2 items-start">
-                {message.role === "user" && !isReadonly && (
+                {message.role === "user" && (
                   <Tooltip>
                     <TooltipTrigger asChild>
                       <Button
@@ -90,13 +88,13 @@ const PurePreviewMessage = ({
               </div>
             )}
 
-            {!isReadonly && (
+            {
               <MessageActions
                 key={`action-${message.id}`}
                 message={message}
                 isLoading={isLoading}
               />
-            )}
+            }
           </div>
         </div>
       </motion.div>
@@ -112,13 +110,13 @@ export const PreviewMessage = memo(
     if (
       !equal(
         prevProps.message.toolInvocations,
-        nextProps.message.toolInvocations,
+        nextProps.message.toolInvocations
       )
     )
       return false;
 
     return true;
-  },
+  }
 );
 
 export const ThinkingMessage = () => {
@@ -136,11 +134,13 @@ export const ThinkingMessage = () => {
           "flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl",
           {
             "group-data-[role=user]/message:bg-muted": true,
-          },
+          }
         )}
       >
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-          <SparklesIcon size={14} />
+          <Avatar className="w-6 h-6">
+            <AvatarImage src="/BotIcon.png" alt="QuailAI" />
+          </Avatar>
         </div>
 
         <div className="flex flex-col gap-2 w-full">

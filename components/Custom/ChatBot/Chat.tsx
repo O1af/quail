@@ -4,12 +4,15 @@ import { useChat } from "ai/react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Messages } from "./messages";
 import ExampleMessages from "./ExampleMessages";
-import { Input } from "./Input";
+import { MultimodalInput } from "./multimodal-input";
 
 export default function Chat() {
   const {
     messages,
+    setMessages,
     input,
+    setInput,
+    append,
     handleInputChange,
     handleSubmit,
     isLoading,
@@ -25,23 +28,25 @@ export default function Chat() {
   };
 
   return (
-    <div className="flex flex-col items-center w-full h-full bg-background p-4">
-      <ScrollArea className="h-[700px] w-full">
-        {messages.length === 0 ? (
-          <ExampleMessages handleInputChange={handleInputChange} />
-        ) : (
-          <Messages isLoading={isLoading} messages={messages} reload={reload} />
-        )}
-      </ScrollArea>
+    <div className="flex flex-col min-w-0 h-[95dvh] bg-background">
+      {messages.length === 0 ? (
+        <ExampleMessages handleInputChange={handleInputChange} />
+      ) : (
+        <Messages isLoading={isLoading} messages={messages} reload={reload} />
+      )}
 
-      <Input
-        input={input}
-        handleInputChange={handleInputChange}
-        handleSubmit={handleSubmit}
-        handleKeyDown={handleKeyDown}
-        isLoading={isLoading}
-        stop={stop}
-      />
+      <form className="flex mx-auto px-4 bg-background pb-4 md:pb-6 gap-2 w-full md:max-w-3xl">
+        <MultimodalInput
+          input={input}
+          setInput={setInput}
+          handleSubmit={handleSubmit}
+          isLoading={isLoading}
+          stop={stop}
+          messages={messages}
+          setMessages={setMessages}
+          append={append}
+        />
+      </form>
     </div>
   );
 }
