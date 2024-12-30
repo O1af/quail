@@ -8,6 +8,8 @@ import {
   DialogTitle,
 } from "@/components/ui/dialog";
 import { SidebarNav } from "./sidebar-nav";
+import { ProfileForm } from "./profile-form";
+import { DatabasesForm } from "./databases-form";
 
 const sidebarNavItems = [
   {
@@ -36,6 +38,17 @@ interface SettingsDialogProps {
 export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
   const [activeSection, setActiveSection] = useState("profile");
 
+  const renderContent = () => {
+    switch (activeSection) {
+      case "profile":
+        return <ProfileForm />;
+      case "database":
+        return <DatabasesForm />;
+      default:
+        return <div>Section under construction</div>;
+    }
+  };
+
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[800px] max-h-[90vh] flex flex-col">
@@ -52,7 +65,7 @@ export function SettingsDialog({ open, onOpenChange }: SettingsDialogProps) {
               setActiveSection={setActiveSection}
             />
           </aside>
-          <div className="flex-1 overflow-y-auto pr-6"></div>
+          <div className="flex-1 overflow-y-auto pr-6">{renderContent()}</div>
         </div>
       </DialogContent>
     </Dialog>
