@@ -5,16 +5,6 @@ import { ColumnDef } from "@tanstack/react-table";
 import { SQLData } from "./table_store";
 import { useDbStore } from "./db_store";
 import { DatabaseStructure, Schema } from "./table_store";
-import { createClient } from "@/utils/supabase/server";
-
-async function checkAuth() {
-  const supabase = createClient();
-  const { data: user, error } = await supabase.auth.getUser();
-
-  if (error || !user) {
-    throw new Error("Unauthorized");
-  }
-}
 
 async function getDbConnection() {
   const currentDb = useDbStore.getState().getCurrentDatabase();
@@ -25,7 +15,6 @@ async function getDbConnection() {
 }
 
 export async function executeQuery(query: string, connectionString?: string) {
-  await checkAuth();
   const dbConnection = connectionString || (await getDbConnection());
   try {
     return await runPostgres({ connectionString: dbConnection, query: query });
@@ -37,14 +26,12 @@ export async function executeQuery(query: string, connectionString?: string) {
 }
 
 export async function testConnection(connectionString: string, type: string) {
-  await checkAuth();
   const testQuery = type === "mysql" ? "SELECT 1" : "SELECT 1;";
   await executeQuery(testQuery, connectionString);
   return true;
 }
 
 export async function handleQuery(): Promise<void> {
-  await checkAuth();
   const query = useEditorStore.getState().value;
   const { setData, setColumns } = useTableStore.getState();
 
@@ -72,7 +59,6 @@ export async function queryMetadata(
   connectionString?: string,
   dbType?: string,
 ) {
-  await checkAuth();
   const metadataQuery = `SELECT 
     t.table_schema,
     t.table_name,
