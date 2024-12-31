@@ -16,12 +16,24 @@ export async function runPostgres(
     throw new Error("Unauthorized");
   }
 
+  const {
+    data: { session },
+    error: sessionError,
+  } = await supabase.auth.getSession();
+
+  if (sessionError || !session) {
+    throw new Error("Unable to retrieve session");
+  }
+
+  const jwt = session.access_token;
+
   const response = await fetch(
     process.env.AZURE_FUNCTION_ENDPOINT + "/runPostgres",
     {
       method: "POST",
       headers: {
         "Content-Type": "application/json",
+        "Authorization": `Bearer ${jwt}`,
       },
       body: JSON.stringify(request),
     },
