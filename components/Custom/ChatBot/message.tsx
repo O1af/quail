@@ -6,17 +6,11 @@ import { AnimatePresence, motion } from "framer-motion";
 import { AvatarImage, Avatar } from "@/components/ui/avatar";
 import { memo, useState } from "react";
 
-import { PencilEditIcon } from "./icons";
 import { Markdown } from "./markdown";
 import { MessageActions } from "./message-actions";
 import equal from "fast-deep-equal";
 import { cn } from "@/lib/utils";
-import { Button } from "@/components/ui/button";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
+
 import { useTheme } from "next-themes";
 
 const PurePreviewMessage = ({
@@ -64,23 +58,6 @@ const PurePreviewMessage = ({
           <div className="flex flex-col gap-2 w-full">
             {message.content && mode === "view" && (
               <div className="flex flex-row gap-2 items-start">
-                {message.role === "user" && (
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="ghost"
-                        className="px-2 h-fit rounded-full text-muted-foreground opacity-0 group-hover/message:opacity-100"
-                        onClick={() => {
-                          setMode("edit");
-                        }}
-                      >
-                        <PencilEditIcon />
-                      </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>Edit message</TooltipContent>
-                  </Tooltip>
-                )}
-
                 <div
                   className={cn("flex flex-col gap-4", {
                     "text-sm bg-primary text-primary-foreground p-2 rounded-xl":
