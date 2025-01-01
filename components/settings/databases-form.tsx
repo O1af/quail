@@ -3,9 +3,9 @@
 import { useDbStore } from "../stores/db_store";
 import { DatabaseCard } from "./DatabaseCard";
 import { DatabaseDialog } from "./DatabaseDialog";
-import { useEffect, useState } from "react";
+import { useEffect, useState, memo, useMemo } from "react";
 
-export function DatabasesForm() {
+export const DatabasesForm = memo(function DatabasesForm() {
   const {
     databases,
     addDatabase,
@@ -20,12 +20,13 @@ export function DatabasesForm() {
     setSortActive(true);
   }, []);
 
-  const sortedDatabases = sortActive
-    ? [
-        ...databases.filter((db) => db.id === currentDatabaseId),
-        ...databases.filter((db) => db.id !== currentDatabaseId),
-      ]
-    : databases;
+  const sortedDatabases = useMemo(
+    () => [
+      ...databases.filter((db) => db.id === currentDatabaseId),
+      ...databases.filter((db) => db.id !== currentDatabaseId),
+    ],
+    [databases, currentDatabaseId]
+  );
 
   return (
     <div className="space-y-4">
@@ -45,4 +46,4 @@ export function DatabasesForm() {
       </div>
     </div>
   );
-}
+});

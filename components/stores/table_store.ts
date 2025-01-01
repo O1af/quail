@@ -60,6 +60,9 @@ interface TableStore {
 
   // Database structure related actions
   setDatabaseStructure: (structure: DatabaseStructure) => void;
+
+  // Clear table data
+  clearTableData: () => void;
 }
 
 export const useDatabaseStructure = () =>
@@ -88,6 +91,9 @@ export const useTableStore = create<TableStore>()(
 
       // Database structure related actions
       setDatabaseStructure: (databaseStructure) => set({ databaseStructure }),
+
+      // Clear table data
+      clearTableData: () => set({ data: [], columns: [] }),
     }),
     {
       name: "table-storage",

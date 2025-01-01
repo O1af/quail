@@ -21,7 +21,7 @@ import { Plus, Loader2 } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import { DatabaseConfig } from "../stores/db_store";
 import { testConnection } from "../stores/query";
 
@@ -76,7 +76,7 @@ interface Props {
   onSubmit: (data: FormValues) => void;
 }
 
-export function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
+export const DatabaseDialog = memo(function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
   const [open, setOpen] = useState(false);
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,7 +108,7 @@ export function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
     }
   }, [form.watch("connectionString")]);
 
-  const handleSubmit = async (values: FormValues) => {
+  const handleSubmit = useCallback(async (values: FormValues) => {
     try {
       setTesting(true);
       setError(null);
@@ -132,7 +132,7 @@ export function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
     } finally {
       setTesting(false);
     }
-  };
+  }, [onSubmit]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -224,4 +224,4 @@ export function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
       </DialogContent>
     </Dialog>
   );
-}
+});

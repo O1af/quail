@@ -7,9 +7,10 @@ import {
   TooltipContent,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useState } from "react";
+import { useState, memo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { testConnection, queryMetadata } from "../stores/query";
+import { queryMetadata } from "../stores/query";
+import { useTableStore } from "../stores/table_store"; // Add this import
 
 interface DatabaseCardProps {
   db: DatabaseConfig;
@@ -17,17 +18,23 @@ interface DatabaseCardProps {
   onDelete: (id: number) => void;
 }
 
-export function DatabaseCard({ db, onEdit, onDelete }: DatabaseCardProps) {
+export const DatabaseCard = memo(function DatabaseCard({
+  db,
+  onEdit,
+  onDelete,
+}: DatabaseCardProps) {
   const [activating, setActivating] = useState(false);
   const { toast } = useToast();
   const { currentDatabaseId, setCurrentDatabase } = useDbStore();
   const isActive = db.id === currentDatabaseId;
+  const clearTableData = useTableStore((state) => state.clearTableData);
 
   const handleSetActive = async () => {
     if (isActive) return;
     setActivating(true);
     try {
       await queryMetadata(db.connectionString, db.type);
+      clearTableData(); // Clear table data before switching database
       setCurrentDatabase(db.id);
     } catch (err) {
       toast({
@@ -117,4 +124,4 @@ export function DatabaseCard({ db, onEdit, onDelete }: DatabaseCardProps) {
       </div>
     </div>
   );
-}
+});
