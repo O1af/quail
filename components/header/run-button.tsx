@@ -27,7 +27,6 @@ const ExecuteButton = React.memo(function ExecuteButton({
       size="icon"
       onClick={onClick}
       disabled={isExecuting}
-      title={error || undefined}
     >
       {isExecuting ? (
         <Loader2 className="h-[1.2rem] w-[1.2rem] animate-spin" />
@@ -63,14 +62,16 @@ export const RunButton = React.memo(function RunButton() {
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
-          <ExecuteButton
-            error={error}
-            isExecuting={isExecuting}
-            onClick={handleExecute}
-          />
+          <span>
+            <ExecuteButton
+              error={error}
+              isExecuting={isExecuting}
+              onClick={handleExecute}
+            />
+          </span>
         </TooltipTrigger>
         <TooltipContent>
-          {error ? <p>{error}</p> : <p>Run query</p>}
+          <p>{error || "Run query"}</p>
         </TooltipContent>
       </Tooltip>
     </TooltipProvider>
