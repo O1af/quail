@@ -52,7 +52,7 @@ interface TableStore {
   databaseStructure: DatabaseStructure;
 
   // Query result related actions
-  setSorting: (sorting: SortingState) => void;
+  setSorting: (sorting: SortingState | null) => void;
   setColumnVisibility: (visibility: VisibilityState) => void;
   setRowSelection: (selection: Record<string, boolean>) => void;
   setData: (data: SQLData[]) => void;
@@ -83,7 +83,9 @@ export const useTableStore = create<TableStore>()(
       databaseStructure: { schemas: [] },
 
       // Query result related actions
-      setSorting: (sorting: SortingState) => set(() => ({ sorting })),
+      setSorting: (sorting: SortingState | null) => set(() => ({ 
+        sorting: sorting || [] 
+      })),
       setColumnVisibility: (columnVisibility) => set({ columnVisibility }),
       setRowSelection: (rowSelection) => set({ rowSelection }),
       setData: (data) => set({ data }),

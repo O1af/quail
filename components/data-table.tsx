@@ -42,27 +42,23 @@ export function DataTable() {
     isLoading,
   } = useTableStore();
 
-  // Add error handling for missing data
-  if (!data || !columns) {
-    return (
-      <div className="flex h-[200px] w-full items-center justify-center rounded-md border">
-        <p className="text-sm text-muted-foreground">No data available</p>
-      </div>
-    );
-  }
+  // Initialize sorting only once when component mounts
+  React.useEffect(() => {
+    setSorting([]);
+  }, []); // Empty dependency array
 
   const handleSortingChange = React.useCallback(
     (updater: any) => {
       setSorting(typeof updater === "function" ? updater(sorting) : updater);
     },
-    [setSorting, sorting]
+    [setSorting, sorting] // Remove columns from dependencies
   );
 
   const table = useReactTable({
-    data,
-    columns,
+    data: data || [],
+    columns: columns || [],
     getCoreRowModel: getCoreRowModel(),
-    getSortedRowModel: getSortedRowModel(), // add this
+    getSortedRowModel: getSortedRowModel(),
     onSortingChange: handleSortingChange,
     enableSorting: true,
     state: {
@@ -71,6 +67,15 @@ export function DataTable() {
       rowSelection,
     },
   });
+
+  // Early return after hooks
+  if (!data || !columns || columns.length === 0) {
+    return (
+      <div className="flex h-[200px] w-full items-center justify-center rounded-md border">
+        <p className="text-sm text-muted-foreground">No data available</p>
+      </div>
+    );
+  }
 
   return (
     <div className="flex flex-col h-full">
