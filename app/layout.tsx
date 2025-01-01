@@ -28,7 +28,7 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        <script src="https://unpkg.com/react-scan/dist/auto.global.js" async />
+        {/* <script src="https://unpkg.com/react-scan/dist/auto.global.js"  /> */}
         {/* rest of your scripts go under */}
       </head>
       <body

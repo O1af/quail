@@ -46,6 +46,7 @@ interface TableStore {
   sorting: SortingState;
   columnVisibility: VisibilityState;
   rowSelection: Record<string, boolean>;
+  isLoading: boolean;
 
   // Database structure related state
   databaseStructure: DatabaseStructure;
@@ -73,6 +74,7 @@ export const useTableStore = create<TableStore>()(
       sorting: [],
       columnVisibility: {},
       rowSelection: {},
+      isLoading: false,
 
       // Database structure state
       databaseStructure: { schemas: [] },
@@ -98,5 +100,7 @@ export const useTableStore = create<TableStore>()(
 export const useTableData = () => useTableStore((state) => state.data);
 export const useTableColumns = () => useTableStore((state) => state.columns);
 export const useTableSorting = () => useTableStore((state) => state.sorting);
-export const useTableVisibility = () => useTableStore((state) => state.columnVisibility);
-export const useTableSelection = () => useTableStore((state) => state.rowSelection);
+export const useTableVisibility = () =>
+  useTableStore((state) => state.columnVisibility);
+export const useTableSelection = () =>
+  useTableStore((state) => state.rowSelection);
