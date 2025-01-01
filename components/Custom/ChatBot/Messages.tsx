@@ -8,7 +8,7 @@ interface MessagesProps {
   isLoading: boolean;
   messages: Array<Message>;
   reload: (
-    chatRequestOptions?: ChatRequestOptions,
+    chatRequestOptions?: ChatRequestOptions
   ) => Promise<string | null | undefined>;
 }
 
@@ -44,8 +44,5 @@ function PureMessages({ isLoading, messages, reload }: MessagesProps) {
 
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
   if (prevProps.isLoading !== nextProps.isLoading) return false;
-  if (prevProps.isLoading && nextProps.isLoading) return false;
-  if (prevProps.messages.length !== nextProps.messages.length) return false;
-
-  return true;
+  return equal(prevProps.messages, nextProps.messages);
 });

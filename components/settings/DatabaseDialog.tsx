@@ -76,7 +76,11 @@ interface Props {
   onSubmit: (data: FormValues) => void;
 }
 
-export const DatabaseDialog = memo(function DatabaseDialog({ trigger, defaultValues, onSubmit }: Props) {
+export const DatabaseDialog = memo(function DatabaseDialog({
+  trigger,
+  defaultValues,
+  onSubmit,
+}: Props) {
   const [open, setOpen] = useState(false);
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
@@ -108,31 +112,34 @@ export const DatabaseDialog = memo(function DatabaseDialog({ trigger, defaultVal
     }
   }, [form.watch("connectionString")]);
 
-  const handleSubmit = useCallback(async (values: FormValues) => {
-    try {
-      setTesting(true);
-      setError(null);
+  const handleSubmit = useCallback(
+    async (values: FormValues) => {
+      try {
+        setTesting(true);
+        setError(null);
 
-      const { base, sslMode: existingSSL } = parseConnectionString(
-        values.connectionString
-      );
-      const finalSslMode = values.sslMode || existingSSL || "require";
-      const finalConnString = buildConnectionString(
-        base,
-        finalSslMode,
-        values.type
-      );
+        const { base, sslMode: existingSSL } = parseConnectionString(
+          values.connectionString
+        );
+        const finalSslMode = values.sslMode || existingSSL || "require";
+        const finalConnString = buildConnectionString(
+          base,
+          finalSslMode,
+          values.type
+        );
 
-      await testConnection(finalConnString, values.type);
-      onSubmit({ ...values, connectionString: finalConnString });
-      setOpen(false);
-      form.reset();
-    } catch (err) {
-      setError(err instanceof Error ? err.message : String(err));
-    } finally {
-      setTesting(false);
-    }
-  }, [onSubmit]);
+        await testConnection(finalConnString, values.type);
+        onSubmit({ ...values, connectionString: finalConnString });
+        setOpen(false);
+        form.reset();
+      } catch (err) {
+        setError(err instanceof Error ? err.message : String(err));
+      } finally {
+        setTesting(false);
+      }
+    },
+    [onSubmit]
+  );
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>

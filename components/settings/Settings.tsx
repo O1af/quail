@@ -66,7 +66,10 @@ export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
   };
 
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog open={open} onOpenChange={(newOpen) => {
+      setOpen(newOpen);
+      onOpenChange?.(newOpen);
+    }}>
       <DialogContent className="sm:max-w-[90vw] md:max-w-[800px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight">
