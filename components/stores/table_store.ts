@@ -61,6 +61,9 @@ interface TableStore {
   setDatabaseStructure: (structure: DatabaseStructure) => void;
 }
 
+export const useDatabaseStructure = () =>
+  useTableStore((state) => state.databaseStructure);
+
 export const useTableStore = create<TableStore>()(
   persist(
     (set) => ({
@@ -90,3 +93,10 @@ export const useTableStore = create<TableStore>()(
     }
   )
 );
+
+// Add selector functions
+export const useTableData = () => useTableStore((state) => state.data);
+export const useTableColumns = () => useTableStore((state) => state.columns);
+export const useTableSorting = () => useTableStore((state) => state.sorting);
+export const useTableVisibility = () => useTableStore((state) => state.columnVisibility);
+export const useTableSelection = () => useTableStore((state) => state.rowSelection);

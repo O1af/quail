@@ -13,24 +13,33 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { cn } from "@/lib/utils";
+import React from "react";
 
-export function DownloadButton() {
+export const DownloadButton = React.memo(function DownloadButton() {
   const [isDownloading, setIsDownloading] = useState(false);
   const [selectedType, setSelectedType] = useState<"sql" | "data">("sql");
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleDownload = async (format: string) => {
+  const handleDownload = useCallback(async (format: string) => {
     setIsDownloading(true);
-    setIsOpen(false); // Close menu when download starts
+    setIsOpen(false);
     try {
       await new Promise((resolve) => setTimeout(resolve, 1000));
       console.log(`Downloading ${format}`);
     } finally {
       setIsDownloading(false);
     }
-  };
+  }, []);
+
+  const handleTypeChange = useCallback((v: string) => {
+    setSelectedType(v as "sql" | "data");
+  }, []);
+
+  const handleOpenChange = useCallback((open: boolean) => {
+    setIsOpen(open);
+  }, []);
 
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
@@ -41,10 +50,10 @@ export function DownloadButton() {
     };
     window.addEventListener("keydown", handleKeyDown);
     return () => window.removeEventListener("keydown", handleKeyDown);
-  }, []); // Remove selectedType dependency since we're not using it anymore
+  }, []);
 
   return (
-    <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
+    <DropdownMenu open={isOpen} onOpenChange={handleOpenChange}>
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
@@ -70,14 +79,14 @@ export function DownloadButton() {
         className="w-[200px]"
         onCloseAutoFocus={(e) => {
           e.preventDefault();
-          setSelectedType("sql"); // Reset to default when menu closes
+          setSelectedType("sql");
         }}
       >
         <div className="p-2">
           <Tabs
             defaultValue="sql"
             className="w-full"
-            onValueChange={(v) => setSelectedType(v as "sql" | "data")}
+            onValueChange={handleTypeChange}
           >
             <TabsList className="grid w-full grid-cols-2">
               <TabsTrigger value="sql">SQL</TabsTrigger>
@@ -120,4 +129,4 @@ export function DownloadButton() {
       </DropdownMenuContent>
     </DropdownMenu>
   );
-}
+});
