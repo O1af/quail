@@ -4,8 +4,11 @@ import { useChat } from "ai/react";
 import { Messages } from "./Messages";
 import ExampleMessages from "./example-messages";
 import { MultimodalInput } from "./multimodal-input";
+import { useDatabaseStructure } from "@/components/stores/table_store";
 
 export default function Chat() {
+  const databaseStructure = useDatabaseStructure();
+
   const {
     messages,
     setMessages,
@@ -17,7 +20,15 @@ export default function Chat() {
     isLoading,
     stop,
     reload,
-  } = useChat();
+  } = useChat({
+    experimental_prepareRequestBody: ({ messages }) => {
+      // Return a modified body with both the messages and the databaseStructure
+      return {
+        messages,
+        databaseStructure, // Add the database structure here
+      };
+    },
+  });
 
   return (
     <div className="flex flex-col min-w-0 h-[91dvh] bg-background">
