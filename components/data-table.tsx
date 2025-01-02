@@ -79,85 +79,102 @@ export function DataTable() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="relative flex-1 overflow-auto rounded-md border">
-        <Table>
-          <TableHeader className="sticky top-0 z-10 bg-background">
-            {table.getHeaderGroups().map((headerGroup) => (
-              <TableRow
-                key={headerGroup.id}
-                className="hover:bg-transparent border-b"
-              >
-                {headerGroup.headers.map((header) => (
-                  <TableHead
-                    key={header.id}
-                    className="whitespace-nowrap bg-muted/50 py-2 px-2 text-sm"
+      <div className="relative flex-1 overflow-hidden rounded-md border">
+        <div className="absolute inset-0 overflow-auto">
+          <div className="min-w-full inline-block">
+            <Table>
+              <TableHeader className="sticky top-0 z-10 bg-background">
+                {table.getHeaderGroups().map((headerGroup) => (
+                  <TableRow
+                    key={headerGroup.id}
+                    className="hover:bg-transparent border-b"
                   >
-                    {!header.isPlaceholder && (
-                      <div
-                        className={`flex items-center gap-1 ${
-                          header.column.getCanSort()
-                            ? "cursor-pointer select-none hover:text-primary"
-                            : ""
+                    {headerGroup.headers.map((header, index) => (
+                      <TableHead
+                        key={header.id}
+                        className={`whitespace-nowrap bg-muted/50 py-2 px-4 text-sm min-w-[150px] ${
+                          index === headerGroup.headers.length - 1
+                            ? ""
+                            : "border-r"
                         }`}
-                        onClick={() => handleHeaderClick(header.column)}
                       >
-                        {flexRender(
-                          header.column.columnDef.header,
-                          header.getContext()
+                        {!header.isPlaceholder && (
+                          <div
+                            className={`flex items-center gap-1 ${
+                              header.column.getCanSort()
+                                ? "cursor-pointer select-none hover:text-primary"
+                                : ""
+                            }`}
+                            onClick={() => handleHeaderClick(header.column)}
+                          >
+                            {flexRender(
+                              header.column.columnDef.header,
+                              header.getContext()
+                            )}
+                            {header.column.getCanSort() && (
+                              <SortIcon
+                                sortDirection={header.column.getIsSorted()}
+                              />
+                            )}
+                          </div>
                         )}
-                        {header.column.getCanSort() && (
-                          <SortIcon
-                            sortDirection={header.column.getIsSorted()}
-                          />
-                        )}
-                      </div>
-                    )}
-                  </TableHead>
+                      </TableHead>
+                    ))}
+                  </TableRow>
                 ))}
-              </TableRow>
-            ))}
-          </TableHeader>
-          <TableBody>
-            {isLoading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-16 text-center"
-                >
-                  <Loader2 className="h-4 w-4 animate-spin mx-auto" />
-                </TableCell>
-              </TableRow>
-            ) : table.getRowModel().rows?.length ? (
-              table.getRowModel().rows.map((row, index) => (
-                <TableRow
-                  key={row.id}
-                  className={`
-                    hover:bg-muted/50
-                    ${index % 2 === 0 ? "bg-background" : "bg-muted/10"}
-                  `}
-                >
-                  {row.getVisibleCells().map((cell) => (
-                    <TableCell key={cell.id} className="px-2 py-1 text-sm">
-                      {flexRender(
-                        cell.column.columnDef.cell,
-                        cell.getContext()
-                      )}
+              </TableHeader>
+              <TableBody>
+                {isLoading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-16 text-center"
+                    >
+                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
                     </TableCell>
-                  ))}
-                </TableRow>
-              ))
-            ) : (
-              <TableRow>
-                <TableCell
-                  colSpan={columns.length}
-                  className="h-16 text-center"
-                >
-                  <p className="text-sm text-muted-foreground">No results.</p>
-                </TableCell>
-              </TableRow>
-            )}
-          </TableBody>
-        </Table>
+                  </TableRow>
+                ) : table.getRowModel().rows?.length ? (
+                  table.getRowModel().rows.map((row, index) => (
+                    <TableRow
+                      key={row.id}
+                      className={`
+                        hover:bg-muted/50
+                        ${index % 2 === 0 ? "bg-background" : "bg-muted/10"}
+                      `}
+                    >
+                      {row.getVisibleCells().map((cell, index) => (
+                        <TableCell
+                          key={cell.id}
+                          className={`px-4 py-1 text-sm whitespace-nowrap min-w-[150px] ${
+                            index === row.getVisibleCells().length - 1
+                              ? ""
+                              : "border-r"
+                          }`}
+                        >
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
+                      ))}
+                    </TableRow>
+                  ))
+                ) : (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-16 text-center"
+                    >
+                      <p className="text-sm text-muted-foreground">
+                        No results.
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </div>
       </div>
       <div className="px-2 py-1 text-xs text-muted-foreground border-t bg-muted/10">
         {table.getRowModel().rows?.length ?? 0} rows
