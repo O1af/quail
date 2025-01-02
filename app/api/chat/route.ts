@@ -25,6 +25,7 @@ export async function POST(req: Request) {
   const result = streamText({
     model: azure("gpt-4o-mini"),
     messages,
+    maxTokens: 1000,
   });
 
   return result.toDataStreamResponse();
