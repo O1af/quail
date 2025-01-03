@@ -1,7 +1,12 @@
 import { streamText } from "ai";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
-import { useTableStore } from "@/components/stores/table_store";
+import {
+  Column,
+  Schema,
+  Table,
+  DatabaseStructure,
+} from "@/components/stores/table_store";
 
 const azure = createAzure({
   resourceName: process.env.AZURE_RESOURCE_NAME, // Azure resource name
@@ -25,12 +30,13 @@ export async function POST(req: Request) {
   const { messages, databaseStructure } = await req.json();
 
   const formattedSchemas = databaseStructure.schemas
-    .map((schema) => {
+    .map((schema: Schema) => {
       const formattedTables = schema.tables
-        .map((table) => {
+        .map((table: Table) => {
           const formattedColumns = table.columns
             .map(
-              (column) => `  ${column.name} ${column.dataType.toUpperCase()}`,
+              (column: Column) =>
+                `  ${column.name} ${column.dataType.toUpperCase()}`
             )
             .join(",\n");
           return `${table.name} (\n${formattedColumns}\n);`;

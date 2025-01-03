@@ -31,14 +31,6 @@ export interface DatabaseStructure {
   schemas: Schema[];
 }
 
-export interface DatabaseMetadata {
-  table_schema: string;
-  table_name: string;
-  table_type: string;
-  column_name: string;
-  data_type: string;
-}
-
 interface TableStore {
   // Query result related state
   data: SQLData[];
@@ -83,9 +75,10 @@ export const useTableStore = create<TableStore>()(
       databaseStructure: { schemas: [] },
 
       // Query result related actions
-      setSorting: (sorting: SortingState | null) => set(() => ({ 
-        sorting: sorting || [] 
-      })),
+      setSorting: (sorting: SortingState | null) =>
+        set(() => ({
+          sorting: sorting || [],
+        })),
       setColumnVisibility: (columnVisibility) => set({ columnVisibility }),
       setRowSelection: (rowSelection) => set({ rowSelection }),
       setData: (data) => set({ data }),
