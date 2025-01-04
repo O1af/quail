@@ -3,9 +3,7 @@ import React, { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ResizableDisplay } from "@/components/ResizableDisplay";
 import { ModeToggle } from "@/components/header/mode-toggle";
-import Routes from "@/components/routes";
 import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation"; // For client-side navigation
 import { RunButton } from "@/components/header/run-button";
 import { DownloadButton } from "@/components/header/download-button";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
@@ -14,7 +12,6 @@ import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 export default function Page() {
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
-  const router = useRouter();
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -22,11 +19,11 @@ export default function Page() {
       } = await supabase.auth.getUser();
       setUser(user);
       if (!user) {
-        router.push(Routes.LoginPage);
+        window.location.href = "http://app.localhost:3000/login";
       }
     };
     fetchUser();
-  }, [router, supabase]);
+  }, [supabase]);
   return (
     <SidebarProvider>
       <AppSidebar />

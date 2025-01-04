@@ -5,6 +5,13 @@ export async function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const path = request.nextUrl.pathname;
 
+  if (hostname === "localhost:3000" && path.startsWith("/app")) {
+    const url = new URL(request.nextUrl);
+    url.host = "app.localhost:3000";
+    url.pathname = path.replace("/app", "");
+    return NextResponse.redirect(url);
+  }
+
   // Handle app subdomain routing
   if (hostname.startsWith("app.")) {
     // First update the session
