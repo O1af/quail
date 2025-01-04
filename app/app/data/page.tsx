@@ -5,7 +5,7 @@ import { ModeToggle } from "@/components/header/mode-toggle";
 import Routes from "@/components/routes";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
-import { DownloadButton } from "@/components/header/download-button";
+import { DataDownloadButton } from "@/components/header/data-download-button";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { BetterDataTable } from "@/components/Custom/DataTable/better-data-table";
@@ -39,7 +39,7 @@ export default function Page() {
           </div>
           <div className="flex items-center gap-2 px-4 ml-auto">
             <DataHeader />
-            <DownloadButton />
+            <DataDownloadButton />
             <ModeToggle />
           </div>
         </header>

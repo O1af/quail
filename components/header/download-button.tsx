@@ -15,6 +15,7 @@ import {
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback } from "react";
 import { downloadSQL } from "../stores/utils/downloadSQL";
+import { downloadCSV } from "../stores/utils/downloadCSV";
 import React from "react";
 
 export const DownloadButton = React.memo(function DownloadButton() {
@@ -26,10 +27,12 @@ export const DownloadButton = React.memo(function DownloadButton() {
     setIsDownloading(true);
     setIsOpen(false);
     try {
-      if (selectedType === "sql") {
+      console.log(format, selectedType);
+      if (format === "SQL") {
         await downloadSQL("query");
+      } else if (format === "CSV") {
+        await downloadCSV();
       } else {
-        // Download data
       }
     } finally {
       setIsDownloading(false);
