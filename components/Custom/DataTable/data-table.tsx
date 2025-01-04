@@ -192,7 +192,7 @@ export function DataTable() {
             ` (${table.getSelectedRowModel().rows.length} selected)`}
         </div>
         <Link
-          href={`${pathname}/data`}
+          href={pathname.replace(/\/*$/, "") + "/data"}
           className="text-primary hover:underline inline-flex items-center gap-1"
           target="_blank"
           rel="noopener noreferrer"
