@@ -11,7 +11,7 @@ export async function GET(request: NextRequest) {
   const redirectTo = new URL("http://app.localhost:3000/login");
 
   if (token_hash && type) {
-    const supabase = createClient();
+    const supabase = await createClient();
 
     const { error } = await supabase.auth.verifyOtp({
       type,

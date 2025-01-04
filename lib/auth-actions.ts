@@ -6,7 +6,7 @@ import { redirect } from "next/navigation";
 import { createClient } from "@/utils/supabase/server";
 
 export async function login(formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   // type-casting here for convenience
   // in practice, you should validate your inputs
@@ -27,7 +27,7 @@ export async function login(formData: FormData) {
 }
 
 export async function signup(formData: FormData) {
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const firstName = formData.get("first-name") as string;
   const lastName = formData.get("last-name") as string;
@@ -56,7 +56,7 @@ export async function signup(formData: FormData) {
 }
 
 export async function signout() {
-  const supabase = createClient();
+  const supabase = await createClient();
   const { error } = await supabase.auth.signOut();
   if (error) {
     console.log(error);
@@ -88,7 +88,7 @@ export async function signInWithGoogle() {
 
 export async function forgotPassword(formData: FormData) {
   const email = formData.get("email") as string;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `http://app.localhost:3000/reset-password`,
@@ -106,7 +106,7 @@ export async function resetPassword(
   searchParams: { code?: string },
 ) {
   const password = formData.get("password") as string;
-  const supabase = createClient();
+  const supabase = await createClient();
 
   if (searchParams.code) {
     const { error } = await supabase.auth.exchangeCodeForSession(

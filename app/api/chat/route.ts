@@ -13,7 +13,7 @@ export const maxDuration = 30;
 
 export async function POST(req: Request) {
   console.log("Post req made:");
-  const supabase = createClient();
+  const supabase = await createClient();
   const { data: user, error } = await supabase.auth.getUser();
 
   if (error || !user) {

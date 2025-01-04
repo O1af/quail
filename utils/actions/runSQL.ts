@@ -8,7 +8,7 @@ export async function runPostgres(
   if (!process.env.AZURE_FUNCTION_ENDPOINT) {
     throw new Error("Function endpoint not configured");
   }
-  const supabase = createClient();
+  const supabase = await createClient();
 
   const { data: user, error } = await supabase.auth.getUser();
 
