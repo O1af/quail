@@ -64,7 +64,7 @@ export const useDbStore = create<DbState & DbActions>()(
       updateDatabase: (id, config) =>
         set((state) => ({
           databases: state.databases.map((db) =>
-            db.id === id ? { ...db, ...config } : db,
+            db.id === id ? { ...db, ...config } : db
           ),
         })),
       resetDatabaseChange: () => set({ isDatabaseChanged: false }),
@@ -72,6 +72,6 @@ export const useDbStore = create<DbState & DbActions>()(
     {
       name: "database-storage",
       storage: createJSONStorage(() => encryptedStorage),
-    },
-  ),
+    }
+  )
 );

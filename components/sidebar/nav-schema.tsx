@@ -1,6 +1,13 @@
 "use client";
 
-import { ChevronRight, Database, Table2, BoxSelect } from "lucide-react";
+import {
+  ChevronRight,
+  Database,
+  Table2,
+  BoxSelect,
+  RefreshCw,
+} from "lucide-react";
+import { useToast } from "@/hooks/use-toast";
 
 import {
   Collapsible,
@@ -18,13 +25,52 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { useDatabaseStructure } from "../stores/table_store";
-
+import { queryMetadata } from "../stores/query";
+import { useState } from "react";
+import { useDbStore } from "../stores/db_store";
 export function NavSchema() {
+  const { toast } = useToast();
+  const [refreshing, setRefreshing] = useState(false);
+  const getCurrentDatabase = useDbStore((state) => state.getCurrentDatabase);
   const databaseStructure = useDatabaseStructure();
+
+  const handleRefresh = async () => {
+    const currentDb = getCurrentDatabase();
+    if (refreshing || !currentDb) return;
+
+    setRefreshing(true);
+    try {
+      await queryMetadata(currentDb.connectionString, currentDb.type);
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Refresh failed",
+        description:
+          err instanceof Error
+            ? err.message
+            : "Failed to refresh database schema",
+      });
+    } finally {
+      setRefreshing(false);
+    }
+  };
 
   return (
     <SidebarGroup className="h-full">
-      <SidebarGroupLabel>Database Schemas</SidebarGroupLabel>
+      <SidebarGroupLabel>
+        Database Schemas
+        {getCurrentDatabase() && (
+          <button
+            onClick={handleRefresh}
+            className="ml-auto p-1 hover:bg-accent rounded-sm"
+            disabled={refreshing}
+          >
+            <RefreshCw
+              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+            />
+          </button>
+        )}
+      </SidebarGroupLabel>
       <SidebarMenu className="h-[calc(100%-2rem)] overflow-y-auto">
         {databaseStructure.schemas.map((schema) => (
           <Collapsible key={schema.name} asChild className="group/collapsible">
