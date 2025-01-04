@@ -55,6 +55,21 @@ interface TableStore {
 
   // Clear table data
   clearTableData: () => void;
+
+  // Pagination state
+  pagination: {
+    pageIndex: number;
+    pageSize: number;
+  };
+  setPagination: (pagination: { pageIndex: number; pageSize: number }) => void;
+
+  // Global filter state
+  globalFilter: string;
+  setGlobalFilter: (filter: string) => void;
+
+  // Row size preference
+  rowSizePreference: number;
+  setRowSizePreference: (size: number) => void;
 }
 
 export const useDatabaseStructure = () =>
@@ -89,10 +104,39 @@ export const useTableStore = create<TableStore>()(
 
       // Clear table data
       clearTableData: () => set({ data: [], columns: [] }),
+
+      // Pagination state
+      pagination: {
+        pageIndex: 0,
+        pageSize: 10,
+      },
+      setPagination: (pagination) => set({ pagination }),
+
+      // Global filter state
+      globalFilter: "",
+      setGlobalFilter: (filter) => set({ globalFilter: filter }),
+
+      // Row size preference
+      rowSizePreference: 25,
+      setRowSizePreference: (size) =>
+        set({
+          rowSizePreference: size,
+          pagination: { pageIndex: 0, pageSize: size },
+        }),
     }),
     {
       name: "table-storage",
       storage: createJSONStorage(() => encryptedStorage),
+      // Add state migration to handle undefined values
+      partialize: (state) => ({
+        ...state,
+        rowSizePreference: state.rowSizePreference ?? 25,
+        pagination: {
+          pageIndex: 0,
+          pageSize: state.rowSizePreference ?? 25,
+        },
+        globalFilter: state.globalFilter ?? "",
+      }),
     }
   )
 );
