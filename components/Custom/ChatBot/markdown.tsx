@@ -7,7 +7,7 @@ import Link from "next/link";
 const components: Partial<Components> = {
   p: ({ node, children }) => <>{children}</>,
   code: CodeBlock, // Custom code block
-  pre: ({ children }) => <>{children}</>,
+  pre: ({ children }) => <pre className="overflow-x-auto p-4">{children}</pre>,
   ol: ({ children, ...props }) => (
     <ol className="list-decimal list-outside ml-4" {...props}>
       {children}
@@ -71,5 +71,5 @@ const NonMemoizedMarkdown = ({ children }: { children: string }) => {
 
 export const Markdown = memo(
   NonMemoizedMarkdown,
-  (prevProps, nextProps) => prevProps.children === nextProps.children
+  (prevProps, nextProps) => prevProps.children === nextProps.children,
 );
