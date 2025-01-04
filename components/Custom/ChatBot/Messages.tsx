@@ -8,7 +8,7 @@ interface MessagesProps {
   isLoading: boolean;
   messages: Array<Message>;
   reload: (
-    chatRequestOptions?: ChatRequestOptions
+    chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
 }
 

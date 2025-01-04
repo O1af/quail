@@ -1,12 +1,7 @@
 import { streamText } from "ai";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
-import {
-  Column,
-  Schema,
-  Table,
-  DatabaseStructure,
-} from "@/components/stores/table_store";
+import { useTableStore } from "@/components/stores/table_store";
 
 const azure = createAzure({
   resourceName: process.env.AZURE_RESOURCE_NAME, // Azure resource name
@@ -27,31 +22,12 @@ export async function POST(req: Request) {
     });
   }
 
-  const { messages, databaseStructure } = await req.json();
-
-  const formattedSchemas = databaseStructure.schemas
-    .map((schema: Schema) => {
-      const formattedTables = schema.tables
-        .map((table: Table) => {
-          const formattedColumns = table.columns
-            .map(
-              (column: Column) =>
-                `  ${column.name} ${column.dataType.toUpperCase()}`
-            )
-            .join(",\n");
-          return `${table.name} (\n${formattedColumns}\n);`;
-        })
-        .join("\n\n");
-      return `Schema: ${schema.name}\n\n${formattedTables}`;
-    })
-    .join("\n\n");
-
+  const { messages } = await req.json();
   const systemPrompt = {
     role: "system",
-    content: `You are a SQL (postgres) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows: \n\n${formattedSchemas}\n\nFor string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. For example: LOWER(industry) ILIKE LOWER('%search_term%').`,
+    content:
+      "You are a SQL (postgres) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows:",
   };
-
-  console.log(systemPrompt.content);
 
   const promptMessage = {
     role: "user",
@@ -59,6 +35,14 @@ export async function POST(req: Request) {
   };
 
   // Get the database schema from Zustand store
+  const databaseSchema = useTableStore.getState().databaseStructure;
+
+  if (!databaseSchema || databaseSchema.schemas.length === 0) {
+    console.error("Database Schema is empty or not initialized");
+    console.log("Current Zustand state:", useTableStore.getState());
+  } else {
+    console.log("Database Schema:", databaseSchema);
+  }
 
   const result = streamText({
     model: azure("gpt-4o-mini"),

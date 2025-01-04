@@ -5,6 +5,8 @@ import { Messages } from "./Messages";
 import ExampleMessages from "./example-messages";
 import { MultimodalInput } from "./multimodal-input";
 import { useDatabaseStructure } from "@/components/stores/table_store";
+import { useEffect } from "react";
+import { useDbStore } from "@/components/stores/db_store";
 
 export default function Chat() {
   const databaseStructure = useDatabaseStructure();
@@ -29,6 +31,17 @@ export default function Chat() {
       };
     },
   });
+
+  const { isDatabaseChanged, resetDatabaseChange } = useDbStore();
+
+  useEffect(() => {
+    if (isDatabaseChanged) {
+      // Clear messages when the database is updated
+      setMessages([]);
+      // Reset the database update flag to false
+      resetDatabaseChange();
+    }
+  }, [isDatabaseChanged, setMessages, resetDatabaseChange]);
 
   return (
     <div className="flex flex-col min-w-0 h-[91dvh] bg-background">
