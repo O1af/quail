@@ -24,7 +24,7 @@ const SignUpPage = () => {
     fetchUser();
   }, [router, supabase]);
 
-  const theme = useTheme();
+  const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
 
   return (

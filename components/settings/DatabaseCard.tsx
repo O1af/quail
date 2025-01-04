@@ -117,8 +117,8 @@ export const DatabaseCard = memo(function DatabaseCard({
             {isActive
               ? "Current database"
               : activating
-              ? "Testing connection..."
-              : "Set as current"}
+                ? "Testing connection..."
+                : "Set as current"}
           </TooltipContent>
         </Tooltip>
       </div>

@@ -19,6 +19,7 @@ type DbState = {
   databases: DatabaseConfig[];
   currentDatabaseId: number | null;
   nextId: number;
+  isDatabaseChanged: boolean;
 };
 
 type DbActions = {
@@ -27,6 +28,7 @@ type DbActions = {
   setCurrentDatabase: (id: number | null) => void;
   getCurrentDatabase: () => DatabaseConfig | null;
   updateDatabase: (id: number, config: Partial<DatabaseConfig>) => void;
+  resetDatabaseChange: () => void;
 };
 
 export const useDbStore = create<DbState & DbActions>()(
@@ -35,6 +37,7 @@ export const useDbStore = create<DbState & DbActions>()(
       databases: [],
       currentDatabaseId: null,
       nextId: 1,
+      isDatabaseChanged: false,
 
       addDatabase: (config) =>
         set((state) => ({
@@ -49,7 +52,9 @@ export const useDbStore = create<DbState & DbActions>()(
             state.currentDatabaseId === id ? null : state.currentDatabaseId,
         })),
 
-      setCurrentDatabase: (id) => set({ currentDatabaseId: id }),
+      setCurrentDatabase: (id) => {
+        set({ currentDatabaseId: id, isDatabaseChanged: true });
+      },
 
       getCurrentDatabase: () => {
         const { databases, currentDatabaseId } = get();
@@ -59,13 +64,14 @@ export const useDbStore = create<DbState & DbActions>()(
       updateDatabase: (id, config) =>
         set((state) => ({
           databases: state.databases.map((db) =>
-            db.id === id ? { ...db, ...config } : db
+            db.id === id ? { ...db, ...config } : db,
           ),
         })),
+      resetDatabaseChange: () => set({ isDatabaseChanged: false }),
     }),
     {
       name: "database-storage",
       storage: createJSONStorage(() => encryptedStorage),
-    }
-  )
+    },
+  ),
 );

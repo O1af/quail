@@ -1,43 +1,87 @@
 "use client";
-import LoginButton from "@/components/Custom/Landing/LoginLogoutButton";
-import UserGreetText from "@/components/Custom/Landing/UserGreetText";
+import Link from "next/link";
 import Image from "next/image";
-import React, { useEffect, useState } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { useRouter } from "next/navigation";
+
+import { Button } from "@/components/ui/button";
+import { Container } from "@/components/ui/container";
+import {
+  NavigationMenu,
+  NavigationMenuItem,
+  NavigationMenuLink,
+  NavigationMenuList,
+  navigationMenuTriggerStyle,
+} from "@/components/ui/navigation-menu";
+import { Badge } from "@/components/ui/badge";
+import { useTheme } from "next-themes";
 
 export default function Home() {
-  const [user, setUser] = useState<any>(null);
-  const supabase = createClient();
-  const router = useRouter();
-  useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      setUser(user);
-    };
-    fetchUser();
-  }, [router, supabase]);
+  const theme = useTheme();
+  const avatarSrc =
+    theme.resolvedTheme === "dark" ? "/BotIconDark.Png" : "/BotIconLight.Png";
   return (
-    <main className="flex min-h-screen flex-col items-center justify-between p-24">
-      <div className="z-10 w-full max-w-5xl items-center justify-between font-mono text-sm lg:flex">
-        <UserGreetText />
-        <div className="fixed bottom-0 left-0 flex h-48 w-full items-end justify-center bg-gradient-to-t from-white via-white dark:from-black dark:via-black lg:static lg:size-auto lg:bg-none">
-          <LoginButton />
-        </div>
-      </div>
+    <div className="flex min-h-screen flex-col">
+      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <Container>
+          <div className="flex h-16 items-center justify-between">
+            <Link href="/" className="flex items-center space-x-2">
+              <Image
+                src={avatarSrc}
+                alt="Buster Logo"
+                width={24}
+                height={24}
+                className="size-8"
+              />
+              <span className="font-semibold">Quail</span>
+            </Link>
+            <NavigationMenu>
+              <NavigationMenuList>
+                <NavigationMenuItem>
+                  <Link href="#" legacyBehavior passHref>
+                    <NavigationMenuLink
+                      className={navigationMenuTriggerStyle()}
+                    >
+                      Pricing
+                    </NavigationMenuLink>
+                  </Link>
+                </NavigationMenuItem>
+                <NavigationMenuItem>
+                  <Button
+                    onClick={() =>
+                      (window.location.href = "http://app.localhost:3000/login")
+                    }
+                  >
+                    Get Started
+                  </Button>
+                </NavigationMenuItem>
+              </NavigationMenuList>
+            </NavigationMenu>
+          </div>
+        </Container>
+      </header>
 
-      <div className="relative z-[-1] flex place-items-center before:absolute before:h-[300px] before:w-full before:-translate-x-1/2 before:rounded-full before:bg-gradient-radial before:from-white before:to-transparent before:blur-2xl before:content-[''] after:absolute after:-z-20 after:h-[180px] after:w-full after:translate-x-1/3 after:bg-gradient-conic after:from-sky-200 after:via-blue-200 after:blur-2xl after:content-[''] before:dark:bg-gradient-to-br before:dark:from-transparent before:dark:to-blue-700 before:dark:opacity-10 after:dark:from-sky-900 after:dark:via-[#0141ff] after:dark:opacity-40 sm:before:w-[480px] sm:after:w-[240px] before:lg:h-[360px]">
-        <Image
-          className="relative dark:drop-shadow-[0_0_0.3rem_#ffffff70] dark:invert"
-          src="/lightmode_logo.jpeg"
-          alt="Next.js Logo"
-          width={180}
-          height={37}
-          priority
-        />
-      </div>
-    </main>
+      <main className="flex-1">
+        <section className="py-12 md:py-24">
+          <Container className="space-y-12 text-center">
+            <div className="mx-auto max-w-[800px] space-y-6">
+              <Badge variant="secondary" className="mx-auto">
+                🚀 AI-Powered Business Insights
+              </Badge>
+              <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+                <span className="bg-gradient-to-r from-green-600 to-green-300 bg-clip-text text-transparent">
+                  AI-Driven{" "}
+                </span>{" "}
+                <br />
+                Insights, Simplified
+              </h1>
+              <p className="mx-auto max-w-[600px] text-lg text-muted-foreground">
+                With Quail, anyone can write SQL queries, analyze data, and
+                generate insights effortlessly. It’s intelligent, efficient, and
+                AI-powered.
+              </p>
+            </div>
+          </Container>
+        </section>
+      </main>
+    </div>
   );
 }

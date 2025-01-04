@@ -1,12 +1,7 @@
 import { streamText } from "ai";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
-import {
-  Column,
-  Schema,
-  Table,
-  DatabaseStructure,
-} from "@/components/stores/table_store";
+import { Column, Schema, Table } from "@/components/stores/table_store";
 
 const azure = createAzure({
   resourceName: process.env.AZURE_RESOURCE_NAME, // Azure resource name
@@ -28,7 +23,7 @@ export async function POST(req: Request) {
   }
 
   const { messages, databaseStructure } = await req.json();
-
+  console.log(messages);
   const formattedSchemas = databaseStructure.schemas
     .map((schema: Schema) => {
       const formattedTables = schema.tables
@@ -36,7 +31,7 @@ export async function POST(req: Request) {
           const formattedColumns = table.columns
             .map(
               (column: Column) =>
-                `  ${column.name} ${column.dataType.toUpperCase()}`
+                `  ${column.name} ${column.dataType.toUpperCase()}`,
             )
             .join(",\n");
           return `${table.name} (\n${formattedColumns}\n);`;
@@ -50,8 +45,6 @@ export async function POST(req: Request) {
     role: "system",
     content: `You are a SQL (postgres) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows: \n\n${formattedSchemas}\n\nFor string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. For example: LOWER(industry) ILIKE LOWER('%search_term%').`,
   };
-
-  console.log(systemPrompt.content);
 
   const promptMessage = {
     role: "user",

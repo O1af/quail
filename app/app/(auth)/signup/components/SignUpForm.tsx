@@ -15,6 +15,8 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { useToast } from "@/hooks/use-toast"; // Import the toast hook
+
 import { signup } from "@/lib/auth-actions";
 import Routes from "@/components/routes";
 
@@ -30,6 +32,7 @@ const formSchema = z.object({
 
 export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
+  const { toast } = useToast(); // Initialize the toast hook
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -58,6 +61,15 @@ export function SignUpForm() {
       formData.append("password", data.password);
 
       await signup(formData);
+      toast({
+        title: "Email Verification Sent!",
+        description:
+          "If no account is associated with this email, a verification email will still be sent to you.",
+        duration: Infinity,
+        variant: "success",
+      });
+
+      form.reset();
     } catch (err) {
       console.log(err);
       setError("There was an error creating your account. Please try again.");
