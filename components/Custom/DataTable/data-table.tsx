@@ -1,7 +1,7 @@
 "use client";
 
 import * as React from "react";
-import { useTableStore } from "./stores/table_store";
+import { useTableStore } from "../../stores/table_store";
 import { ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
 import {
   flexRender,
