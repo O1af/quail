@@ -1,8 +1,16 @@
 "use client";
 
 import * as React from "react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
 import { useTableStore } from "../../stores/table_store";
-import { ArrowUpDown, ArrowUp, ArrowDown, Loader2 } from "lucide-react";
+import {
+  ArrowUpDown,
+  ArrowUp,
+  ArrowDown,
+  Loader2,
+  ExternalLink,
+} from "lucide-react";
 import {
   flexRender,
   getCoreRowModel,
@@ -32,6 +40,7 @@ function handleHeaderClick(column: any) {
 }
 
 export function DataTable() {
+  const pathname = usePathname();
   const {
     data,
     columns,
@@ -176,10 +185,21 @@ export function DataTable() {
           </div>
         </div>
       </div>
-      <div className="px-2 py-1 text-xs text-muted-foreground border-t bg-muted/10">
-        {table.getRowModel().rows?.length ?? 0} rows
-        {table.getSelectedRowModel?.()?.rows?.length > 0 &&
-          ` (${table.getSelectedRowModel().rows.length} selected)`}
+      <div className="px-2 py-1 text-xs text-muted-foreground border-t bg-muted/10 flex justify-between items-center">
+        <div>
+          {table.getRowModel().rows?.length ?? 0} rows
+          {table.getSelectedRowModel?.()?.rows?.length > 0 &&
+            ` (${table.getSelectedRowModel().rows.length} selected)`}
+        </div>
+        <Link
+          href={`${pathname}/data`}
+          className="text-primary hover:underline inline-flex items-center gap-1"
+          target="_blank"
+          rel="noopener noreferrer"
+        >
+          Advanced View
+          <ExternalLink className="h-3 w-3" />
+        </Link>
       </div>
     </div>
   );
