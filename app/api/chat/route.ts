@@ -31,7 +31,7 @@ export async function POST(req: Request) {
           const formattedColumns = table.columns
             .map(
               (column: Column) =>
-                `  ${column.name} ${column.dataType.toUpperCase()}`,
+                `  ${column.name} ${column.dataType.toUpperCase()}`
             )
             .join(",\n");
           return `${table.name} (\n${formattedColumns}\n);`;
