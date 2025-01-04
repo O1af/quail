@@ -28,7 +28,7 @@ export function PureMessageActions({
     return null;
 
   return (
-    <TooltipProvider delayDuration={0}>
+    <TooltipProvider>
       <div className="flex flex-row gap-2">
         <Tooltip>
           <TooltipTrigger asChild>

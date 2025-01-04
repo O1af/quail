@@ -2,9 +2,19 @@
 
 import { useState } from "react";
 import { Button } from "@/components/ui/button";
-import { Copy } from "lucide-react";
+import { Copy, Repeat } from "lucide-react";
 import { useCopyToClipboard } from "usehooks-ts";
 import { useToast } from "@/hooks/use-toast";
+import { useEditorStore } from "@/components/stores/editor_store";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
+const sqlRegex =
+  /^(SELECT|INSERT|UPDATE|DELETE|MERGE|REPLACE|CREATE|DROP|ALTER|TRUNCATE|GRANT|REVOKE|COMMIT|ROLLBACK|SAVEPOINT|SET|SHOW|DESCRIBE|EXPLAIN|USE|LOCK|UNLOCK|TRUNCATE|BEGIN|END|CALL|EXCEPT|INTERSECT|FETCH)\s+/i;
 
 interface CodeBlockProps {
   node: any;
@@ -24,12 +34,25 @@ export function CodeBlock({
   const [tab, setTab] = useState<"code" | "run">("code");
   const [_, copyToClipboard] = useCopyToClipboard();
   const { toast } = useToast(); // Initialize the toast hook
+  const { setValue } = useEditorStore();
+
+  const isSQL = sqlRegex.test(children);
 
   const handleCopy = async () => {
     await copyToClipboard(children);
     toast({
       description: "Copied to clipboard!",
-      duration: 2000, // Adjust duration as needed
+      duration: 1750,
+    });
+  };
+
+  const insertCode = (children: React.ReactNode) => {
+    // Set the new value for the editor when the button is clicked
+    const newValue = `${children}`; // Example: Dynamically use the children content
+    setValue(newValue);
+    toast({
+      description: "Editor content replaced!",
+      duration: 1750,
     });
   };
 
@@ -42,25 +65,48 @@ export function CodeBlock({
               {...props}
               className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
             >
-              <code className="whitespace-pre-wrap break-words">
+              <code className="whitespace-pre-wrap break-words pr-16">
                 {children}
               </code>
             </pre>
-            <Button
-              variant="ghost"
-              size="icon"
-              className="absolute top-2 right-2"
-              onClick={handleCopy}
-            >
-              <Copy className="h-4 w-4" />
-            </Button>
+            <div className="absolute top-2 right-2 flex">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    {isSQL && (
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-md hover:bg-zinc-700 focus:outline-none"
+                        onClick={() => insertCode(children)}
+                      >
+                        <Repeat className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
+                      </Button>
+                    )}
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Insert code into editor</p>
+                  </TooltipContent>
+                </Tooltip>
+                <Tooltip>
+                  {" "}
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-md hover:bg-zinc-700 focus:outline-none"
+                      onClick={handleCopy}
+                    >
+                      <Copy className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Copy</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </>
-        )}
-
-        {tab === "run" && output && (
-          <div className="text-sm w-full overflow-x-auto bg-zinc-800 dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 border-t-0 rounded-b-xl text-zinc-50">
-            <code>{output}</code>
-          </div>
         )}
       </div>
     );

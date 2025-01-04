@@ -24,6 +24,13 @@ import {
   SidebarMenuSubButton,
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+
 import { useDatabaseStructure } from "../stores/table_store";
 import { queryMetadata } from "../stores/query";
 import { useState } from "react";
@@ -60,15 +67,24 @@ export function NavSchema() {
       <SidebarGroupLabel>
         Database Schemas
         {getCurrentDatabase() && (
-          <button
-            onClick={handleRefresh}
-            className="ml-auto p-1 hover:bg-accent rounded-sm"
-            disabled={refreshing}
-          >
-            <RefreshCw
-              className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-            />
-          </button>
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleRefresh}
+                  className="ml-auto p-1 hover:bg-accent rounded-sm"
+                  disabled={refreshing}
+                >
+                  <RefreshCw
+                    className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Refresh Database Schemas</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         )}
       </SidebarGroupLabel>
       <SidebarMenu className="h-[calc(100%-2rem)] overflow-y-auto">
