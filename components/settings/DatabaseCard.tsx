@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useState, memo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { queryMetadata } from "../stores/query";
+import { queryMetadata } from "../stores/utils/query";
 import { useTableStore } from "../stores/table_store"; // Add this import
 
 interface DatabaseCardProps {
@@ -117,8 +117,8 @@ export const DatabaseCard = memo(function DatabaseCard({
             {isActive
               ? "Current database"
               : activating
-                ? "Testing connection..."
-                : "Set as current"}
+              ? "Testing connection..."
+              : "Set as current"}
           </TooltipContent>
         </Tooltip>
       </div>

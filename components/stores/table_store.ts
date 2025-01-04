@@ -1,6 +1,6 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
-import { encryptedStorage } from "./encrypted_store";
+import { encryptedStorage } from "./utils/encrypted_store";
 import {
   ColumnDef,
   SortingState,

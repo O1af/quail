@@ -14,7 +14,7 @@ import {
 } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback } from "react";
-import { cn } from "@/lib/utils";
+import { downloadSQL } from "../stores/utils/downloadSQL";
 import React from "react";
 
 export const DownloadButton = React.memo(function DownloadButton() {
@@ -26,8 +26,11 @@ export const DownloadButton = React.memo(function DownloadButton() {
     setIsDownloading(true);
     setIsOpen(false);
     try {
-      await new Promise((resolve) => setTimeout(resolve, 1000));
-      console.log(`Downloading ${format}`);
+      if (selectedType === "sql") {
+        await downloadSQL("query");
+      } else {
+        // Download data
+      }
     } finally {
       setIsDownloading(false);
     }
