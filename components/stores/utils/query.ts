@@ -1,10 +1,10 @@
-import { useEditorStore } from "./editor_store";
-import { useTableStore } from "./table_store";
+import { useEditorStore } from "../editor_store";
+import { useTableStore } from "../table_store";
 import { runPostgres } from "@/utils/actions/runSQL";
 import { ColumnDef } from "@tanstack/react-table";
-import { SQLData } from "./table_store";
-import { useDbStore } from "./db_store";
-import { DatabaseStructure, Schema } from "./table_store";
+import { SQLData } from "../table_store";
+import { useDbStore } from "../db_store";
+import { DatabaseStructure, Schema } from "../table_store";
 
 async function getDbConnection() {
   const currentDb = useDbStore.getState().getCurrentDatabase();
@@ -44,7 +44,7 @@ export async function handleQuery(): Promise<void> {
         header: key,
         enableSorting: true,
         sortingFn: "basic",
-      }),
+      })
     );
 
     setColumns(columns);
@@ -57,7 +57,7 @@ export async function handleQuery(): Promise<void> {
 
 export async function queryMetadata(
   connectionString?: string,
-  dbType?: string,
+  dbType?: string
 ) {
   const metadataQuery = `SELECT 
     t.table_schema,

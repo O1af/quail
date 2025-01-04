@@ -25,7 +25,7 @@ import {
   SidebarMenuSubItem,
 } from "@/components/ui/sidebar";
 import { useDatabaseStructure } from "../stores/table_store";
-import { queryMetadata } from "../stores/query";
+import { queryMetadata } from "../stores/utils/query";
 import { useState } from "react";
 import { useDbStore } from "../stores/db_store";
 export function NavSchema() {
