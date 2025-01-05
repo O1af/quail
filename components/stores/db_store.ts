@@ -28,6 +28,7 @@ type DbActions = {
   setCurrentDatabase: (id: number | null) => void;
   getCurrentDatabase: () => DatabaseConfig | null;
   updateDatabase: (id: number, config: Partial<DatabaseConfig>) => void;
+  setDatabaseChange: () => void;
   resetDatabaseChange: () => void;
 };
 
