@@ -64,14 +64,15 @@ export const useDbStore = create<DbState & DbActions>()(
       updateDatabase: (id, config) =>
         set((state) => ({
           databases: state.databases.map((db) =>
-            db.id === id ? { ...db, ...config } : db
+            db.id === id ? { ...db, ...config } : db,
           ),
         })),
+      setDatabaseChange: () => set({ isDatabaseChanged: true }),
       resetDatabaseChange: () => set({ isDatabaseChanged: false }),
     }),
     {
       name: "database-storage",
       storage: createJSONStorage(() => encryptedStorage),
-    }
-  )
+    },
+  ),
 );

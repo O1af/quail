@@ -6,6 +6,7 @@ import {
   Table2,
   BoxSelect,
   RefreshCw,
+  MessageCircleOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,6 +42,8 @@ export function NavSchema() {
   const getCurrentDatabase = useDbStore((state) => state.getCurrentDatabase);
   const databaseStructure = useDatabaseStructure();
 
+  const { setDatabaseChange } = useDbStore();
+
   const handleRefresh = async () => {
     const currentDb = getCurrentDatabase();
     if (refreshing || !currentDb) return;
@@ -68,22 +71,39 @@ export function NavSchema() {
         Database Schemas
         {getCurrentDatabase() && (
           <TooltipProvider>
-            <Tooltip>
-              <TooltipTrigger asChild>
-                <button
-                  onClick={handleRefresh}
-                  className="ml-auto p-1 hover:bg-accent rounded-sm"
-                  disabled={refreshing}
-                >
-                  <RefreshCw
-                    className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
-                  />
-                </button>
-              </TooltipTrigger>
-              <TooltipContent>
-                <p>Refresh Database Schemas</p>
-              </TooltipContent>
-            </Tooltip>
+            <div className="absolute top-2 right-2 flex space-x-2">
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={handleRefresh}
+                    className="p-1 hover:bg-accent rounded-sm"
+                    disabled={refreshing}
+                  >
+                    <RefreshCw
+                      className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                    />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Refresh Database Schemas</p>
+                </TooltipContent>
+              </Tooltip>
+
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <button
+                    onClick={() => setDatabaseChange()}
+                    className="p-1 hover:bg-accent rounded-sm"
+                    disabled={refreshing}
+                  >
+                    <MessageCircleOff className="h-4 w-4" />
+                  </button>
+                </TooltipTrigger>
+                <TooltipContent>
+                  <p>Clear Chat History</p>
+                </TooltipContent>
+              </Tooltip>
+            </div>
           </TooltipProvider>
         )}
       </SidebarGroupLabel>
