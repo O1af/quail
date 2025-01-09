@@ -10,6 +10,7 @@ import { useDbStore } from "@/components/stores/db_store";
 
 export default function Chat() {
   const databaseStructure = useDatabaseStructure();
+  const { getCurrentDatabase } = useDbStore();
 
   const {
     messages,
@@ -24,11 +25,14 @@ export default function Chat() {
     reload,
   } = useChat({
     experimental_prepareRequestBody: ({ messages }) => {
-      // Return a modified body with both the messages and the databaseStructure
-      return {
-        messages,
-        databaseStructure, // Add the database structure here
-      };
+      const currentDb = getCurrentDatabase();
+      return JSON.parse(
+        JSON.stringify({
+          messages,
+          databaseStructure,
+          dbType: currentDb?.type || "postgres", // default to postgres if no db selected
+        })
+      );
     },
   });
 

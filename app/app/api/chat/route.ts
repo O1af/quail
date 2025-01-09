@@ -22,8 +22,7 @@ export async function POST(req: Request) {
     });
   }
 
-  const { messages, databaseStructure } = await req.json();
-  console.log(messages);
+  const { messages, databaseStructure, dbType } = await req.json();
   const formattedSchemas = databaseStructure.schemas
     .map((schema: Schema) => {
       const formattedTables = schema.tables
@@ -43,12 +42,13 @@ export async function POST(req: Request) {
 
   const systemPrompt = {
     role: "system",
-    content: `You are a SQL (postgres) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows: \n\n${formattedSchemas}\n\nFor string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. For example: LOWER(industry) ILIKE LOWER('%search_term%').`,
+    content: `You are a SQL (${dbType}) and data visualization expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows: \n\n${formattedSchemas}\n\nFor string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. For example: LOWER(industry) ILIKE LOWER('%search_term%').`,
   };
 
   const promptMessage = {
     role: "user",
-    content: "Provide the necessary response to fulfill the user's request.",
+    content:
+      "Please provide the best SQL queries and any relevant explanations or data visualization insights to fulfill the user's request",
   };
 
   // Get the database schema from Zustand store
