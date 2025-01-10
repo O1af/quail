@@ -10,3 +10,11 @@ export interface PostgresResponse {
   rowCount: number;
   rows: any[];
 }
+
+export interface MySQLRequest {
+  connectionString: string;
+  query: string;
+  sslCA?: string;
+  sslCert?: string;
+  sslKey?: string;
+}

@@ -1,6 +1,6 @@
 import { useEditorStore } from "../editor_store";
 import { useTableStore } from "../table_store";
-import { runPostgres } from "@/utils/actions/runSQL";
+import { runPostgres, runMySQL } from "@/utils/actions/runSQL";
 import { ColumnDef } from "@tanstack/react-table";
 import { SQLData } from "../table_store";
 import { useDbStore } from "../db_store";
@@ -11,13 +11,29 @@ async function getDbConnection() {
   if (!currentDb) {
     throw new Error("No database selected");
   }
-  return currentDb.connectionString;
+  return { connectionString: currentDb.connectionString, type: currentDb.type };
 }
 
-export async function executeQuery(query: string, connectionString?: string) {
-  const dbConnection = connectionString || (await getDbConnection());
+export async function executeQuery(
+  query: string,
+  connectionString?: string,
+  dbType?: string
+) {
+  const dbInfo = connectionString
+    ? { connectionString, type: dbType || "postgres" }
+    : await getDbConnection();
+
   try {
-    return await runPostgres({ connectionString: dbConnection, query: query });
+    if (dbInfo.type === "mysql") {
+      return await runMySQL({
+        connectionString: dbInfo.connectionString,
+        query: query,
+      });
+    }
+    return await runPostgres({
+      connectionString: dbInfo.connectionString,
+      query: query,
+    });
   } catch (error) {
     const errorMessage =
       error instanceof Error ? error.message : "Unknown error";
@@ -27,7 +43,7 @@ export async function executeQuery(query: string, connectionString?: string) {
 
 export async function testConnection(connectionString: string, type: string) {
   const testQuery = type === "mysql" ? "SELECT 1" : "SELECT 1;";
-  await executeQuery(testQuery, connectionString);
+  await executeQuery(testQuery, connectionString, type);
   return true;
 }
 
@@ -55,23 +71,52 @@ export async function handleQuery(): Promise<void> {
   }
 }
 
+interface RawMetadataRow {
+  [key: string]: string;
+}
+
+function normalizeMetadataRow(row: RawMetadataRow) {
+  return {
+    table_schema: row.table_schema || row.TABLE_SCHEMA,
+    table_name: row.table_name || row.TABLE_NAME,
+    table_type: row.table_type || row.TABLE_TYPE,
+    column_name: row.column_name || row.COLUMN_NAME,
+    data_type: row.data_type || row.DATA_TYPE,
+  };
+}
+
 export async function queryMetadata(
   connectionString?: string,
   dbType?: string
 ) {
-  const metadataQuery = `SELECT 
-    t.table_schema,
-    t.table_name,
-    t.table_type,
-    c.column_name,
-    c.data_type
-FROM information_schema.tables t
-LEFT JOIN information_schema.columns c
-ON t.table_schema = c.table_schema AND t.table_name = c.table_name
-WHERE t.table_schema NOT IN ('pg_catalog', 'information_schema')
-ORDER BY t.table_schema, t.table_name, c.ordinal_position;`;
+  const metadataQuery =
+    dbType === "mysql"
+      ? `SELECT 
+    t.TABLE_SCHEMA,
+    t.TABLE_NAME,
+    t.TABLE_TYPE,
+    c.COLUMN_NAME,
+    c.DATA_TYPE
+FROM information_schema.tables AS t
+LEFT JOIN information_schema.columns AS c
+    ON t.TABLE_SCHEMA = c.TABLE_SCHEMA
+    AND t.TABLE_NAME = c.TABLE_NAME
+-- Exclude MySQL-specific system schemas as you see fit:
+WHERE t.TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys')
+ORDER BY t.TABLE_SCHEMA, t.TABLE_NAME, c.ORDINAL_POSITION;`
+      : `SELECT 
+      t.table_schema,
+      t.table_name,
+      t.table_type,
+      c.column_name,
+      c.data_type
+    FROM information_schema.tables t
+    LEFT JOIN information_schema.columns c
+    ON t.table_schema = c.table_schema AND t.table_name = c.table_name
+    WHERE t.table_schema NOT IN ('pg_catalog', 'information_schema')
+    ORDER BY t.table_schema, t.table_name, c.ordinal_position;`;
 
-  const result = await executeQuery(metadataQuery, connectionString);
+  const result = await executeQuery(metadataQuery, connectionString, dbType);
 
   const { setDatabaseStructure } = useTableStore.getState();
 
@@ -79,7 +124,8 @@ ORDER BY t.table_schema, t.table_name, c.ordinal_position;`;
     const structure: DatabaseStructure = { schemas: [] };
     const schemaMap = new Map<string, Schema>();
 
-    for (const row of result.rows) {
+    for (const rawRow of result.rows) {
+      const row = normalizeMetadataRow(rawRow);
       const schemaName = row.table_schema;
       const tableName = row.table_name;
       const tableType = row.table_type;
