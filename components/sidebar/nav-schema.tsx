@@ -6,7 +6,6 @@ import {
   Table2,
   BoxSelect,
   RefreshCw,
-  MessageCircleOff,
 } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
 
@@ -41,8 +40,6 @@ export function NavSchema() {
   const [refreshing, setRefreshing] = useState(false);
   const getCurrentDatabase = useDbStore((state) => state.getCurrentDatabase);
   const databaseStructure = useDatabaseStructure();
-
-  const { setDatabaseChange } = useDbStore();
 
   const handleRefresh = async () => {
     const currentDb = getCurrentDatabase();
@@ -86,21 +83,6 @@ export function NavSchema() {
                 </TooltipTrigger>
                 <TooltipContent>
                   <p>Refresh Database Schemas</p>
-                </TooltipContent>
-              </Tooltip>
-
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={() => setDatabaseChange()}
-                    className="p-1 hover:bg-accent rounded-sm"
-                    disabled={refreshing}
-                  >
-                    <MessageCircleOff className="h-4 w-4" />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Clear Chat History</p>
                 </TooltipContent>
               </Tooltip>
             </div>
