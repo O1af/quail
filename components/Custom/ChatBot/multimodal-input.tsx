@@ -204,14 +204,6 @@ function PureMultimodalInput({
         )}
         <Dialog>
           <DialogTrigger asChild>
-            {
-              //<ChartButton
-              //  handleChartAction={handleChartConfigGeneration}
-              //  input={input}
-              //  uploadQueue={uploadQueue}
-              ///>
-            }
-
             <Button
               onClick={() => handleChartConfigGeneration()}
               disabled={input.length === 0 || uploadQueue.length > 0}
