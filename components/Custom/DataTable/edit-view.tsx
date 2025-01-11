@@ -20,17 +20,19 @@ interface DataTableViewOptionsProps<TData> {
 export function DataTableViewOptions<TData>({
   table,
 }: DataTableViewOptionsProps<TData>) {
-  const setColumnVisibility = useTableStore(
-    (state) => state.setColumnVisibility
-  );
+  const { setColumnVisibility, columnVisibility } = useTableStore();
+
+  // Sync table visibility with store visibility on mount and when store changes
+  React.useEffect(() => {
+    table.setColumnVisibility(columnVisibility);
+  }, [table, columnVisibility]);
 
   const toggleColumnVisibility = (columnId: string, visible: boolean) => {
     const newVisibility = {
-      ...table.getState().columnVisibility,
+      ...columnVisibility,
       [columnId]: visible,
     };
     setColumnVisibility(newVisibility);
-    table.setColumnVisibility(newVisibility);
   };
 
   return (

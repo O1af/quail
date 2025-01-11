@@ -70,6 +70,9 @@ interface TableStore {
   // Row size preference
   rowSizePreference: number;
   setRowSizePreference: (size: number) => void;
+
+  // Reset column visibility
+  resetColumnVisibility: () => void;
 }
 
 export const useDatabaseStructure = () =>
@@ -96,7 +99,11 @@ export const useTableStore = create<TableStore>()(
         })),
       setColumnVisibility: (columnVisibility) => set({ columnVisibility }),
       setRowSelection: (rowSelection) => set({ rowSelection }),
-      setData: (data) => set({ data }),
+      setData: (data) =>
+        set((state) => ({
+          data,
+          columnVisibility: {}, // Reset visibility when new data is loaded
+        })),
       setColumns: (columns) => set({ columns }),
 
       // Database structure related actions
@@ -123,6 +130,9 @@ export const useTableStore = create<TableStore>()(
           rowSizePreference: size,
           pagination: { pageIndex: 0, pageSize: size },
         }),
+
+      // Reset column visibility
+      resetColumnVisibility: () => set({ columnVisibility: {} }),
     }),
     {
       name: "table-storage",
