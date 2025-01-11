@@ -10,7 +10,6 @@ export const downloadCSV = (customFilename?: string) => {
 
   // Create header row
   const headers = columns.map((col) => String(col.header || "")).join(",");
-
   // Create data rows
   const csvRows = data.map((row) => {
     return columns
@@ -73,12 +72,9 @@ export const downloadSelectedCSV = (customFilename?: string) => {
 
   if (!selectedData.length) return;
 
-  // If no columns are visible, show all columns
-  const hasVisibleColumns = Object.values(columnVisibility).some((v) => v);
-  const visibleColumns = hasVisibleColumns
-    ? columns.filter((col) => columnVisibility[col.id as string] !== false)
-    : columns;
-
+  const visibleColumns = columns.filter(
+    (col) => columnVisibility[col.header as string] !== false
+  );
   if (!visibleColumns.length) return;
 
   // Create header row
