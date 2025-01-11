@@ -43,7 +43,7 @@ export default function Page() {
             <ModeToggle />
           </div>
         </header>
-        <div className="flex-1">
+        <div className="flex-1 overflow-hidden">
           <BetterDataTable />
         </div>
       </SidebarInset>
