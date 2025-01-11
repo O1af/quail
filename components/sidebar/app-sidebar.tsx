@@ -6,15 +6,11 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 import {
   AudioWaveform,
-  BookOpen,
-  Bot,
   Command,
   Frame,
   GalleryVerticalEnd,
   Map,
   PieChart,
-  Settings2,
-  SquareTerminal,
 } from "lucide-react";
 
 import { NavProjects } from "@/components/sidebar/nav-projects";
@@ -109,7 +105,7 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
         <TeamSwitcher />
       </SidebarHeader>
       <SidebarContent>
-        <ResizablePanelGroup direction="vertical">
+        {/* <ResizablePanelGroup direction="vertical">
           <ResizablePanel defaultSize={50} minSize={20}>
             <NavSchema />
           </ResizablePanel>
@@ -117,7 +113,8 @@ export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
           <ResizablePanel minSize={20}>
             <NavProjects projects={data.projects} />
           </ResizablePanel>
-        </ResizablePanelGroup>
+        </ResizablePanelGroup> */}
+        <NavSchema />
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={supabaseData.user} />

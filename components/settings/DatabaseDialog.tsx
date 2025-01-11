@@ -212,7 +212,7 @@ export const DatabaseDialog = memo(function DatabaseDialog({
               <SelectContent>
                 <SelectItem value="postgres">PostgreSQL</SelectItem>
                 <SelectItem value="mysql">MySQL</SelectItem>
-                <SelectItem value="sqlite">SQLite</SelectItem>
+                {/* <SelectItem value="sqlite">SQLite</SelectItem> */}
               </SelectContent>
             </Select>
           </div>
