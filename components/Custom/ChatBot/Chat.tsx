@@ -7,6 +7,8 @@ import { MultimodalInput } from "./multimodal-input";
 import { useDatabaseStructure } from "@/components/stores/table_store";
 import { useEffect } from "react";
 import { useDbStore } from "@/components/stores/db_store";
+import { useState } from "react";
+import { generateChartConfig } from "@/app/app/api/chat/actions";
 
 export default function Chat() {
   const databaseStructure = useDatabaseStructure();
@@ -31,21 +33,43 @@ export default function Chat() {
           messages,
           databaseStructure,
           dbType: currentDb?.type || "postgres", // default to postgres if no db selected
-        })
+        }),
       );
     },
   });
 
   const { isDatabaseChanged, resetDatabaseChange } = useDbStore();
+  //const [userQuery, setUserQuery] = useState("");
 
   useEffect(() => {
     if (isDatabaseChanged) {
-      // Clear messages when the database is updated
       setMessages([]);
-      // Reset the database update flag to false
       resetDatabaseChange();
     }
   }, [isDatabaseChanged, setMessages, resetDatabaseChange]);
+
+  //const handleChartConfigGeneration = async (e: React.FormEvent) => {
+  //  e.preventDefault();
+  //
+  //  try {
+  //    console.log(databaseStructure);
+  //    console.log("Current DB:", databaseStructure);
+  //
+  //    const response = await generateChartConfig(databaseStructure, userQuery);
+  //
+  //    const responseColumns =
+  //      response.results.length > 0 ? Object.keys(response.results[0]) : [];
+  //
+  //    setColumns(responseColumns);
+  //
+  //    setChartConfig(response.config);
+  //    setResults(response.results);
+  //    console.log("Generated Chart Config:", chartConfig);
+  //    console.log(results);
+  //  } catch (error) {
+  //    console.error("Error generating chart config:", error);
+  //  }
+  //};
 
   return (
     <div className="flex flex-col min-w-0 h-[91dvh] bg-background">
@@ -67,6 +91,30 @@ export default function Chat() {
           append={append}
         />
       </form>
+      {
+        //  <form
+        //    onSubmit={handleChartConfigGeneration}
+        //    className="flex flex-col mx-auto mt-4 w-full md:max-w-3xl px-4"
+        //  >
+        //    <label htmlFor="userQuery" className="text-sm text-gray-600">
+        //      Enter your query for chart generation:
+        //    </label>
+        //    <input
+        //      id="userQuery"
+        //      type="text"
+        //      value={userQuery}
+        //      onChange={(e) => setUserQuery(e.target.value)}
+        //      className="border border-gray-300 rounded p-2 mt-2"
+        //      placeholder="E.g., Show sales trends by month"
+        //    />
+        //    <button
+        //      type="submit"
+        //      className="mt-4 bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600"
+        //    >
+        //      Generate Chart Config
+        //    </button>
+        //  </form>
+      }
     </div>
   );
 }

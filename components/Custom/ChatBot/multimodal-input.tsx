@@ -18,8 +18,23 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { sanitizeUIMessages } from "@/lib/utils";
 
 import { ArrowUpIcon, StopIcon } from "./icons";
+import { ChartNoAxesCombined } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { useDatabaseStructure } from "@/components/stores/table_store";
+import { generateChartConfig } from "@/app/app/api/chat/actions";
+import { Config } from "@/lib/types";
+import { Results } from "./Results";
+import { Result } from "@/lib/types";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogFooter,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
 
 function PureMultimodalInput({
   input,
@@ -40,13 +55,13 @@ function PureMultimodalInput({
   setMessages: Dispatch<SetStateAction<Array<Message>>>;
   append: (
     message: Message | CreateMessage,
-    chatRequestOptions?: ChatRequestOptions
+    chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
   handleSubmit: (
     event?: {
       preventDefault?: () => void;
     },
-    chatRequestOptions?: ChatRequestOptions
+    chatRequestOptions?: ChatRequestOptions,
   ) => void;
   className?: string;
 }) {
@@ -69,7 +84,7 @@ function PureMultimodalInput({
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
-    ""
+    "",
   );
 
   useEffect(() => {
@@ -80,8 +95,6 @@ function PureMultimodalInput({
       setInput(finalValue);
       adjustHeight();
     }
-    // Only run once after hydration
-    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   useEffect(() => {
@@ -106,6 +119,41 @@ function PureMultimodalInput({
     handleSubmit();
   }, [handleSubmit, setLocalStorageInput, width]);
 
+  const databaseStructure = useDatabaseStructure();
+  const [chartConfig, setChartConfig] = useState<Config | null>(null);
+  const [columns, setColumns] = useState<string[]>([]);
+  const [results, setResults] = useState<Result[]>([]);
+
+  const handleChartConfigGeneration = async () => {
+    setChartConfig(null);
+    console.log("Handle Chart Generation New Function Called");
+    setLocalStorageInput("");
+    if (width && width > 768) {
+      textareaRef.current?.focus();
+    }
+    setInput("");
+    console.log("input: ", input);
+    //console.log("Generating chart config for query:", userQuery);
+    try {
+      console.log(databaseStructure);
+      console.log("Current DB:", databaseStructure);
+
+      const response = await generateChartConfig(databaseStructure, input);
+
+      const responseColumns =
+        response.results.length > 0 ? Object.keys(response.results[0]) : [];
+
+      setColumns(responseColumns);
+
+      setChartConfig(response.config);
+      setResults(response.results);
+      console.log("Generated Chart Config:", chartConfig);
+      console.log(results);
+    } catch (error) {
+      console.error("Error generating chart config:", error);
+    }
+  };
+
   return (
     <div className="relative w-full flex flex-col gap-4">
       <input
@@ -123,7 +171,7 @@ function PureMultimodalInput({
         onChange={handleInput}
         className={cx(
           "max-h-[calc(7.5vh)] overflow-hidden resize-none rounded-2xl !text-base bg-muted pb-10 dark:border-zinc-700",
-          className
+          className,
         )}
         rows={2}
         autoFocus
@@ -144,7 +192,7 @@ function PureMultimodalInput({
         }}
       />
 
-      <div className="absolute bottom-0 right-0 p-2 w-fit flex flex-row justify-end">
+      <div className="absolute bottom-0 right-0 p-2 space-x-1 w-fit flex flex-row justify-end">
         {isLoading ? (
           <StopButton stop={stop} setMessages={setMessages} />
         ) : (
@@ -154,6 +202,42 @@ function PureMultimodalInput({
             uploadQueue={uploadQueue}
           />
         )}
+        <Dialog>
+          <DialogTrigger asChild>
+            {
+              //<ChartButton
+              //  handleChartAction={handleChartConfigGeneration}
+              //  input={input}
+              //  uploadQueue={uploadQueue}
+              ///>
+            }
+
+            <Button
+              onClick={() => handleChartConfigGeneration()}
+              disabled={input.length === 0 || uploadQueue.length > 0}
+              className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+            >
+              <ChartNoAxesCombined />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="sm:max-w-[75dvw] max-h-[82dvh] overflow-y-auto">
+            <DialogHeader>
+              <DialogTitle></DialogTitle>
+              <DialogDescription></DialogDescription>
+            </DialogHeader>
+            {chartConfig ? (
+              <Results
+                results={results}
+                chartConfig={chartConfig}
+                columns={columns}
+              />
+            ) : (
+              <div className="flex items-center justify-center h-full">
+                <div className="animate-spin rounded-full h-8 w-8 border-t-2 border-b-2 border-blue-500"></div>
+              </div>
+            )}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );
@@ -166,7 +250,7 @@ export const MultimodalInput = memo(
     if (prevProps.isLoading !== nextProps.isLoading) return false;
 
     return true;
-  }
+  },
 );
 
 function PureStopButton({
@@ -216,6 +300,36 @@ function PureSendButton({
 }
 
 const SendButton = memo(PureSendButton, (prevProps, nextProps) => {
+  if (prevProps.uploadQueue.length !== nextProps.uploadQueue.length)
+    return false;
+  if (prevProps.input !== nextProps.input) return false;
+  return true;
+});
+
+function PureChartButton({
+  handleChartAction,
+  uploadQueue,
+  input,
+}: {
+  uploadQueue: Array<string>;
+  input: string;
+  handleChartAction;
+}) {
+  return (
+    <Button
+      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      onClick={(event) => {
+        event.preventDefault();
+        handleChartAction(event); // Pass userQuery when invoking chart generation
+      }}
+      disabled={input.length === 0 || uploadQueue.length > 0}
+    >
+      <ChartNoAxesCombined />
+    </Button>
+  );
+}
+
+const ChartButton = memo(PureChartButton, (prevProps, nextProps) => {
   if (prevProps.uploadQueue.length !== nextProps.uploadQueue.length)
     return false;
   if (prevProps.input !== nextProps.input) return false;

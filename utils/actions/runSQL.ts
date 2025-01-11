@@ -4,9 +4,9 @@ import { createClient } from "../supabase/server";
 import { MySQLRequest } from "@/types/DatabaseTypes";
 
 export async function runPostgres(
-  request: PostgresRequest
+  request: PostgresRequest,
 ): Promise<PostgresResponse> {
-  if (!process.env.AZURE_FUNCTION_ENDPOINT) {
+  if (!process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT) {
     throw new Error("Function endpoint not configured");
   }
   const supabase = await createClient();
@@ -18,11 +18,11 @@ export async function runPostgres(
   }
 
   const response = await fetch(
-    process.env.AZURE_FUNCTION_ENDPOINT + "/runPostgres",
+    process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT + "/runPostgres",
     {
       method: "POST",
       body: JSON.stringify(request),
-    }
+    },
   );
 
   if (!response.ok) {
@@ -34,9 +34,9 @@ export async function runPostgres(
 }
 
 export async function runMySQL(
-  request: MySQLRequest
+  request: MySQLRequest,
 ): Promise<PostgresResponse> {
-  if (!process.env.AZURE_FUNCTION_ENDPOINT) {
+  if (!process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT) {
     throw new Error("Function endpoint not configured");
   }
   const supabase = await createClient();
@@ -48,11 +48,11 @@ export async function runMySQL(
   }
 
   const response = await fetch(
-    process.env.AZURE_FUNCTION_ENDPOINT + "/runMySQL",
+    process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT + "/runMySQL",
     {
       method: "POST",
       body: JSON.stringify(request),
-    }
+    },
   );
 
   if (!response.ok) {

@@ -4,8 +4,8 @@ import { createClient } from "@/utils/supabase/server";
 import { Column, Schema, Table } from "@/components/stores/table_store";
 
 const azure = createAzure({
-  resourceName: process.env.AZURE_RESOURCE_NAME, // Azure resource name
-  apiKey: process.env.AZURE_API_KEY, // Azure API key
+  resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
+  apiKey: process.env.NEXT_PUBLIC_AZURE_API_KEY, // Azure API key
 });
 
 // Allow streaming responses up to 30 seconds
@@ -30,7 +30,7 @@ export async function POST(req: Request) {
           const formattedColumns = table.columns
             .map(
               (column: Column) =>
-                `  ${column.name} ${column.dataType.toUpperCase()}`
+                `  ${column.name} ${column.dataType.toUpperCase()}`,
             )
             .join(",\n");
           return `${table.name} (\n${formattedColumns}\n);`;
