@@ -26,9 +26,23 @@ import { DatabaseConfig } from "../stores/db_store";
 import { testConnection } from "../stores/utils/query";
 
 const SSL_MODES = {
-  postgres: ["disable", "require", "verify-ca", "verify-full"],
-  mysql: ["true", "false", "preferred"],
-  sqlite: [],
+  postgres: [
+    "disable", // No SSL
+    "allow", // Try non-SSL first, then SSL
+    "prefer", // Try SSL first, then non-SSL
+    "require", // Always use SSL
+    "verify-ca", // Verify server certificate
+    "verify-full", // Verify server certificate and hostname
+  ],
+  mysql: [
+    "true", // Enable SSL
+    "false", // Disable SSL
+    "preferred", // Use SSL if available
+    "required", // Require SSL
+    "verify_ca", // Verify server certificate
+    "verify_identity", // Verify server certificate and hostname
+  ],
+  sqlite: [], // SQLite doesn't use SSL
 } as const;
 
 const formSchema = z.object({
@@ -45,13 +59,22 @@ const CONNECTION_FORMATS = {
 } as const;
 
 function parseConnectionString(connString: string) {
-  const url = new URL(connString);
-  const params = Object.fromEntries(url.searchParams);
-  return {
-    base: `${url.protocol}//${url.username}:${url.password}@${url.host}${url.pathname}`,
-    sslMode: params.sslmode || params.ssl,
-    params,
-  };
+  try {
+    const url = new URL(connString);
+    const params = Object.fromEntries(url.searchParams);
+    return {
+      base: `${url.protocol}//${url.username}:${url.password}@${url.host}${url.pathname}`,
+      sslMode: params.sslmode || params.ssl || params["ssl-mode"],
+      params,
+    };
+  } catch {
+    // For non-URL formats (like SQLite)
+    return {
+      base: connString,
+      sslMode: undefined,
+      params: {},
+    };
+  }
 }
 
 function buildConnectionString(
@@ -61,11 +84,23 @@ function buildConnectionString(
 ) {
   if (type === "sqlite") return base;
 
-  const url = new URL(base);
-  if (sslMode) {
-    url.searchParams.set(type === "postgres" ? "sslmode" : "ssl", sslMode);
+  try {
+    const url = new URL(base);
+    if (sslMode) {
+      if (type === "postgres") {
+        url.searchParams.set("sslmode", sslMode);
+      } else if (type === "mysql") {
+        // MySQL uses both 'ssl' and 'ssl-mode' parameters
+        url.searchParams.set("ssl", sslMode);
+        if (["verify_ca", "verify_identity"].includes(sslMode)) {
+          url.searchParams.set("ssl-mode", sslMode);
+        }
+      }
+    }
+    return url.toString();
+  } catch {
+    return base;
   }
-  return url.toString();
 }
 
 type FormValues = z.infer<typeof formSchema>;
