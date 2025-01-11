@@ -58,38 +58,27 @@ export function CodeBlock({
 
   if (!inline) {
     return (
-      <div className="not-prose flex flex-col relative">
-        {tab === "code" && (
-          <>
-            <pre
-              {...props}
-              className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
-            >
-              <code className="whitespace-pre-wrap break-words pr-16">
-                {children}
-              </code>
-            </pre>
-            <div className="absolute top-2 right-2 flex">
+      <div>
+        {tab === "code" && isSQL ? (
+          <div className="not-prose flex flex-col relative">
+            <div className="absolute top-0 left-0 right-0 flex justify-end bg-zinc-100 dark:bg-zinc-800 rounded-t-xl border-b border-zinc-200 dark:border-zinc-700">
               <TooltipProvider>
                 <Tooltip>
                   <TooltipTrigger asChild>
-                    {isSQL && (
-                      <Button
-                        variant="ghost"
-                        size="icon"
-                        className="rounded-md hover:bg-zinc-700 focus:outline-none"
-                        onClick={() => insertCode(children)}
-                      >
-                        <Repeat className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
-                      </Button>
-                    )}
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="rounded-md hover:bg-zinc-700 focus:outline-none"
+                      onClick={() => insertCode(children)}
+                    >
+                      <Repeat className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
+                    </Button>
                   </TooltipTrigger>
                   <TooltipContent>
                     <p>Insert code into editor</p>
                   </TooltipContent>
                 </Tooltip>
                 <Tooltip>
-                  {" "}
                   <TooltipTrigger asChild>
                     <Button
                       variant="ghost"
@@ -106,7 +95,17 @@ export function CodeBlock({
                 </Tooltip>
               </TooltipProvider>
             </div>
-          </>
+            <pre
+              {...props}
+              className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 pt-12 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
+            >
+              <code className="whitespace-pre-wrap break-words">
+                {children}
+              </code>
+            </pre>
+          </div>
+        ) : (
+          <p className="font-bold italic"> {children} </p>
         )}
       </div>
     );

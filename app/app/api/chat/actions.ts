@@ -18,6 +18,20 @@ export const generateChartConfig = async (
   userQuery: string,
 ) => {
   try {
+    function generateSchemaString(data) {
+      if (!Array.isArray(data) || data.length === 0) {
+        return "No data available to infer schema.";
+      }
+
+      const sampleObject = data[0];
+      const schemaEntries = Object.entries(sampleObject).map(([key, value]) => {
+        const type = typeof value === "number" ? "INTEGER" : "VARCHAR";
+        return `  "${key}" ${type}`;
+      });
+
+      return `Schema: InferredTable\n\nTable: GeneratedSchema\n${schemaEntries.join(",\n")};`;
+    }
+
     const formattedSchemas = databaseStructure.schemas
       .map((schema: Schema) => {
         const formattedTables = schema.tables
@@ -40,7 +54,7 @@ export const generateChartConfig = async (
     const { text } = await generateText({
       model: azure("gpt-4o-mini"),
       system: "You are an SQL expert.",
-      prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${userQuery}. Output only valid SQL code as plain text, without formatting, explanations, or comments.`,
+      prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${userQuery}. Output only valid SQL code as plain text, without formatting, explanations, or comments. Always enclose table and column names in double quotes`,
     });
 
     console.log(text);
@@ -58,11 +72,13 @@ export const generateChartConfig = async (
     console.log("RESULTS");
     console.log(results);
 
+    const resultsSchema = generateSchemaString(results);
+
     const { object: config } = await generateObject({
       model: azure("gpt-4o-mini"),
       system: "You are a data visualization expert.",
       prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query.
-      For multiple groups use multi-lines.
+      For multiple groups use multi-lines. Match the field names in the results exactly.
 
       Here is an example complete config:
       export const chartConfig = {
@@ -80,8 +96,8 @@ export const generateChartConfig = async (
       User Query:
       ${userQuery}
 
-      Data:
-      ${results}`,
+      Database Schema:
+      ${resultsSchema}`,
       schema: configSchema,
     });
 
