@@ -32,7 +32,7 @@ import {
 } from "@/components/ui/tooltip";
 
 import { useDatabaseStructure } from "../stores/table_store";
-import { queryMetadata } from "../stores/utils/query";
+import { queryMetadata, handleQuery } from "../stores/utils/query";
 import { useState } from "react";
 import { useDbStore } from "../stores/db_store";
 export function NavSchema() {
@@ -59,6 +59,21 @@ export function NavSchema() {
       });
     } finally {
       setRefreshing(false);
+    }
+  };
+
+  const handleTableClick = async (schemaName: string, tableName: string) => {
+    try {
+      await handleQuery(
+        `SELECT * FROM "${schemaName}"."${tableName}" LIMIT 100;`
+      );
+    } catch (err) {
+      toast({
+        variant: "destructive",
+        title: "Query failed",
+        description:
+          err instanceof Error ? err.message : "Failed to query table",
+      });
     }
   };
 
@@ -103,7 +118,10 @@ export function NavSchema() {
               <CollapsibleContent>
                 <SidebarMenuSub>
                   {schema.tables.map((table) => (
-                    <SidebarMenuSubItem key={table.name}>
+                    <SidebarMenuSubItem
+                      key={table.name}
+                      onClick={() => handleTableClick(schema.name, table.name)}
+                    >
                       <SidebarMenuSubButton>
                         {table.type === "VIEW" ? (
                           <BoxSelect className="h-4 w-4" />

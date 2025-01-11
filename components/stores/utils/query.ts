@@ -47,8 +47,8 @@ export async function testConnection(connectionString: string, type: string) {
   return true;
 }
 
-export async function handleQuery(): Promise<void> {
-  const query = useEditorStore.getState().value;
+export async function handleQuery(queryString?: string): Promise<void> {
+  const query = queryString ?? useEditorStore.getState().value;
   const { setData, setColumns } = useTableStore.getState();
 
   const result = await executeQuery(query);
