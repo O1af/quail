@@ -36,8 +36,15 @@ async function executeWithUsageTracking<T>(
     throw new Error("Unauthorized");
   }
 
-  // Update usage metrics
-  await updateMetricUsage(supabase, user.user.id, getCurrentUsageColumn());
+  // Start metrics update in background
+  const metricsPromise = updateMetricUsage(
+    supabase,
+    user.user.id,
+    getCurrentUsageColumn()
+  ).catch((error) => {
+    console.error("Failed to update usage metrics:", error);
+    // Don't throw here - we don't want to fail the main operation
+  });
 
   const response = await fetch(
     process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT + endpoint,
@@ -52,7 +59,12 @@ async function executeWithUsageTracking<T>(
     throw new Error(`Database error: ${error}`);
   }
 
-  return await response.json();
+  const result = await response.json();
+
+  // Ensure metrics are updated before returning
+  await metricsPromise;
+
+  return result;
 }
 
 export async function runPostgres(
