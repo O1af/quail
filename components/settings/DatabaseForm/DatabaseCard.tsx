@@ -1,4 +1,4 @@
-import { DatabaseConfig, useDbStore } from "../stores/db_store";
+import { DatabaseConfig, useDbStore } from "../../stores/db_store";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, CheckCircle, Circle, Loader2 } from "lucide-react";
 import { DatabaseDialog } from "./DatabaseDialog";
@@ -9,8 +9,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useState, memo } from "react";
 import { useToast } from "@/hooks/use-toast";
-import { queryMetadata } from "../stores/utils/query";
-import { useTableStore } from "../stores/table_store"; // Add this import
+import { queryMetadata } from "../../stores/utils/query";
+import { useTableStore } from "../../stores/table_store"; // Add this import
 
 interface DatabaseCardProps {
   db: DatabaseConfig;

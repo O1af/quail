@@ -22,8 +22,8 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState, useEffect, useCallback, memo } from "react";
-import { DatabaseConfig } from "../stores/db_store";
-import { testConnection } from "../stores/utils/query";
+import { DatabaseConfig } from "../../stores/db_store";
+import { testConnection } from "../../stores/utils/query";
 
 const SSL_MODES = {
   postgres: [

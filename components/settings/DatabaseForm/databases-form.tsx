@@ -1,6 +1,6 @@
 "use client";
 
-import { useDbStore } from "../stores/db_store";
+import { useDbStore } from "../../stores/db_store";
 import { DatabaseCard } from "./DatabaseCard";
 import { DatabaseDialog } from "./DatabaseDialog";
 import { useEffect, useState, memo, useMemo } from "react";
