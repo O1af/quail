@@ -305,33 +305,3 @@ const SendButton = memo(PureSendButton, (prevProps, nextProps) => {
   if (prevProps.input !== nextProps.input) return false;
   return true;
 });
-
-function PureChartButton({
-  handleChartAction,
-  uploadQueue,
-  input,
-}: {
-  uploadQueue: Array<string>;
-  input: string;
-  handleChartAction;
-}) {
-  return (
-    <Button
-      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
-      onClick={(event) => {
-        event.preventDefault();
-        handleChartAction(event); // Pass userQuery when invoking chart generation
-      }}
-      disabled={input.length === 0 || uploadQueue.length > 0}
-    >
-      <ChartNoAxesCombined />
-    </Button>
-  );
-}
-
-const ChartButton = memo(PureChartButton, (prevProps, nextProps) => {
-  if (prevProps.uploadQueue.length !== nextProps.uploadQueue.length)
-    return false;
-  if (prevProps.input !== nextProps.input) return false;
-  return true;
-});
