@@ -10,6 +10,7 @@ import {
 import { SidebarNav } from "./sidebar-nav";
 import { ProfileForm } from "./profile-form";
 import { DatabasesForm } from "./DatabaseForm/databases-form";
+import { BillingForm } from "./BillingForm/billing-form";
 
 const sidebarNavItems = [
   {
@@ -60,8 +61,19 @@ export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
         return <ProfileForm />;
       case "database":
         return <DatabasesForm />;
+      case "billing":
+        return <BillingForm />;
       default:
         return <div>Section under construction</div>;
+    }
+  };
+
+  const getSidebarWidth = () => {
+    switch (activeSection) {
+      case "billing":
+        return "w-[180px] min-w-[180px]";
+      default:
+        return "w-1/3 max-w-[200px]";
     }
   };
 
@@ -73,14 +85,14 @@ export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
         onOpenChange?.(newOpen);
       }}
     >
-      <DialogContent className="sm:max-w-[90vw] md:max-w-[800px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[95vw] md:max-w-[1000px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight">
             Settings
           </DialogTitle>
         </DialogHeader>
         <div className="pt-8 flex flex-row flex-grow overflow-hidden">
-          <aside className="w-1/3 max-w-[200px] pr-6 overflow-y-auto">
+          <aside className={`${getSidebarWidth()} pr-6 overflow-y-auto`}>
             <SidebarNav
               items={sidebarNavItems}
               activeSection={activeSection}
