@@ -1,7 +1,6 @@
 import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
-import { FeatureCards } from "./heroCards";
 
 export function Hero() {
   return (
@@ -33,7 +32,6 @@ export function Hero() {
             Get Started
           </Button>
         </div>
-        <FeatureCards />
       </Container>
     </section>
   );
