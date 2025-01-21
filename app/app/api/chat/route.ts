@@ -1,17 +1,24 @@
-import { streamText } from "ai";
+import { streamText, generateText, generateObject, tool } from "ai";
+import { z } from "zod";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
 import { Column, Schema, Table } from "@/components/stores/table_store";
+import { executeQuery } from "@/components/stores/utils/query";
+import { Result, configSchema } from "@/lib/types";
+import { unstable_noStore as noStore } from "next/cache";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
   apiKey: process.env.NEXT_PUBLIC_AZURE_API_KEY, // Azure API key
 });
 
-// Allow streaming responses up to 30 seconds
+// Allow streaming responses up to 120 seconds
 export const maxDuration = 30;
+export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
+  console.log("noStore called");
+  noStore();
   console.log("Post req made:");
   const supabase = await createClient();
   const { data: user, error } = await supabase.auth.getUser();
@@ -22,7 +29,13 @@ export async function POST(req: Request) {
     });
   }
 
-  const { messages, databaseStructure, dbType } = await req.json();
+  console.log("db connection pre");
+
+  const { messages, databaseStructure, dbType, connectionString } =
+    await req.json();
+
+  console.log("db connection post");
+
   const formattedSchemas = databaseStructure.schemas
     .map((schema: Schema) => {
       const formattedTables = schema.tables
@@ -51,13 +64,101 @@ export async function POST(req: Request) {
       "Please provide the best SQL queries to fulfill the user's request",
   };
 
-  // Get the database schema from Zustand store
-
+  console.log("all other");
   const result = streamText({
     model: azure("gpt-4o-mini"),
+    tools: {
+      chart: tool({
+        description: "Generate a chart.",
+        parameters: z.object({}),
+        execute: async ({}) => {
+          console.log("Executing chart tool");
+          function generateSchemaString(data: Result[]) {
+            if (!Array.isArray(data) || data.length === 0) {
+              return "No data available to infer schema.";
+            }
+
+            const sampleObject = data[0];
+            const schemaEntries = Object.entries(sampleObject).map(
+              ([key, value]) => {
+                const type = typeof value === "number" ? "INTEGER" : "VARCHAR";
+                return `  "${key}" ${type}`;
+              },
+            );
+
+            return `Schema: InferredTable\n\nTable: GeneratedSchema\n${schemaEntries.join(",\n")};`;
+          }
+
+          const jsonQuery = messages[messages.length - 1].content;
+          const myQuery = JSON.stringify(jsonQuery, null, 2);
+          console.log(`my query:  ${myQuery}`);
+
+          const { text } = await generateText({
+            model: azure("gpt-4o-mini"),
+            system: "You are an SQL expert.",
+            prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. Output only valid SQL code as plain text, without formatting, explanations, or comments. Always enclose table and column names in double quotes`,
+          });
+
+          console.log("executing query");
+
+          const response = await executeQuery(text, connectionString, dbType);
+
+          const results: Result[] = response.rows.map((row) => {
+            const transformedRow: Result = {};
+            Object.entries(row).forEach(([key, value]) => {
+              transformedRow[key] = isNaN(Number(value))
+                ? value
+                : parseFloat(value);
+            });
+            return transformedRow;
+          });
+
+          const resultsSchema = generateSchemaString(results);
+
+          console.log("config object about to be generated");
+
+          const { object: config } = await generateObject({
+            model: azure("gpt-4o-mini"),
+            system: "You are a data visualization expert.",
+            prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query. For multiple groups use multi-lines. Match the field names in the results exactly.
+
+              Here is an example complete config:
+              export const chartConfig = {
+                type: "pie",
+                xKey: "month",
+                yKeys: ["sales", "profit", "expenses"],
+                colors: {
+                  sales: "#4CAF50",    // Green for sales
+                  profit: "#2196F3",   // Blue for profit
+                  expenses: "#F44336"  // Red for expenses
+                },
+                legend: true
+              }
+
+              User Query:
+              ${myQuery}
+
+              Database Schema:
+              ${resultsSchema}`,
+            schema: configSchema,
+          });
+
+          const colors: Record<string, string> = {};
+          config.yKeys.forEach((key, index) => {
+            colors[key] = `hsl(var(--chart-${index + 1}))`;
+          });
+
+          const updatedConfig = { ...config, colors };
+
+          return { results, config: updatedConfig };
+        },
+      }),
+    },
     messages: [systemPrompt, promptMessage, ...messages],
     maxTokens: 1000,
   });
+
+  console.log("returning result");
 
   return result.toDataStreamResponse();
 }

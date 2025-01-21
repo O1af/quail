@@ -124,6 +124,8 @@ function PureMultimodalInput({
   const [columns, setColumns] = useState<string[]>([]);
   const [results, setResults] = useState<Result[]>([]);
 
+  console.log(messages);
+
   const handleChartConfigGeneration = async () => {
     setChartConfig(null);
     console.log("Handle Chart Generation New Function Called");
@@ -202,7 +204,7 @@ function PureMultimodalInput({
             uploadQueue={uploadQueue}
           />
         )}
-        <Dialog>
+        {/*<Dialog>
           <DialogTrigger asChild>
             <Button
               onClick={() => handleChartConfigGeneration()}
@@ -229,7 +231,7 @@ function PureMultimodalInput({
               </div>
             )}
           </DialogContent>
-        </Dialog>
+        </Dialog>*/}
       </div>
     </div>
   );

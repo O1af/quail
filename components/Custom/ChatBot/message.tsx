@@ -8,8 +8,18 @@ import { memo, useState } from "react";
 
 import { Markdown } from "./markdown";
 import { MessageActions } from "./message-actions";
-import equal from "fast-deep-equal";
 import { cn } from "@/lib/utils";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { BarChart3 } from "lucide-react";
+import { Results } from "./Results";
+import { Button } from "@/components/ui/button";
 
 import { useTheme } from "next-themes";
 
@@ -20,7 +30,7 @@ const PurePreviewMessage = ({
   message: Message;
   isLoading: boolean;
   reload: (
-    chatRequestOptions?: ChatRequestOptions
+    chatRequestOptions?: ChatRequestOptions,
   ) => Promise<string | null | undefined>;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
@@ -42,7 +52,7 @@ const PurePreviewMessage = ({
             {
               "w-full": mode === "edit",
               "group-data-[role=user]/message:w-fit": mode !== "edit",
-            }
+            },
           )}
         >
           {message.role === "assistant" && (
@@ -54,6 +64,68 @@ const PurePreviewMessage = ({
               </div>
             </div>
           )}
+
+          {message.toolInvocations &&
+            message.toolInvocations.length > 0 &&
+            message.role === "assistant" && (
+              <>
+                {message.toolInvocations.map((toolInvocation) => {
+                  const { toolName, toolCallId, state } = toolInvocation;
+
+                  if (state === "result") {
+                    if (toolName === "chart") {
+                      const { result } = toolInvocation;
+                      return (
+                        <div key={toolCallId}>
+                          <Dialog>
+                            <DialogTrigger asChild>
+                              <Button
+                                variant="outline"
+                                className="justify-start text-left font-normal"
+                              >
+                                <BarChart3 className="h-4 w-4" />
+                                <span>View Chart</span>
+                              </Button>
+                            </DialogTrigger>
+                            <DialogContent className="sm:max-w-[95dvw] max-h-[85dvh] overflow-y-auto">
+                              <DialogHeader>
+                                <DialogTitle></DialogTitle>
+                                <DialogDescription></DialogDescription>
+                              </DialogHeader>
+                              {result.config ? (
+                                <Results
+                                  results={result.results}
+                                  chartConfig={result.config}
+                                  columns={
+                                    result.results.length > 0
+                                      ? Object.keys(result.results[0])
+                                      : []
+                                  }
+                                />
+                              ) : (
+                                <div className="flex items-center justify-center h-full">
+                                  <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-12 w-12" />
+                                </div>
+                              )}
+                            </DialogContent>
+                          </Dialog>
+                        </div>
+                      );
+                    }
+                  } else {
+                    return (
+                      <div key={toolCallId}>
+                        {toolName === "chart" && (
+                          <div className="flex items-center justify-center h-full">
+                            <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-6 w-6" />
+                          </div>
+                        )}
+                      </div>
+                    );
+                  }
+                })}
+              </>
+            )}
 
           <div className="flex flex-col gap-2 w-full">
             {message.content && mode === "view" && (
@@ -84,10 +156,12 @@ const PurePreviewMessage = ({
   );
 };
 
-export const PreviewMessage = memo(PurePreviewMessage, (prevProps, nextProps) => 
-  prevProps.isLoading === nextProps.isLoading && 
-  prevProps.message.id === nextProps.message.id &&
-  prevProps.message.content === nextProps.message.content
+export const PreviewMessage = memo(
+  PurePreviewMessage,
+  (prevProps, nextProps) =>
+    prevProps.isLoading === nextProps.isLoading &&
+    prevProps.message.id === nextProps.message.id &&
+    prevProps.message.content === nextProps.message.content,
 );
 
 export const ThinkingMessage = () => {
@@ -107,7 +181,7 @@ export const ThinkingMessage = () => {
           "flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl",
           {
             "group-data-[role=user]/message:bg-muted": true,
-          }
+          },
         )}
       >
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">

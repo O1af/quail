@@ -8,6 +8,8 @@ import { useDatabaseStructure } from "@/components/stores/table_store";
 import { useEffect } from "react";
 import { useDbStore } from "@/components/stores/db_store";
 
+export const maxDuration = 30;
+
 export default function Chat() {
   const databaseStructure = useDatabaseStructure();
   const { getCurrentDatabase } = useDbStore();
@@ -31,6 +33,7 @@ export default function Chat() {
           messages,
           databaseStructure,
           dbType: currentDb?.type || "postgres", // default to postgres if no db selected
+          connectionString: currentDb?.connectionString,
         }),
       );
     },

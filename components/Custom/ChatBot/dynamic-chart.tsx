@@ -14,6 +14,7 @@ import {
   YAxis,
   CartesianGrid,
   Legend,
+  ResponsiveContainer,
 } from "recharts";
 import {
   ChartContainer,
@@ -60,27 +61,50 @@ export function DynamicChart({
 
     chartData = parsedChartData;
 
-    const processChartData = (data: Result[], chartType: string) => {
-      if (chartType === "bar" || chartType === "pie") {
-        if (data.length <= 8) {
-          return data;
-        }
-
-        const subset = data.slice(0, 20);
-        return subset;
-      }
-      return data;
-    };
-
-    chartData = processChartData(chartData, chartConfig.type);
-    // console.log({ chartData, chartConfig });
+    console.log({ chartData, chartConfig });
 
     switch (chartConfig.type) {
       case "bar":
         return (
-          <BarChart data={chartData}>
+          <BarChart data={chartData} margin={{ bottom: 50 }}>
             <CartesianGrid strokeDasharray="3 3" />
-            <XAxis dataKey={chartConfig.xKey}>
+            <XAxis
+              dataKey={chartConfig.xKey}
+              interval="preserveStartEnd"
+              tick={({ x, y, payload }) => {
+                const words = payload.value.split(" ");
+                const lines = [];
+                let currentLine = "";
+
+                words.forEach((word) => {
+                  if ((currentLine + word).length > 10) {
+                    lines.push(currentLine);
+                    currentLine = word;
+                  } else {
+                    currentLine += (currentLine ? " " : "") + word;
+                  }
+                });
+                lines.push(currentLine);
+
+                return (
+                  <g transform={`translate(${x},${y + 10})`}>
+                    {lines.map((line, index) => (
+                      <text
+                        key={index}
+                        x={0}
+                        y={index * 12}
+                        textAnchor="middle"
+                        fontSize={12}
+                      >
+                        {line}
+                      </text>
+                    ))}
+                  </g>
+                );
+              }}
+              angle={0}
+              textAnchor="middle"
+            >
               <Label
                 value={toTitleCase(chartConfig.xKey)}
                 offset={0}
@@ -114,8 +138,6 @@ export function DynamicChart({
           chartConfig.multipleLines &&
           chartConfig.measurementColumn &&
           chartConfig.yKeys.includes(chartConfig.measurementColumn);
-        // console.log(useTransformedData, "useTransformedData");
-        // const useTransformedData = false;
         return (
           <LineChart data={useTransformedData ? data : chartData}>
             <CartesianGrid strokeDasharray="3 3" />
@@ -221,12 +243,19 @@ export function DynamicChart({
           )}
           className="h-[320px] w-full"
         >
-          {renderChart()}
+          <div style={{ overflowX: "auto", width: "100%" }}>
+            <ResponsiveContainer
+              width={Math.max(chartData.length, window.innerWidth * 0.9)}
+              height={370}
+            >
+              {renderChart()}
+            </ResponsiveContainer>
+          </div>
         </ChartContainer>
       )}
-      <div className="w-full">
+      <div className="w-full pt-16">
         <p className="mt-4 text-sm">{chartConfig.description}</p>
-        <p className="mt-4 text-sm">{chartConfig.takeaway}</p>
+        <p className="mt-2 text-sm">{chartConfig.takeaway}</p>
       </div>
     </div>
   );
