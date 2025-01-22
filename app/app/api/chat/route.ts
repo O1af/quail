@@ -148,10 +148,13 @@ export async function POST(req: Request) {
           const { text } = await generateText({
             model: azure("gpt-4o-mini"),
             system: "You are an SQL expert.",
-            prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. Output only valid SQL code as plain text, without formatting, explanations, or comments. Always enclose table and column names in double quotes`,
+            prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. Output only valid SQL code as plain text, without formatting, explanations, or comments. Keep in mind the database is of type ${dbType}.`,
           });
 
           const response = await executeQuery(text, connectionString, dbType);
+          if (!response) {
+            throw new Error("Failed to execute query");
+          }
 
           const results: Result[] = response.rows.map((row) => {
             const transformedRow: Result = {};
@@ -190,6 +193,10 @@ export async function POST(req: Request) {
               ${resultsSchema}`,
             schema: configSchema,
           });
+
+          if (!config) {
+            throw new Error("Failed to generate chart config");
+          }
 
           const colors: Record<string, string> = {};
           config.yKeys.forEach((key, index) => {
