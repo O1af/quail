@@ -35,6 +35,7 @@ import { useDatabaseStructure } from "../stores/table_store";
 import { queryMetadata, handleQuery } from "../stores/utils/query";
 import { useState } from "react";
 import { useDbStore } from "../stores/db_store";
+import { match } from "assert";
 export function NavSchema() {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
@@ -63,10 +64,18 @@ export function NavSchema() {
   };
 
   const handleTableClick = async (schemaName: string, tableName: string) => {
+    const currentDb = getCurrentDatabase();
+    if (!currentDb) return;
+    let query: string;
+    if (currentDb.type === "postgres") {
+      query = `SELECT * FROM "${schemaName}"."${tableName}" LIMIT 100;`;
+    } else if (currentDb.type === "mysql") {
+      query = `SELECT * FROM ${schemaName}.${tableName} LIMIT 100;`;
+    } else {
+      throw new Error(`Unsupported database type: ${currentDb.type}`);
+    }
     try {
-      await handleQuery(
-        `SELECT * FROM "${schemaName}"."${tableName}" LIMIT 100;`
-      );
+      await handleQuery(query);
     } catch (err) {
       toast({
         variant: "destructive",
