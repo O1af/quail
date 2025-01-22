@@ -207,7 +207,7 @@ export async function POST(req: Request) {
 
           const updatedConfig = { ...config, colors };
 
-          return { results, config: updatedConfig };
+          return { results, sql: text, config: updatedConfig };
         },
       }),
     },

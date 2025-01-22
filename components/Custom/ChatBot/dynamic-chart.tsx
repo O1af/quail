@@ -59,6 +59,42 @@ export function DynamicChart({
       return parsedItem;
     });
 
+    const ScrollableLegend = ({ payload }: any) => {
+      return (
+        <div
+          style={{
+            maxHeight: "325px", // Limit the height of the legend
+            overflowY: "auto", // Enable scrolling for the legend
+            padding: "10px", // Add padding for better appearance
+            border: "1px solid #ccc", // Optional: Add a border
+            borderRadius: "4px", // Optional: Add rounded corners
+          }}
+        >
+          {payload.map((entry: any, index: number) => (
+            <div
+              key={`legend-item-${index}`}
+              style={{
+                display: "flex",
+                alignItems: "center",
+                marginBottom: "4px",
+              }}
+            >
+              <span
+                style={{
+                  display: "inline-block",
+                  width: "12px",
+                  height: "12px",
+                  backgroundColor: entry.color,
+                  marginRight: "8px",
+                }}
+              ></span>
+              <span>{entry.value}</span>
+            </div>
+          ))}
+        </div>
+      );
+    };
+
     chartData = parsedChartData;
 
     console.log({ chartData, chartConfig });
@@ -72,7 +108,8 @@ export function DynamicChart({
               dataKey={chartConfig.xKey}
               interval="preserveStartEnd"
               tick={({ x, y, payload }) => {
-                const words = payload.value.split(" ");
+                const value = String(payload.value); // Ensure payload.value is a string
+                const words = value.split(" ");
                 const lines = [];
                 let currentLine = "";
 
@@ -84,7 +121,8 @@ export function DynamicChart({
                     currentLine += (currentLine ? " " : "") + word;
                   }
                 });
-                lines.push(currentLine);
+
+                if (currentLine) lines.push(currentLine);
 
                 return (
                   <g transform={`translate(${x},${y + 10})`}>
@@ -218,7 +256,14 @@ export function DynamicChart({
               ))}
             </Pie>
             <ChartTooltip content={<ChartTooltipContent />} />
-            {chartConfig.legend && <Legend />}
+            {chartConfig.legend && (
+              <Legend
+                content={<ScrollableLegend />}
+                layout="vertical"
+                align="right"
+                verticalAlign="middle"
+              />
+            )}
           </PieChart>
         );
       default:
@@ -246,7 +291,7 @@ export function DynamicChart({
           <div style={{ overflowX: "auto", width: "100%" }}>
             <ResponsiveContainer
               width={Math.max(chartData.length, window.innerWidth * 0.9)}
-              height={370}
+              height={375}
             >
               {renderChart()}
             </ResponsiveContainer>

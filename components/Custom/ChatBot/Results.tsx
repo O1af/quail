@@ -10,14 +10,27 @@ import {
   Table,
 } from "@/components/ui/table";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { Button } from "@/components/ui/button";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import { useCopyToClipboard } from "usehooks-ts";
+import { useToast } from "@/hooks/use-toast";
+import { useEditorStore } from "@/components/stores/editor_store";
+import { Copy, Repeat } from "lucide-react";
 
 export const Results = ({
   results,
   columns,
+  sql,
   chartConfig,
 }: {
   results: Result[];
   columns: string[];
+  sql: string;
   chartConfig: Config | null;
 }) => {
   const formatColumnTitle = (title: string) => {
@@ -27,6 +40,28 @@ export const Results = ({
         index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word,
       )
       .join(" ");
+  };
+
+  const { toast } = useToast(); // Initialize the toast hook
+  const { setValue } = useEditorStore();
+  const [_, copyToClipboard] = useCopyToClipboard();
+
+  const handleCopy = async () => {
+    await copyToClipboard(sql);
+    toast({
+      description: "Copied to clipboard!",
+      duration: 1750,
+    });
+  };
+
+  const insertCode = (children: React.ReactNode) => {
+    // Set the new value for the editor when the button is clicked
+    const newValue = `${children}`; // Example: Dynamically use the children content
+    setValue(newValue);
+    toast({
+      description: "Editor content replaced!",
+      duration: 1750,
+    });
   };
 
   const formatCellValue = (column: string, value: any) => {
@@ -47,11 +82,40 @@ export const Results = ({
     return String(value || "");
   };
 
+  const formatSqlWithHighlighting = (sql: string) => {
+    const keywords = {
+      blue: ["SELECT", "FROM", "WHERE", "GROUP BY", "ORDER BY", "DESC", "AS"],
+      purple: ["COUNT"],
+      green: ["'active'"],
+    };
+
+    let formattedSql = sql;
+    keywords.blue.forEach((keyword) => {
+      formattedSql = formattedSql.replace(
+        new RegExp(`\\b${keyword}\\b`, "g"),
+        `<span class="text-blue-500">${keyword}</span>`,
+      );
+    });
+    keywords.purple.forEach((keyword) => {
+      formattedSql = formattedSql.replace(
+        new RegExp(`\\b${keyword}\\b`, "g"),
+        `<span class="text-purple-500">${keyword}</span>`,
+      );
+    });
+    keywords.green.forEach((keyword) => {
+      formattedSql = formattedSql.replace(
+        keyword,
+        `<span class="text-green-500">${keyword}</span>`,
+      );
+    });
+
+    return formattedSql;
+  };
+
   return (
     <div className="flex-grow flex flex-col">
-      <Tabs defaultValue="table" className="w-full flex-grow flex flex-col">
-        <TabsList className="grid w-full grid-cols-2">
-          <TabsTrigger value="table">Table</TabsTrigger>
+      <Tabs defaultValue="charts" className="w-full flex-grow flex flex-col">
+        <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger
             value="charts"
             disabled={
@@ -60,7 +124,18 @@ export const Results = ({
           >
             Chart
           </TabsTrigger>
+          <TabsTrigger value="table">Table</TabsTrigger>
+          <TabsTrigger value="sql">SQL</TabsTrigger>
         </TabsList>
+        <TabsContent value="charts" className="flex-grow overflow-auto">
+          <div className="mt-4">
+            {chartConfig && results.length > 0 ? (
+              <DynamicChart chartData={results} chartConfig={chartConfig} />
+            ) : (
+              <SkeletonCard />
+            )}
+          </div>
+        </TabsContent>
         <TabsContent value="table" className="flex-grow">
           <div className="sm:min-h-[10px] relative">
             <Table className="min-w-full divide-y divide-border">
@@ -93,14 +168,43 @@ export const Results = ({
             </Table>
           </div>
         </TabsContent>
-        <TabsContent value="charts" className="flex-grow overflow-auto">
-          <div className="mt-4">
-            {chartConfig && results.length > 0 ? (
-              <DynamicChart chartData={results} chartConfig={chartConfig} />
-            ) : (
-              <SkeletonCard />
-            )}
-          </div>
+        <TabsContent value="sql" className="flex-grow">
+          <TooltipProvider>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-md hover:bg-zinc-700 focus:outline-none"
+                  onClick={() => insertCode(sql)}
+                >
+                  <Repeat className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Insert code into editor</p>
+              </TooltipContent>
+            </Tooltip>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  className="rounded-md hover:bg-zinc-700 focus:outline-none"
+                  onClick={handleCopy}
+                >
+                  <Copy className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
+                </Button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Copy</p>
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
+          <div
+            className="p-4 bg-secondary rounded-md text-sm whitespace-pre-wrap"
+            dangerouslySetInnerHTML={{ __html: formatSqlWithHighlighting(sql) }}
+          />
         </TabsContent>
       </Tabs>
     </div>

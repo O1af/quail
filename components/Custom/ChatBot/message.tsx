@@ -96,6 +96,7 @@ const PurePreviewMessage = ({
                                 <Results
                                   results={result.results}
                                   chartConfig={result.config}
+                                  sql={result.sql}
                                   columns={
                                     result.results.length > 0
                                       ? Object.keys(result.results[0])

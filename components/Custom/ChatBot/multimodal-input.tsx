@@ -119,42 +119,42 @@ function PureMultimodalInput({
     handleSubmit();
   }, [handleSubmit, setLocalStorageInput, width]);
 
-  const databaseStructure = useDatabaseStructure();
-  const [chartConfig, setChartConfig] = useState<Config | null>(null);
-  const [columns, setColumns] = useState<string[]>([]);
-  const [results, setResults] = useState<Result[]>([]);
+  //const databaseStructure = useDatabaseStructure();
+  //const [chartConfig, setChartConfig] = useState<Config | null>(null);
+  //const [columns, setColumns] = useState<string[]>([]);
+  //const [results, setResults] = useState<Result[]>([]);
 
   console.log(messages);
 
-  const handleChartConfigGeneration = async () => {
-    setChartConfig(null);
-    console.log("Handle Chart Generation New Function Called");
-    setLocalStorageInput("");
-    if (width && width > 768) {
-      textareaRef.current?.focus();
-    }
-    setInput("");
-    console.log("input: ", input);
-    //console.log("Generating chart config for query:", userQuery);
-    try {
-      console.log(databaseStructure);
-      console.log("Current DB:", databaseStructure);
-
-      const response = await generateChartConfig(databaseStructure, input);
-
-      const responseColumns =
-        response.results.length > 0 ? Object.keys(response.results[0]) : [];
-
-      setColumns(responseColumns);
-
-      setChartConfig(response.config);
-      setResults(response.results);
-      console.log("Generated Chart Config:", chartConfig);
-      console.log(results);
-    } catch (error) {
-      console.error("Error generating chart config:", error);
-    }
-  };
+  //const handleChartConfigGeneration = async () => {
+  //  setChartConfig(null);
+  //  console.log("Handle Chart Generation New Function Called");
+  //  setLocalStorageInput("");
+  //  if (width && width > 768) {
+  //    textareaRef.current?.focus();
+  //  }
+  //  setInput("");
+  //  console.log("input: ", input);
+  //  //console.log("Generating chart config for query:", userQuery);
+  //  try {
+  //    console.log(databaseStructure);
+  //    console.log("Current DB:", databaseStructure);
+  //
+  //    const response = await generateChartConfig(databaseStructure, input);
+  //
+  //    const responseColumns =
+  //      response.results.length > 0 ? Object.keys(response.results[0]) : [];
+  //
+  //    setColumns(responseColumns);
+  //
+  //    setChartConfig(response.config);
+  //    setResults(response.results);
+  //    console.log("Generated Chart Config:", chartConfig);
+  //    console.log(results);
+  //  } catch (error) {
+  //    console.error("Error generating chart config:", error);
+  //  }
+  //};
 
   return (
     <div className="relative w-full flex flex-col gap-4">
