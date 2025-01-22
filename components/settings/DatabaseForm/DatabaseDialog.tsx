@@ -24,6 +24,7 @@ import * as z from "zod";
 import { useState, useEffect, useCallback, memo } from "react";
 import { DatabaseConfig } from "../../stores/db_store";
 import { testConnection } from "../../stores/utils/query";
+import { getAzureIP } from "@/utils/actions/getIP";
 
 const SSL_MODES = {
   postgres: [
@@ -120,6 +121,13 @@ export const DatabaseDialog = memo(function DatabaseDialog({
   const [testing, setTesting] = useState(false);
   const [error, setError] = useState<string | null>(null);
   const [hasSSLInString, setHasSSLInString] = useState(false);
+  const [ip, setIp] = useState<string>("");
+
+  useEffect(() => {
+    if (open) {
+      getAzureIP().then(setIp);
+    }
+  }, [open]);
 
   const form = useForm<FormValues>({
     resolver: zodResolver(formSchema),
@@ -245,6 +253,12 @@ export const DatabaseDialog = memo(function DatabaseDialog({
             </div>
           )}
           {error && <div className="text-sm text-destructive">{error}</div>}
+          {ip && (
+            <div className="text-sm text-muted-foreground border rounded-md p-2 bg-muted/50">
+              ⚠️ Make sure to add this IP to your database allow list:{" "}
+              <span className="font-mono">{ip}</span>
+            </div>
+          )}
           <div className="flex justify-end gap-2">
             <Button variant="outline" onClick={() => setOpen(false)}>
               Cancel
