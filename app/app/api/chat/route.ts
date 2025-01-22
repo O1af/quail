@@ -6,6 +6,7 @@ import { Column, Schema, Table } from "@/components/stores/table_store";
 import { executeQuery } from "@/components/stores/utils/query";
 import { Result, configSchema } from "@/lib/types";
 import { unstable_noStore as noStore } from "next/cache";
+import { countTokens } from "gpt-tokenizer";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -15,6 +16,35 @@ const azure = createAzure({
 // Allow streaming responses up to 120 seconds
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
+
+async function updateTokenUsage(
+  supabase: any,
+  userId: string,
+  columnName: string,
+  tokenCount: number
+) {
+  const { error } = await supabase.rpc("increment_mini_tokens", {
+    p_user_id: userId,
+    p_column_name: columnName,
+    p_increment_value: tokenCount,
+  });
+  if (error) throw new Error(`Failed to update token usage: ${error.message}`);
+}
+
+async function updateUsage(supabase: any, userId: string, columnName: string) {
+  const { error } = await supabase.rpc("increment_mini_count", {
+    p_user_id: userId,
+    p_column_name: columnName,
+  });
+  if (error) throw new Error(`Failed to update AI usage: ${error.message}`);
+}
+
+function getCurrentUsageColumn(): string {
+  const now = new Date();
+  const month = now.toLocaleString("default", { month: "long" }).toLowerCase();
+  const year = now.getFullYear();
+  return `${month}_${year}`;
+}
 
 export async function POST(req: Request) {
   console.log("noStore called");
@@ -43,7 +73,7 @@ export async function POST(req: Request) {
           const formattedColumns = table.columns
             .map(
               (column: Column) =>
-                `  ${column.name} ${column.dataType.toUpperCase()}`,
+                `  ${column.name} ${column.dataType.toUpperCase()}`
             )
             .join(",\n");
           return `${table.name} (\n${formattedColumns}\n);`;
@@ -64,6 +94,31 @@ export async function POST(req: Request) {
       "Please provide the best SQL queries to fulfill the user's request",
   };
 
+  // Count and log tokens
+  const allMessages = [systemPrompt, promptMessage, ...messages];
+  const totalTokens = allMessages.reduce(
+    (sum, msg) => sum + countTokens(msg.content),
+    0
+  );
+  console.log(`Total tokens in messages: ${totalTokens}`);
+
+  // Start token usage and general usage update in background
+  const updatePromises = [
+    updateTokenUsage(
+      supabase,
+      user.user.id,
+      getCurrentUsageColumn(),
+      totalTokens
+    ).catch((error) => {
+      console.error("Failed to update token usage:", error);
+    }),
+    updateUsage(supabase, user.user.id, getCurrentUsageColumn()).catch(
+      (error) => {
+        console.error("Failed to update AI usage:", error);
+      }
+    ),
+  ];
+
   console.log("all other");
   const result = streamText({
     model: azure("gpt-4o-mini"),
@@ -83,10 +138,12 @@ export async function POST(req: Request) {
               ([key, value]) => {
                 const type = typeof value === "number" ? "INTEGER" : "VARCHAR";
                 return `  "${key}" ${type}`;
-              },
+              }
             );
 
-            return `Schema: InferredTable\n\nTable: GeneratedSchema\n${schemaEntries.join(",\n")};`;
+            return `Schema: InferredTable\n\nTable: GeneratedSchema\n${schemaEntries.join(
+              ",\n"
+            )};`;
           }
 
           const jsonQuery = messages[messages.length - 1].content;
@@ -107,8 +164,8 @@ export async function POST(req: Request) {
             const transformedRow: Result = {};
             Object.entries(row).forEach(([key, value]) => {
               transformedRow[key] = isNaN(Number(value))
-                ? value
-                : parseFloat(value);
+                ? (value as string)
+                : parseFloat(value as string);
             });
             return transformedRow;
           });
@@ -157,6 +214,9 @@ export async function POST(req: Request) {
     messages: [systemPrompt, promptMessage, ...messages],
     maxTokens: 1000,
   });
+
+  // Ensure usage updates are completed before returning
+  await Promise.all(updatePromises);
 
   console.log("returning result");
 
