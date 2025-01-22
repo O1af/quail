@@ -21,7 +21,7 @@ async function updateTokenUsage(
   supabase: any,
   userId: string,
   columnName: string,
-  tokenCount: number
+  tokenCount: number,
 ) {
   const { error } = await supabase.rpc("increment_mini_tokens", {
     p_user_id: userId,
@@ -59,12 +59,8 @@ export async function POST(req: Request) {
     });
   }
 
-  console.log("db connection pre");
-
   const { messages, databaseStructure, dbType, connectionString } =
     await req.json();
-
-  console.log("db connection post");
 
   const formattedSchemas = databaseStructure.schemas
     .map((schema: Schema) => {
@@ -73,7 +69,7 @@ export async function POST(req: Request) {
           const formattedColumns = table.columns
             .map(
               (column: Column) =>
-                `  ${column.name} ${column.dataType.toUpperCase()}`
+                `  ${column.name} ${column.dataType.toUpperCase()}`,
             )
             .join(",\n");
           return `${table.name} (\n${formattedColumns}\n);`;
@@ -98,7 +94,7 @@ export async function POST(req: Request) {
   const allMessages = [systemPrompt, promptMessage, ...messages];
   const totalTokens = allMessages.reduce(
     (sum, msg) => sum + countTokens(msg.content),
-    0
+    0,
   );
   console.log(`Total tokens in messages: ${totalTokens}`);
 
@@ -108,18 +104,17 @@ export async function POST(req: Request) {
       supabase,
       user.user.id,
       getCurrentUsageColumn(),
-      totalTokens
+      totalTokens,
     ).catch((error) => {
       console.error("Failed to update token usage:", error);
     }),
     updateUsage(supabase, user.user.id, getCurrentUsageColumn()).catch(
       (error) => {
         console.error("Failed to update AI usage:", error);
-      }
+      },
     ),
   ];
 
-  console.log("all other");
   const result = streamText({
     model: azure("gpt-4o-mini"),
     tools: {
@@ -138,11 +133,11 @@ export async function POST(req: Request) {
               ([key, value]) => {
                 const type = typeof value === "number" ? "INTEGER" : "VARCHAR";
                 return `  "${key}" ${type}`;
-              }
+              },
             );
 
             return `Schema: InferredTable\n\nTable: GeneratedSchema\n${schemaEntries.join(
-              ",\n"
+              ",\n",
             )};`;
           }
 
@@ -155,8 +150,6 @@ export async function POST(req: Request) {
             system: "You are an SQL expert.",
             prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. Output only valid SQL code as plain text, without formatting, explanations, or comments. Always enclose table and column names in double quotes`,
           });
-
-          console.log("executing query");
 
           const response = await executeQuery(text, connectionString, dbType);
 
@@ -171,8 +164,6 @@ export async function POST(req: Request) {
           });
 
           const resultsSchema = generateSchemaString(results);
-
-          console.log("config object about to be generated");
 
           const { object: config } = await generateObject({
             model: azure("gpt-4o-mini"),
@@ -217,8 +208,6 @@ export async function POST(req: Request) {
 
   // Ensure usage updates are completed before returning
   await Promise.all(updatePromises);
-
-  console.log("returning result");
 
   return result.toDataStreamResponse();
 }

@@ -33,6 +33,10 @@ export const Results = ({
   sql: string;
   chartConfig: Config | null;
 }) => {
+  const { toast } = useToast(); // Initialize the toast hook
+  const { setValue } = useEditorStore();
+  const [_, copyToClipboard] = useCopyToClipboard();
+
   const formatColumnTitle = (title: string) => {
     return title
       .split("_")
@@ -41,10 +45,6 @@ export const Results = ({
       )
       .join(" ");
   };
-
-  const { toast } = useToast(); // Initialize the toast hook
-  const { setValue } = useEditorStore();
-  const [_, copyToClipboard] = useCopyToClipboard();
 
   const handleCopy = async () => {
     await copyToClipboard(sql);
@@ -55,8 +55,7 @@ export const Results = ({
   };
 
   const insertCode = (children: React.ReactNode) => {
-    // Set the new value for the editor when the button is clicked
-    const newValue = `${children}`; // Example: Dynamically use the children content
+    const newValue = `${children}`;
     setValue(newValue);
     toast({
       description: "Editor content replaced!",
