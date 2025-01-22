@@ -1,7 +1,5 @@
 import { z } from "zod";
 
-export type Result = Record<string, string | number>;
-
 export const configSchema = z
   .object({
     description: z
