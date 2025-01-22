@@ -2,6 +2,7 @@ import { create } from "zustand";
 import { persist } from "zustand/middleware";
 import { editor } from "monaco-editor";
 import { handleQuery } from "./utils/query";
+import { clear } from "console";
 
 interface EditorStore {
   value: string;

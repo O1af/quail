@@ -59,8 +59,14 @@ export async function POST(req: Request) {
     });
   }
 
-  const { messages, databaseStructure, dbType, connectionString } =
-    await req.json();
+  const {
+    messages,
+    databaseStructure,
+    dbType,
+    connectionString,
+    editorValue,
+    editorError,
+  } = await req.json();
 
   const formattedSchemas = databaseStructure.schemas
     .map((schema: Schema) => {
@@ -81,14 +87,20 @@ export async function POST(req: Request) {
 
   const systemPrompt = {
     role: "system",
-    content: `You are a SQL (${dbType}) and Data expert. Your job is to help the user write a SQL query to retrieve the data they need. The table schema is as follows: \n\n${formattedSchemas}\n\nFor string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. For example: LOWER(industry) ILIKE LOWER('%search_term%'). Always enclose table and column names in double quotes.`,
+    content: `You are a SQL (${dbType}) and Data expert. Your job is to help the user write a SQL query to retrieve the data they need. 
+    The table schema is as follows: \n\n${formattedSchemas}\n\n
+    For string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. 
+    For example: LOWER(industry) ILIKE LOWER('%search_term%').The user currently has this query in their editor which may or may not be of value:${editorValue}.`,
   };
 
   const promptMessage = {
     role: "user",
-    content:
-      "Please provide the best SQL queries to fulfill the user's request",
+    content: `Please provide the best SQL queries to fulfill the user's request.`,
   };
+  if (editorError) {
+    // If there is an error in the editor, add it to the prompt message
+    systemPrompt.content += `\nThe user has just faced this Error when trying to run the query: ${editorError}`;
+  }
 
   // Count and log tokens
   const allMessages = [systemPrompt, promptMessage, ...messages];

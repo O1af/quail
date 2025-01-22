@@ -7,12 +7,14 @@ import { MultimodalInput } from "./multimodal-input";
 import { useDatabaseStructure } from "@/components/stores/table_store";
 import { useEffect } from "react";
 import { useDbStore } from "@/components/stores/db_store";
+import { useEditorStore } from "@/components/stores/editor_store";
 
 export const maxDuration = 30;
 
 export default function Chat() {
   const databaseStructure = useDatabaseStructure();
   const { getCurrentDatabase } = useDbStore();
+  const { value, error } = useEditorStore();
 
   const {
     messages,
@@ -34,7 +36,9 @@ export default function Chat() {
           databaseStructure,
           dbType: currentDb?.type || "postgres", // default to postgres if no db selected
           connectionString: currentDb?.connectionString,
-        }),
+          editorValue: value,
+          editorError: error,
+        })
       );
     },
   });
