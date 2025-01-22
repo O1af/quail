@@ -21,7 +21,7 @@ async function updateTokenUsage(
   supabase: any,
   userId: string,
   columnName: string,
-  tokenCount: number,
+  tokenCount: number
 ) {
   const { error } = await supabase.rpc("increment_mini_tokens", {
     p_user_id: userId,
@@ -69,7 +69,7 @@ export async function POST(req: Request) {
           const formattedColumns = table.columns
             .map(
               (column: Column) =>
-                `  ${column.name} ${column.dataType.toUpperCase()}`,
+                `  ${column.name} ${column.dataType.toUpperCase()}`
             )
             .join(",\n");
           return `${table.name} (\n${formattedColumns}\n);`;
@@ -94,7 +94,7 @@ export async function POST(req: Request) {
   const allMessages = [systemPrompt, promptMessage, ...messages];
   const totalTokens = allMessages.reduce(
     (sum, msg) => sum + countTokens(msg.content),
-    0,
+    0
   );
   console.log(`Total tokens in messages: ${totalTokens}`);
 
@@ -104,14 +104,14 @@ export async function POST(req: Request) {
       supabase,
       user.user.id,
       getCurrentUsageColumn(),
-      totalTokens,
+      totalTokens
     ).catch((error) => {
       console.error("Failed to update token usage:", error);
     }),
     updateUsage(supabase, user.user.id, getCurrentUsageColumn()).catch(
       (error) => {
         console.error("Failed to update AI usage:", error);
-      },
+      }
     ),
   ];
 
@@ -133,11 +133,11 @@ export async function POST(req: Request) {
               ([key, value]) => {
                 const type = typeof value === "number" ? "INTEGER" : "VARCHAR";
                 return `  "${key}" ${type}`;
-              },
+              }
             );
 
             return `Schema: InferredTable\n\nTable: GeneratedSchema\n${schemaEntries.join(
-              ",\n",
+              ",\n"
             )};`;
           }
 

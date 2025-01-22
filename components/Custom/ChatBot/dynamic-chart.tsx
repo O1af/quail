@@ -170,7 +170,7 @@ export function DynamicChart({
       case "line":
         const { data, xAxisField, lineFields } = transformDataForMultiLineChart(
           chartData,
-          chartConfig,
+          chartConfig
         );
         const useTransformedData =
           chartConfig.multipleLines &&
@@ -184,7 +184,7 @@ export function DynamicChart({
             >
               <Label
                 value={toTitleCase(
-                  useTransformedData ? xAxisField : chartConfig.xKey,
+                  useTransformedData ? xAxisField : chartConfig.xKey
                 )}
                 offset={0}
                 position="insideBottom"
@@ -276,16 +276,13 @@ export function DynamicChart({
       <h2 className="text-lg font-bold mb-2">{chartConfig.title}</h2>
       {chartConfig && chartData.length > 0 && (
         <ChartContainer
-          config={chartConfig.yKeys.reduce(
-            (acc, key, index) => {
-              acc[key] = {
-                label: key,
-                color: colors[index % colors.length],
-              };
-              return acc;
-            },
-            {} as Record<string, { label: string; color: string }>,
-          )}
+          config={chartConfig.yKeys.reduce((acc, key, index) => {
+            acc[key] = {
+              label: key,
+              color: colors[index % colors.length],
+            };
+            return acc;
+          }, {} as Record<string, { label: string; color: string }>)}
           className="h-[320px] w-full"
         >
           <div style={{ overflowX: "auto", width: "100%" }}>

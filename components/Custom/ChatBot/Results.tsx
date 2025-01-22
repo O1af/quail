@@ -41,7 +41,7 @@ export const Results = ({
     return title
       .split("_")
       .map((word, index) =>
-        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word,
+        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word
       )
       .join(" ");
   };
@@ -92,19 +92,19 @@ export const Results = ({
     keywords.blue.forEach((keyword) => {
       formattedSql = formattedSql.replace(
         new RegExp(`\\b${keyword}\\b`, "g"),
-        `<span class="text-blue-500">${keyword}</span>`,
+        `<span class="text-blue-500">${keyword}</span>`
       );
     });
     keywords.purple.forEach((keyword) => {
       formattedSql = formattedSql.replace(
         new RegExp(`\\b${keyword}\\b`, "g"),
-        `<span class="text-purple-500">${keyword}</span>`,
+        `<span class="text-purple-500">${keyword}</span>`
       );
     });
     keywords.green.forEach((keyword) => {
       formattedSql = formattedSql.replace(
         keyword,
-        `<span class="text-green-500">${keyword}</span>`,
+        `<span class="text-green-500">${keyword}</span>`
       );
     });
 
