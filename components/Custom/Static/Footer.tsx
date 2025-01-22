@@ -19,7 +19,10 @@ const footerData = {
     },
     {
       title: "Resources",
-      links: [{ name: "Privacy Policy", href: "/privacy" }],
+      links: [
+        { name: "Terms of Service", href: "/terms" },
+        { name: "Privacy Policy", href: "/privacy" },
+      ],
     },
   ],
 };
