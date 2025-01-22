@@ -3,6 +3,7 @@ import { Header } from "@/components/Custom/Static/Landing/header";
 import { Hero } from "@/components/Custom/Static/Landing/hero";
 import { FeatureCards } from "@/components/Custom/Static/Landing/FeatureCards";
 import { Pricing } from "@/components/Custom/Static/Landing/Pricing";
+import Footer from "@/components/Custom/Static/Footer";
 
 export default function Home() {
   return (
@@ -13,6 +14,7 @@ export default function Home() {
         <FeatureCards />
         <Pricing />
       </main>
+      <Footer />
     </div>
   );
 }
