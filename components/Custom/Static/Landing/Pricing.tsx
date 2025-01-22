@@ -26,9 +26,9 @@ const pricingPlans = [
     highlight: "Most Popular",
     features: [
       {
-        name: "Basic SQL Query Execution",
+        name: "Secure Web SQL Query Execution",
         included: true,
-        tooltip: "Submit and execute SQL queries through the text editor",
+        tooltip: "Execute SQL queries securely through our web interface",
       },
       {
         name: "100 AI-Assisted Queries/month",
@@ -41,24 +41,19 @@ const pricingPlans = [
         tooltip: "Queries are limited to 10 seconds execution time",
       },
       {
-        name: "Basic Query Validation",
+        name: "10MB Query Size Limit",
         included: true,
-        tooltip: "Basic syntax checking without optimization",
+        tooltip: "Maximum query size of 10MB",
       },
       {
-        name: "Community Support",
+        name: "VSCode-based Editor",
         included: true,
-        tooltip: "Access to our community forums and documentation",
+        tooltip: "Professional VSCode-based SQL editor with data display",
       },
       {
-        name: "Advanced Features",
-        included: false,
-        tooltip: "Upgrade to Pro for advanced features",
-      },
-      {
-        name: "Priority Support",
-        included: false,
-        tooltip: "Available in Pro and Enterprise plans",
+        name: "OpenAI 4o Mini",
+        included: true,
+        tooltip: "AI assistance powered by OpenAI 4o Mini",
       },
     ],
     cta: "Get Started Free",
@@ -77,34 +72,30 @@ const pricingPlans = [
         tooltip: "All features from the Free plan",
       },
       {
-        name: "Unlimited AI-Assisted Queries",
+        name: "Unlimited AI-assisted Queries",
         included: true,
         tooltip: "No monthly limit on AI-assisted queries",
       },
       {
-        name: "60s Query Execution Limit",
+        name: "30s Query Execution Limit",
         included: true,
-        tooltip: "Extended query execution time up to 60 seconds",
+        tooltip: "Extended query execution time up to 30 seconds",
       },
       {
-        name: "Advanced Query Optimization",
+        name: "50MB Query Size Limit",
         included: true,
-        tooltip: "AI-powered query optimization suggestions",
-      },
-      {
-        name: "Schema Analysis",
-        included: true,
-        tooltip: "Deep analysis of your database schema",
-      },
-      {
-        name: "Priority Support",
-        included: true,
-        tooltip: "Fast response times for support queries",
+        tooltip: "Increased maximum query size of 50MB",
       },
       {
         name: "Early Access Features",
         included: true,
         tooltip: "Beta access to new features and improvements",
+      },
+
+      {
+        name: "OpenAI 4o",
+        included: true,
+        tooltip: "Enhanced AI assistance with OpenAI 4o",
       },
     ],
     cta: "Start Pro Trial",
@@ -123,34 +114,29 @@ const pricingPlans = [
         tooltip: "All features from the Pro plan",
       },
       {
-        name: "Unlimited Query Execution",
+        name: "Long-running Analytical Queries",
         included: true,
-        tooltip: "No limits on query execution time",
+        tooltip: "Support for extended analytical query processing",
       },
       {
-        name: "Custom AI Model Training",
+        name: "Dynamic Query Limits",
         included: true,
-        tooltip: "Train AI models on your specific database schema",
+        tooltip: "Flexible execution time and size limits based on needs",
       },
       {
-        name: "Role-based Access Control",
+        name: "Unlimited AI-assisted Queries",
         included: true,
-        tooltip: "Advanced security and user management",
+        tooltip: "No restrictions on AI-assisted query usage",
       },
       {
-        name: "24/7 Premium Support",
+        name: "Team Management Tools",
         included: true,
-        tooltip: "Dedicated support team with SLA",
+        tooltip: "Advanced team and access management features",
       },
       {
-        name: "Custom Integration",
+        name: "Dedicated Support",
         included: true,
-        tooltip: "Integration with your existing tools",
-      },
-      {
-        name: "Dedicated Account Manager",
-        included: true,
-        tooltip: "Personal support for your team",
+        tooltip: "Priority support with dedicated team",
       },
     ],
     cta: "Contact Sales",
@@ -206,21 +192,21 @@ export function Pricing() {
                 <ul className="space-y-3">
                   {plan.features.map((feature) => (
                     <TooltipProvider key={feature.name}>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <li className="flex items-center text-sm">
-                            {feature.included ? (
-                              <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
-                            ) : (
-                              <X className="h-5 w-5 text-muted-foreground mr-2 flex-shrink-0" />
-                            )}
+                      <li className="flex items-center text-sm">
+                        {feature.included ? (
+                          <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
+                        ) : (
+                          <X className="h-5 w-5 text-muted-foreground mr-2 flex-shrink-0" />
+                        )}
+                        <Tooltip>
+                          <TooltipTrigger>
                             <span>{feature.name}</span>
-                          </li>
-                        </TooltipTrigger>
-                        <TooltipContent side="top" className="max-w-[200px]">
-                          <p className="text-sm">{feature.tooltip}</p>
-                        </TooltipContent>
-                      </Tooltip>
+                          </TooltipTrigger>
+                          <TooltipContent side="top" className="max-w-[200px]">
+                            <p className="text-sm">{feature.tooltip}</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </li>
                     </TooltipProvider>
                   ))}
                 </ul>

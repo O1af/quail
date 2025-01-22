@@ -1,8 +1,8 @@
 "use client";
-import { Header } from "@/components/Custom/Landing/header";
-import { Hero } from "@/components/Custom/Landing/hero";
-import { FeatureCards } from "@/components/Custom/Landing/FeatureCards";
-import { Pricing } from "@/components/Custom/Landing/Pricing";
+import { Header } from "@/components/Custom/Static/Landing/header";
+import { Hero } from "@/components/Custom/Static/Landing/hero";
+import { FeatureCards } from "@/components/Custom/Static/Landing/FeatureCards";
+import { Pricing } from "@/components/Custom/Static/Landing/Pricing";
 
 export default function Home() {
   return (
