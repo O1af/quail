@@ -8,7 +8,11 @@ const footerData = {
     tagline: "The Simpler,Smarter Data Query Tool",
     socialLinks: [
       { name: "Twitter", href: "https://x.com", icon: Twitter },
-      { name: "LinkedIn", href: "https://linkedin.com", icon: Linkedin },
+      {
+        name: "LinkedIn",
+        href: "https://linkedin.com/company/quailbi/",
+        icon: Linkedin,
+      },
       { name: "GitHub", href: "https://github.com/QuailAI", icon: GithubIcon },
     ],
   },
