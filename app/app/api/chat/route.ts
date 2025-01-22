@@ -1,4 +1,4 @@
-import { streamText, generateText, generateObject, tool } from "ai";
+import { streamText, generateText, generateObject, tool, Message } from "ai";
 import { z } from "zod";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
@@ -70,18 +70,15 @@ export async function POST(req: Request) {
 
   const formattedSchemas = databaseStructure.schemas
     .map((schema: Schema) => {
-      const formattedTables = schema.tables
+      const tableSummaries = schema.tables
         .map((table: Table) => {
-          const formattedColumns = table.columns
-            .map(
-              (column: Column) =>
-                `  ${column.name} ${column.dataType.toUpperCase()}`
-            )
-            .join(",\n");
-          return `${table.name} (\n${formattedColumns}\n);`;
+          const columns = table.columns
+            .map((col: Column) => `${col.name} (${col.dataType})`)
+            .join(", ");
+          return `Table ${table.name} contains columns: { ${columns}}`;
         })
-        .join("\n\n");
-      return `Schema: ${schema.name}\n\n${formattedTables}`;
+        .join("\n");
+      return `In schema "${schema.name}":\n${tableSummaries}`;
     })
     .join("\n\n");
 
@@ -89,6 +86,7 @@ export async function POST(req: Request) {
     role: "system",
     content: `You are a SQL (${dbType}) and Data expert. Your job is to help the user write a SQL query to retrieve the data they need. 
     The table schema is as follows: \n\n${formattedSchemas}\n\n
+    Use only the table and column names provided in the schema. Do not create or invent new table names or column names. 
     For string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. 
     For example: LOWER(industry) ILIKE LOWER('%search_term%').The user currently has this query in their editor which may or may not be of value:${editorValue}.`,
   };
@@ -155,17 +153,24 @@ export async function POST(req: Request) {
 
           const jsonQuery = messages[messages.length - 1].content;
           const myQuery = JSON.stringify(jsonQuery, null, 2);
-          console.log(`my query:  ${myQuery}`);
 
           const { text } = await generateText({
             model: azure("gpt-4o-mini"),
             system: "You are an SQL expert.",
-            prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. Output only valid SQL code as plain text, without formatting, explanations, or comments. Keep in mind the database is of type ${dbType}.`,
+            prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. 
+            Ensure that the generated SQL query strictly uses only the table and column names provided in the schema. Do not invent any new table or column names. 
+            Output only valid SQL code as plain text, without formatting, explanations, or comments. Keep in mind the database is of type ${dbType}.`,
           });
+          console.log(`Generated SQL query: ${text}`);
 
-          const response = await executeQuery(text, connectionString, dbType);
-          if (!response) {
-            throw new Error("Failed to execute query");
+          let response;
+          try {
+            response = await executeQuery(text, connectionString, dbType);
+          } catch (error) {
+            console.error("Error executing query:", error);
+            const errorMessage =
+              error instanceof Error ? error.message : String(error);
+            return;
           }
 
           const results: Result[] = response.rows.map((row) => {
@@ -179,6 +184,7 @@ export async function POST(req: Request) {
           });
 
           const resultsSchema = generateSchemaString(results);
+          console.log(`Results schema: ${resultsSchema}`);
 
           const { object: config } = await generateObject({
             model: azure("gpt-4o-mini"),
@@ -207,6 +213,7 @@ export async function POST(req: Request) {
           });
 
           if (!config) {
+            console.error("Failed to generate chart config");
             throw new Error("Failed to generate chart config");
           }
 
