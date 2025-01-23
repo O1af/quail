@@ -37,12 +37,20 @@ async function getTier(supabase: any, userId: string, columnName: string) {
   const tier = profileResponse.data?.tier;
   const count = countResponse.data?.[columnName] || 0;
   console.log(`User tier: ${tier}, usage count: ${count}`);
-  // Check free tier limit
+
+  // Check tier limits
   if (tier === "Free") {
     const freeLimit = parseInt(process.env.FREE_TIER_MONTHLY_LIMIT || "100");
     if (count >= freeLimit) {
       throw new Error(
         "Free tier monthly limit reached. Please upgrade your plan to continue."
+      );
+    }
+  } else if (tier === "Pro") {
+    const proLimit = 10000;
+    if (count >= proLimit) {
+      throw new Error(
+        "Pro tier monthly limit reached. Please contact support if you need a higher limit."
       );
     }
   }
@@ -79,6 +87,10 @@ function getCurrentUsageColumn(): string {
   return `${month}_${year}`;
 }
 
+function getModelName(tier: string): string {
+  return tier === "Pro" ? "gpt-4o" : "gpt-4o-mini";
+}
+
 export async function POST(req: Request) {
   console.log("noStore called");
   noStore();
@@ -93,8 +105,14 @@ export async function POST(req: Request) {
   }
 
   // Check tier and usage limits
+  let userTier;
   try {
-    await getTier(supabase, user.user.id, getCurrentUsageColumn());
+    const { tier } = await getTier(
+      supabase,
+      user.user.id,
+      getCurrentUsageColumn()
+    );
+    userTier = tier;
   } catch (error) {
     return new Response(
       JSON.stringify({
@@ -171,7 +189,7 @@ export async function POST(req: Request) {
   ];
 
   const result = streamText({
-    model: azure("gpt-4o-mini"),
+    model: azure(getModelName(userTier)),
     tools: {
       chart: tool({
         description: "Generate a chart.",
@@ -200,7 +218,7 @@ export async function POST(req: Request) {
           const myQuery = JSON.stringify(jsonQuery, null, 2);
 
           const { text } = await generateText({
-            model: azure("gpt-4o-mini"),
+            model: azure(getModelName(userTier)),
             system: "You are an SQL expert.",
             prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. 
             Ensure that the generated SQL query strictly uses only the table and column names provided in the schema. Do not invent any new table or column names. 
@@ -232,7 +250,7 @@ export async function POST(req: Request) {
           console.log(`Results schema: ${resultsSchema}`);
 
           const { object: config } = await generateObject({
-            model: azure("gpt-4o-mini"),
+            model: azure(getModelName(userTier)),
             system: "You are a data visualization expert.",
             prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query. For multiple groups use multi-lines. Match the field names in the results exactly.
 
