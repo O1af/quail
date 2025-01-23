@@ -27,6 +27,7 @@ export default function Chat() {
     isLoading,
     stop,
     reload,
+    error: chatError, // Add this
   } = useChat({
     experimental_prepareRequestBody: ({ messages }) => {
       const currentDb = getCurrentDatabase();
@@ -51,6 +52,19 @@ export default function Chat() {
       resetDatabaseChange();
     }
   }, [isDatabaseChanged, setMessages, resetDatabaseChange]);
+
+  useEffect(() => {
+    if (chatError && messages.length > 0) {
+      setMessages([
+        ...messages,
+        {
+          id: "error-" + Date.now(),
+          role: "system",
+          content: `Error: ${chatError.message}`,
+        },
+      ]);
+    }
+  }, [chatError]);
 
   return (
     <div className="flex flex-col min-w-0 h-[91dvh] bg-background">

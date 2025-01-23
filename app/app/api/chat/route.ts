@@ -17,6 +17,39 @@ const azure = createAzure({
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
 
+async function getTier(supabase: any, userId: string, columnName: string) {
+  const [profileResponse, countResponse] = await Promise.all([
+    supabase.from("profiles").select("tier").eq("id", userId).single(),
+    supabase.from("mini_count").select(columnName).eq("id", userId).single(),
+  ]);
+
+  if (profileResponse.error) {
+    throw new Error(
+      `Failed to get user tier: ${profileResponse.error.message}`
+    );
+  }
+  if (countResponse.error) {
+    throw new Error(
+      `Failed to get usage count: ${countResponse.error.message}`
+    );
+  }
+
+  const tier = profileResponse.data?.tier;
+  const count = countResponse.data?.[columnName] || 0;
+  console.log(`User tier: ${tier}, usage count: ${count}`);
+  // Check free tier limit
+  if (tier === "Free") {
+    const freeLimit = parseInt(process.env.FREE_TIER_MONTHLY_LIMIT || "100");
+    if (count >= freeLimit) {
+      throw new Error(
+        "Free tier monthly limit reached. Please upgrade your plan to continue."
+      );
+    }
+  }
+
+  return { tier, count };
+}
+
 async function updateTokenUsage(
   supabase: any,
   userId: string,
@@ -49,7 +82,7 @@ function getCurrentUsageColumn(): string {
 export async function POST(req: Request) {
   console.log("noStore called");
   noStore();
-  console.log("Post req made:");
+
   const supabase = await createClient();
   const { data: user, error } = await supabase.auth.getUser();
 
@@ -57,6 +90,18 @@ export async function POST(req: Request) {
     return new Response(JSON.stringify({ message: "Unauthorized" }), {
       status: 401,
     });
+  }
+
+  // Check tier and usage limits
+  try {
+    await getTier(supabase, user.user.id, getCurrentUsageColumn());
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        message: error instanceof Error ? error.message : "Usage limit error",
+      }),
+      { status: 403 }
+    );
   }
 
   const {
