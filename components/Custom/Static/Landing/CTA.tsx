@@ -13,16 +13,14 @@ export function CTA() {
         <Button
           variant="default"
           className="bg-emerald-600 hover:bg-emerald-700"
-          onClick={() =>
-            (window.location.href = "http://app.localhost:3000/login")
-          }
+          onClick={() => (window.location.href = "http://app.localhost:3000/")}
         >
           Get Started for Free
         </Button>
         <Button
           variant="secondary"
           onClick={() =>
-            (window.location.href = "http://app.localhost:3000/contact")
+            (window.location.href = "http://localhost:3000/contact")
           }
         >
           Contact Sales
