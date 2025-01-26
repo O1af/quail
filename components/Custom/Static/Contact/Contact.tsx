@@ -61,7 +61,8 @@ export default function ContactUs() {
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
             <p className="text-muted-foreground">
-              We'd love to hear from you. Please fill out this form.
+              We'd love to hear from you. Please fill out this form and we'll
+              get back to you soon.
             </p>
           </div>
 

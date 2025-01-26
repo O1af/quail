@@ -29,9 +29,9 @@ export function CTA() {
 
       <div className="flex items-center gap-8 mt-12 text-sm text-muted-foreground">
         <span className="flex items-center gap-2">
-          Your data is secure{" "}
+          Always Secure{" "}
           <a href="/privacy" className="text-emerald-500 hover:underline">
-            Security Details
+            Learn More
           </a>
         </span>
       </div>
