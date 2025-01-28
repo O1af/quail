@@ -13,17 +13,13 @@ import { DatabasesForm } from "./DatabaseForm/databases-form";
 import { BillingForm } from "./BillingForm/billing-form";
 
 const sidebarNavItems = [
-  {
-    title: "Profile",
-    href: "profile",
-  },
+  // {
+  //   title: "Account",
+  //   href: "account",
+  // },
   {
     title: "Databases",
     href: "database",
-  },
-  {
-    title: "Account",
-    href: "account",
   },
 
   {
@@ -38,14 +34,14 @@ interface SettingsDialogProps {
 
 export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
   const [open, setOpen] = useState(false);
-  const [activeSection, setActiveSection] = useState("profile");
+  const [activeSection, setActiveSection] = useState("database");
 
   useEffect(() => {
     const handleOpenSettings = (e: Event) => {
       if (e instanceof CustomEvent && e.detail?.section) {
         setActiveSection(e.detail.section);
       } else {
-        setActiveSection("profile"); // fallback to profile if no section specified
+        setActiveSection("database"); // fallback to profile if no section specified
       }
       setOpen(true);
     };

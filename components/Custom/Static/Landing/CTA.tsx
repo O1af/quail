@@ -1,5 +1,6 @@
 import React from "react";
 import { Button } from "@/components/ui/button";
+import { APP_URL } from "@/lib/constants";
 
 export function CTA() {
   return (
@@ -13,15 +14,13 @@ export function CTA() {
         <Button
           variant="default"
           className="bg-emerald-600 hover:bg-emerald-700"
-          onClick={() => (window.location.href = "http://app.localhost:3000/")}
+          onClick={() => (window.location.href = APP_URL)}
         >
           Get Started for Free
         </Button>
         <Button
           variant="secondary"
-          onClick={() =>
-            (window.location.href = "http://localhost:3000/contact")
-          }
+          onClick={() => (window.location.href = "/contact")}
         >
           Contact Sales
         </Button>

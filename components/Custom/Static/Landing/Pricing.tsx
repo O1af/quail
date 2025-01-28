@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { APP_URL } from "@/lib/constants";
 
 const pricingPlans = [
   {
@@ -57,13 +58,13 @@ const pricingPlans = [
       },
     ],
     cta: "Get Started Free",
-    ctaLink: "http://app.localhost:3000/signup",
+    ctaLink: `${APP_URL}/signup`,
   },
   {
     name: "Pro",
     price: 20,
     billing: "monthly",
-    description: "For professional developers and small teams",
+    description: "For professionals and small teams",
     highlight: "Best Value",
     features: [
       {
@@ -98,14 +99,14 @@ const pricingPlans = [
         tooltip: "Enhanced AI assistance with OpenAI 4o",
       },
     ],
-    cta: "Start Pro Trial",
-    ctaLink: "http://app.localhost:3000/signup",
+    cta: "Sign Up for Pro",
+    ctaLink: `${APP_URL}/signup`,
   },
   {
     name: "Enterprise",
     price: null,
     billing: "custom",
-    description: "Custom solutions for large teams",
+    description: "Enterprise-grade solutions with dedicated support",
     highlight: "Custom",
     features: [
       {
@@ -140,7 +141,7 @@ const pricingPlans = [
       },
     ],
     cta: "Contact Sales",
-    ctaLink: "http://localhost:3000/contact",
+    ctaLink: "/contact",
   },
 ];
 

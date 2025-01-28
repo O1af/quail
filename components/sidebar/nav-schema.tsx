@@ -35,12 +35,15 @@ import { useDatabaseStructure } from "../stores/table_store";
 import { queryMetadata, handleQuery } from "../stores/utils/query";
 import { useState } from "react";
 import { useDbStore } from "../stores/db_store";
+import { useEditorStore } from "../stores/editor_store";
 import { match } from "assert";
 export function NavSchema() {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const getCurrentDatabase = useDbStore((state) => state.getCurrentDatabase);
   const databaseStructure = useDatabaseStructure();
+  const executeQuery = useEditorStore((state) => state.executeQuery);
+  const setValue = useEditorStore((state) => state.setValue);
 
   const handleRefresh = async () => {
     const currentDb = getCurrentDatabase();
@@ -75,7 +78,8 @@ export function NavSchema() {
       throw new Error(`Unsupported database type: ${currentDb.type}`);
     }
     try {
-      await handleQuery(query);
+      setValue(query);
+      await executeQuery();
     } catch (err) {
       toast({
         variant: "destructive",
@@ -130,6 +134,7 @@ export function NavSchema() {
                     <SidebarMenuSubItem
                       key={table.name}
                       onClick={() => handleTableClick(schema.name, table.name)}
+                      className="cursor-pointer"
                     >
                       <SidebarMenuSubButton>
                         {table.type === "VIEW" ? (

@@ -1,6 +1,7 @@
 import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
+import { APP_URL } from "@/lib/constants";
 
 export function Hero() {
   return (
@@ -25,9 +26,7 @@ export function Hero() {
           <Button
             size="lg"
             className="mt-8"
-            onClick={() =>
-              (window.location.href = "http://app.localhost:3000/login")
-            }
+            onClick={() => (window.location.href = `${APP_URL}/login`)}
           >
             Get Started
           </Button>

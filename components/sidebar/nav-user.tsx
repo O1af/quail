@@ -99,31 +99,25 @@ export function NavUser({
               </DropdownMenuLabel>
               <DropdownMenuSeparator />
               <DropdownMenuGroup>
-                <DropdownMenuItem>
-                  <Sparkles />
-                  Upgrade to Pro
-                </DropdownMenuItem>
-              </DropdownMenuGroup>
-              <DropdownMenuSeparator />
-              <DropdownMenuGroup>
                 <DropdownMenuItem
                   onSelect={() => {
-                    const event = new CustomEvent("openSettings", {
-                      detail: { section: "profile" },
-                    });
+                    const event = new CustomEvent("openSettings", {});
                     window.dispatchEvent(event);
                   }}
                 >
                   <Settings2 />
                   Settings
                 </DropdownMenuItem>
-                <DropdownMenuItem>
+                <DropdownMenuItem
+                  onSelect={() => {
+                    const event = new CustomEvent("openSettings", {
+                      detail: { section: "billing" },
+                    });
+                    window.dispatchEvent(event);
+                  }}
+                >
                   <CreditCard />
                   Billing
-                </DropdownMenuItem>
-                <DropdownMenuItem>
-                  <Bell />
-                  Notifications
                 </DropdownMenuItem>
               </DropdownMenuGroup>
               <DropdownMenuSeparator />
