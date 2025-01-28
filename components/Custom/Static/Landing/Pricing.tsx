@@ -57,7 +57,7 @@ const pricingPlans = [
       },
     ],
     cta: "Get Started Free",
-    ctaLink: "/register",
+    ctaLink: "http://app.localhost:3000/signup",
   },
   {
     name: "Pro",
@@ -99,7 +99,7 @@ const pricingPlans = [
       },
     ],
     cta: "Start Pro Trial",
-    ctaLink: "/register?plan=pro",
+    ctaLink: "http://app.localhost:3000/signup",
   },
   {
     name: "Enterprise",
@@ -140,7 +140,7 @@ const pricingPlans = [
       },
     ],
     cta: "Contact Sales",
-    ctaLink: "/contact",
+    ctaLink: "http://localhost:3000/contact",
   },
 ];
 
