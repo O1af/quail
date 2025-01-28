@@ -1,7 +1,7 @@
 export async function getTier(
   supabase: any,
   userId: string,
-  columnName: string
+  columnName: string,
 ) {
   const [profileResponse, miniCountResponse, fullCountResponse] =
     await Promise.all([
@@ -12,7 +12,7 @@ export async function getTier(
 
   if (profileResponse.error) {
     throw new Error(
-      `Failed to get user tier: ${profileResponse.error.message}`
+      `Failed to get user tier: ${profileResponse.error.message}`,
     );
   }
 
@@ -21,18 +21,18 @@ export async function getTier(
   // Select count based on tier
   let count;
   if (tier === "Pro") {
-    if (fullCountResponse.error) {
-      throw new Error(
-        `Failed to get usage count: ${fullCountResponse.error.message}`
-      );
-    }
+    //if (fullCountResponse.error) {
+    //  throw new Error(
+    //    `Failed to get usage count: ${fullCountResponse.error.message}`
+    //  );
+    //}
     count = fullCountResponse.data?.[columnName] || 0;
   } else {
-    if (miniCountResponse.error) {
-      throw new Error(
-        `Failed to get usage count: ${miniCountResponse.error.message}`
-      );
-    }
+    //if (miniCountResponse.error) {
+    //  throw new Error(
+    //    `Failed to get usage count: ${miniCountResponse.error.message}`,
+    //  );
+    //}
     count = miniCountResponse.data?.[columnName] || 0;
   }
 
@@ -43,14 +43,14 @@ export async function getTier(
     const freeLimit = parseInt(process.env.FREE_TIER_MONTHLY_LIMIT || "100");
     if (count >= freeLimit) {
       throw new Error(
-        "Free tier monthly limit reached. Please upgrade your plan to continue."
+        "Free tier monthly limit reached. Please upgrade your plan to continue.",
       );
     }
   } else if (tier === "Pro") {
     const proLimit = 10000;
     if (count >= proLimit) {
       throw new Error(
-        "Pro tier monthly limit reached. Please contact support if you need a higher limit."
+        "Pro tier monthly limit reached. Please contact support if you need a higher limit.",
       );
     }
   }
@@ -63,7 +63,7 @@ export async function updateTokenUsage(
   userId: string,
   columnName: string,
   tokenCount: number,
-  tier: string
+  tier: string,
 ) {
   const rpcName =
     tier === "Pro" ? "increment_full_tokens" : "increment_mini_tokens";
@@ -79,7 +79,7 @@ export async function updateUsage(
   supabase: any,
   userId: string,
   columnName: string,
-  tier: string
+  tier: string,
 ) {
   const rpcName =
     tier === "Pro" ? "increment_full_count" : "increment_mini_count";
