@@ -9,6 +9,7 @@ import { DownloadButton } from "@/components/header/download-button";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ClearChat } from "@/components/header/clear-chat";
+import { UploadButton } from "@/components/header/upload-button";
 
 export default function Page() {
   const [user, setUser] = useState<any>(null);
@@ -35,6 +36,7 @@ export default function Page() {
             <ClearChat />
           </div>
           <div className="flex items-center gap-2 px-4 ml-auto">
+            <UploadButton />
             <DownloadButton />
             <RunButton />
             <ModeToggle />

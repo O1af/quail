@@ -43,14 +43,24 @@ async function executeWithUsageTracking<T>(
     getCurrentUsageColumn()
   ).catch((error) => {
     console.error("Failed to update usage metrics:", error);
-    // Don't throw here - we don't want to fail the main operation
   });
+
+  const tier = await supabase
+    .from("profiles")
+    .select("tier")
+    .eq("id", user.user.id)
+    .single();
+
+  const requestWithTier = {
+    ...request,
+    userTier: tier.data?.tier,
+  };
 
   const response = await fetch(
     process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT + endpoint,
     {
       method: "POST",
-      body: JSON.stringify(request),
+      body: JSON.stringify(requestWithTier),
     }
   );
 
@@ -60,8 +70,6 @@ async function executeWithUsageTracking<T>(
   }
 
   const result = await response.json();
-
-  // Ensure metrics are updated before returning
   await metricsPromise;
 
   return result;

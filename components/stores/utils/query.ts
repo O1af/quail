@@ -17,7 +17,7 @@ async function getDbConnection() {
 export async function executeQuery(
   query: string,
   connectionString?: string,
-  dbType?: string,
+  dbType?: string
 ) {
   const dbInfo = connectionString
     ? { connectionString, type: dbType || "postgres" }
@@ -60,7 +60,7 @@ export async function handleQuery(queryString?: string): Promise<void> {
         header: key,
         enableSorting: true,
         sortingFn: "basic",
-      }),
+      })
     );
 
     setColumns(columns);
@@ -87,7 +87,7 @@ function normalizeMetadataRow(row: RawMetadataRow) {
 
 export async function queryMetadata(
   connectionString?: string,
-  dbType?: string,
+  dbType?: string
 ) {
   const metadataQuery =
     dbType === "mysql"
