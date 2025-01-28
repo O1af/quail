@@ -241,6 +241,7 @@ export type Database = {
           end_at: string | null
           full_name: string | null
           id: string
+          inCancellationPeriod: boolean | null
           subscription_id: string | null
           tier: string
         }
@@ -251,6 +252,7 @@ export type Database = {
           end_at?: string | null
           full_name?: string | null
           id: string
+          inCancellationPeriod?: boolean | null
           subscription_id?: string | null
           tier?: string
         }
@@ -261,6 +263,7 @@ export type Database = {
           end_at?: string | null
           full_name?: string | null
           id?: string
+          inCancellationPeriod?: boolean | null
           subscription_id?: string | null
           tier?: string
         }

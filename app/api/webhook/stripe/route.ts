@@ -42,6 +42,7 @@ export async function POST(req: any) {
             end_at,
             customer_id,
             subscription_id,
+            inCancellationPeriod: null,
           })
           .eq("email", email);
         if (error) {
@@ -52,11 +53,13 @@ export async function POST(req: any) {
         break;
       case "customer.subscription.updated":
         const updateSubscription = event.data.object;
+        console.log("updateSubscription", updateSubscription);
+        const cancellation = updateSubscription.cancel_at_period_end;
         const udpateSupabase = await supabaseAdmin();
         const { error: updateError } = await udpateSupabase
           .from("profiles")
           .update({
-            subscription_id: null,
+            inCancellationPeriod: cancellation ? true : null,
           })
           .eq("subscription_id", updateSubscription.id);
 
@@ -76,6 +79,7 @@ export async function POST(req: any) {
             tier: "Free",
             customer_id: null,
             subscription_id: null,
+            inCancellationPeriod: null,
           })
           .eq("customer_id", deleteSubscription.customer);
 
@@ -86,7 +90,7 @@ export async function POST(req: any) {
 
         break;
       default:
-        console.log(`Unhandled event type ${event.type}`);
+      //console.log(`Unhandled event type ${event.type}`);
     }
     return Response.json({});
   } catch (e) {

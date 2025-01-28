@@ -4,7 +4,7 @@ import React from "react";
 import { Button } from "@/components/ui/button";
 import { createClient } from "@/utils/supabase/client";
 import { useEffect, useState } from "react";
-import { checkout, manageBilling } from "./stripe";
+import { checkout, manageBilling, renewSubscription } from "./stripe";
 import { loadStripe } from "@stripe/stripe-js";
 
 export default function Checkout({
@@ -22,6 +22,9 @@ export default function Checkout({
   const supabase = createClient();
   const [customerId, setCustomerId] = useState<string | null>(null);
   const [subscriptionId, setSubscriptionId] = useState<string | null>(null);
+  const [inCancellationPeriod, setInCancellationPeriod] = useState<
+    boolean | null
+  >(null);
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -34,11 +37,12 @@ export default function Checkout({
       if (user) {
         const { data, error } = await supabase
           .from("profiles")
-          .select("customer_id, subscription_id")
+          .select("customer_id, subscription_id, inCancellationPeriod")
           .eq("id", user.id)
           .single();
         setCustomerId(data?.customer_id || null);
         setSubscriptionId(data?.subscription_id || null);
+        setInCancellationPeriod(data?.inCancellationPeriod || null);
       }
     };
     fetchUser();
@@ -71,6 +75,15 @@ export default function Checkout({
     }
   };
 
+  const handleRenew = async () => {
+    console.log("handleRenew");
+    if (subscriptionId) {
+      const data = JSON.parse(await renewSubscription(subscriptionId));
+      console.log(data);
+      window.location.href = `http://localhost:3000/success?subscription=${current}`;
+    }
+  };
+
   console.log(subscriptionId, "subscriptionId");
   console.log(current, "current");
 
@@ -79,22 +92,34 @@ export default function Checkout({
       className="w-full"
       variant={
         (current === "Free" && plan === "Free") ||
-        (current === "Pro" && plan === "Pro" && subscriptionId)
+        (current === "Pro" && plan === "Pro" && inCancellationPeriod === null)
           ? "secondary"
           : "default"
       }
-      onClick={plan === "Free" ? handleBilling : handleCheckout}
+      onClick={
+        current === "Pro" && plan === "Pro" && inCancellationPeriod === true
+          ? handleRenew
+          : plan === "Free"
+            ? handleBilling
+            : handleCheckout
+      }
       disabled={
         (current === "Free" && plan === "Free") ||
-        (current === "Pro" && subscriptionId && plan !== "Free") ||
-        (current !== "Free" && plan === "Free" && !subscriptionId)
+        (current === "Pro" &&
+          inCancellationPeriod === null &&
+          plan !== "Free") ||
+        (current !== "Free" && plan === "Free" && inCancellationPeriod === true)
       }
     >
-      {current !== "Free" && plan === "Free" && !subscriptionId
+      {current !== "Free" && plan === "Free" && inCancellationPeriod === true
         ? `Activates ${new Date(end_at).toDateString()}`
-        : current !== "Free" && plan === current && !subscriptionId
+        : current !== "Free" &&
+            plan === current &&
+            inCancellationPeriod === true
           ? `Renew`
-          : current !== "Free" && subscriptionId && plan === "Free"
+          : current !== "Free" &&
+              inCancellationPeriod === null &&
+              plan === "Free"
             ? `Cancel ${current} Plan`
             : current === plan
               ? "Current Plan"

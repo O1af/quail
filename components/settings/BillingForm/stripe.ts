@@ -27,3 +27,11 @@ export async function manageBilling(customer_id: string) {
     }),
   );
 }
+
+export async function renewSubscription(subscriptionId: string) {
+  return JSON.stringify(
+    await stripe.subscriptions.update(subscriptionId, {
+      cancel_at_period_end: false,
+    }),
+  );
+}
