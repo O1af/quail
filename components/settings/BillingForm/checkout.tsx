@@ -95,12 +95,10 @@ export default function Checkout({
         : current !== "Free" && plan === current && !subscriptionId
           ? `Renew`
           : current !== "Free" && subscriptionId && plan === "Free"
-            ? `Cancel ${current}`
-            : current === plan && current === "Pro" && end_at
-              ? `Ends ${new Date(end_at).toDateString()}`
-              : current === plan
-                ? "Current Plan"
-                : `Get ${plan}`}
+            ? `Cancel ${current} Plan`
+            : current === plan
+              ? "Current Plan"
+              : `Get ${plan}`}
     </Button>
   );
 }
