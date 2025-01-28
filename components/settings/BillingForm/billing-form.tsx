@@ -1,8 +1,11 @@
 "use client";
 
-import { useState } from "react";
 import { Check, X } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { createClient } from "@/utils/supabase/client";
+import { useEffect, useState } from "react";
+import { Loader2 } from "lucide-react";
+
 import {
   Card,
   CardContent,
@@ -17,11 +20,13 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import Checkout from "./checkout";
 
 const plans = [
   {
     name: "Free",
     price: 0,
+    priceId: "price_1QlG8ZPolF2uvnj4wEPZNaDS",
     description: "Perfect for learning and small projects",
     features: [
       {
@@ -59,6 +64,7 @@ const plans = [
   {
     name: "Pro",
     price: 20,
+    priceId: "price_1QlG73PolF2uvnj4fHWOCwGo",
     description: "For professional developers and small teams",
     features: [
       {
@@ -133,7 +139,46 @@ const plans = [
 ];
 
 export function BillingForm() {
-  const [selectedPlan, setSelectedPlan] = useState("Free");
+  const supabase = createClient();
+  const [user, setUser] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [tier, setTier] = useState<string>("Free");
+  const [end_at, setEnd_at] = useState<Date>(null);
+
+  useEffect(() => {
+    const fetchUserAndTier = async () => {
+      const {
+        data: { user },
+      } = await supabase.auth.getUser();
+      setUser(user);
+
+      if (user) {
+        const { data, error } = await supabase
+          .from("profiles")
+          .select("tier, end_at")
+          .eq("id", user.id)
+          .single();
+
+        if (error) {
+          console.error("Error fetching tier:", error);
+        } else {
+          setTier(data?.tier || "Free");
+          setEnd_at(data?.end_at || null);
+        }
+      }
+      setLoading(false);
+    };
+
+    fetchUserAndTier();
+  }, [supabase]);
+
+  if (loading) {
+    return (
+      <div className="flex items-center justify-center h-screen">
+        <Loader2 className="w-16 h-16 animate-spin text-primary" />
+      </div>
+    );
+  }
 
   return (
     <div className="w-full max-w-6xl mx-auto p-4">
@@ -149,7 +194,7 @@ export function BillingForm() {
           <Card
             key={plan.name}
             className={`flex flex-col h-full ${
-              selectedPlan === plan.name
+              tier === plan.name
                 ? "border-primary bg-primary/5 shadow-md"
                 : "hover:border-primary/50 hover:shadow-sm"
             }`}
@@ -206,20 +251,24 @@ export function BillingForm() {
             </CardContent>
 
             <CardFooter className="px-4 pb-6 mt-auto">
-              <Button
-                className="w-full"
-                variant={plan.name === "Free" ? "secondary" : "default"}
-                onClick={() => setSelectedPlan(plan.name)}
-                disabled={plan.name === "Free" && selectedPlan === "Free"}
-              >
-                {selectedPlan === plan.name
-                  ? "Current Plan"
-                  : plan.name === "Enterprise"
-                  ? "Contact Us"
-                  : plan.name === "Pro"
-                  ? "Upgrade to Pro"
-                  : "Start with Free"}
-              </Button>
+              {plan.name === "Enterprise" ? (
+                <Button
+                  className="w-full"
+                  disabled={plan.name === tier}
+                  onClick={() =>
+                    (window.location.href = "http://localhost:3000/contact")
+                  }
+                >
+                  {tier === plan.name ? "Current Plan" : "Contact Us"}
+                </Button>
+              ) : (
+                <Checkout
+                  priceId={plan.priceId}
+                  plan={plan.name}
+                  current={tier}
+                  end_at={end_at}
+                />
+              )}
             </CardFooter>
           </Card>
         ))}
