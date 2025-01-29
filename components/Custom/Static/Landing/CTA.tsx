@@ -22,7 +22,7 @@ export function CTA() {
           variant="secondary"
           onClick={() => (window.location.href = "/contact")}
         >
-          Contact Sales
+          Contact Us
         </Button>
       </div>
 

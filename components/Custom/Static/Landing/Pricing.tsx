@@ -140,7 +140,7 @@ const pricingPlans = [
         tooltip: "Priority support with dedicated team",
       },
     ],
-    cta: "Contact Sales",
+    cta: "Contact Us",
     ctaLink: "/contact",
   },
 ];
