@@ -24,7 +24,7 @@ const ResetPasswordPage = () => {
     fetchUser();
   }, [router, supabase]);
   const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
+  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">

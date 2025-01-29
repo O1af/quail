@@ -26,7 +26,7 @@ export default function ExampleMessages({
   handleInputChange: (event: React.ChangeEvent<HTMLInputElement>) => void;
 }) {
   const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
+  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
   return (
     <div className="flex-1 w-full px-4 py-24 space-y-6">
       <div className="flex items-center justify-center space-x-2">

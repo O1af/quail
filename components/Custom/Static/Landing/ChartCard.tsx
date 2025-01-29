@@ -28,7 +28,7 @@ export function ChartCard() {
   const [data, setData] = useState<typeof finalData>([]);
   const [userText, setUserText] = useState("");
   const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
+  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
   const fullUserText = "Analyze revenue vs targets YTD 📊";
   const avgRevenue = Math.round(
     finalData.reduce((acc, curr) => acc + curr.total, 0) / finalData.length

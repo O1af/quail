@@ -8,7 +8,7 @@ export function ChatCard() {
   const [sqlQuery, setSqlQuery] = useState("");
   const [isUserTypingDone, setIsUserTypingDone] = useState(false);
   const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
+  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
   const fullUserText = "Show active users by country";
   const fullSqlQuery = `SELECT country, COUNT(*) as users
 FROM users WHERE status = 'active'

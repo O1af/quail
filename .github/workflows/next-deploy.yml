@@ -27,6 +27,10 @@ jobs:
     steps:
       - uses: actions/checkout@v4
 
+      - name: Convert filenames in public folder to lowercase
+        run: |
+          find public -depth -exec rename 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
+
       - name: Set up Node.js version
         uses: actions/setup-node@v4
         with:

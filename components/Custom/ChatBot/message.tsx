@@ -30,13 +30,13 @@ const PurePreviewMessage = ({
   message: Message;
   isLoading: boolean;
   reload: (
-    chatRequestOptions?: ChatRequestOptions,
+    chatRequestOptions?: ChatRequestOptions
   ) => Promise<string | null | undefined>;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
 
   const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
+  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
 
   return (
     <AnimatePresence>
@@ -52,7 +52,7 @@ const PurePreviewMessage = ({
             {
               "w-full": mode === "edit",
               "group-data-[role=user]/message:w-fit": mode !== "edit",
-            },
+            }
           )}
         >
           {message.role === "assistant" && (
@@ -162,13 +162,13 @@ export const PreviewMessage = memo(
   (prevProps, nextProps) =>
     prevProps.isLoading === nextProps.isLoading &&
     prevProps.message.id === nextProps.message.id &&
-    prevProps.message.content === nextProps.message.content,
+    prevProps.message.content === nextProps.message.content
 );
 
 export const ThinkingMessage = () => {
   const role = "assistant";
   const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/BotIconDark.png" : "/BotIconLight.png";
+  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
 
   return (
     <motion.div
@@ -182,7 +182,7 @@ export const ThinkingMessage = () => {
           "flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl",
           {
             "group-data-[role=user]/message:bg-muted": true,
-          },
+          }
         )}
       >
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
