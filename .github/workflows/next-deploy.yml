@@ -8,6 +8,8 @@ on:
 
 env:
   APPLICATION_PUBLISH_PROFILE: ${{ secrets.APP_PUBLISH_PROFILE }}
+  STRIPE_SK: ${{ secrets.STRIPE_SK }}
+  STRIPE_ENDPOINT_SECRET: ${{ secrets.STRIPE_ENDPOINT_SECRET }}
   WEBAPP_NAME: "Quail-Next"
 
 jobs:
