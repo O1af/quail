@@ -7,7 +7,7 @@ const footerData = {
     name: "Quail AI",
     tagline: "The Simpler,Smarter Data Query Tool for Everyone",
     socialLinks: [
-      { name: "Twitter", href: "https://x.com", icon: Twitter },
+      { name: "Twitter", href: "https://x.com/useQuail", icon: Twitter },
       {
         name: "LinkedIn",
         href: "https://linkedin.com/company/quailbi/",
