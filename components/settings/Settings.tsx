@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback, memo } from "react";
 import {
   Dialog,
   DialogContent,
@@ -32,55 +32,61 @@ interface SettingsDialogProps {
   onOpenChange?: (open: boolean) => void;
 }
 
+// Memoize form components to prevent unnecessary re-renders
+const MemoizedProfileForm = memo(ProfileForm);
+const MemoizedDatabasesForm = memo(DatabasesForm);
+const MemoizedBillingForm = memo(BillingForm);
+
 export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
   const [open, setOpen] = useState(false);
   const [activeSection, setActiveSection] = useState("database");
 
-  useEffect(() => {
-    const handleOpenSettings = (e: Event) => {
-      if (e instanceof CustomEvent && e.detail?.section) {
-        setActiveSection(e.detail.section);
-      } else {
-        setActiveSection("database"); // fallback to profile if no section specified
-      }
-      setOpen(true);
-    };
-    window.addEventListener("openSettings", handleOpenSettings);
-    return () => {
-      window.removeEventListener("openSettings", handleOpenSettings);
-    };
+  // Memoize event handler
+  const handleOpenSettings = useCallback((e: Event) => {
+    if (e instanceof CustomEvent && e.detail?.section) {
+      setActiveSection(e.detail.section);
+    } else {
+      setActiveSection("database");
+    }
+    setOpen(true);
   }, []);
 
-  const renderContent = () => {
+  useEffect(() => {
+    window.addEventListener("openSettings", handleOpenSettings);
+    return () => window.removeEventListener("openSettings", handleOpenSettings);
+  }, [handleOpenSettings]);
+
+  // Memoize content rendering
+  const renderContent = useCallback(() => {
     switch (activeSection) {
       case "profile":
-        return <ProfileForm />;
+        return <MemoizedProfileForm />;
       case "database":
-        return <DatabasesForm />;
+        return <MemoizedDatabasesForm />;
       case "billing":
-        return <BillingForm />;
+        return <MemoizedBillingForm />;
       default:
         return <div>Section under construction</div>;
     }
-  };
+  }, [activeSection]);
 
-  const getSidebarWidth = () => {
-    switch (activeSection) {
-      case "billing":
-        return "w-[180px] min-w-[180px]";
-      default:
-        return "w-1/3 max-w-[200px]";
-    }
-  };
+  // Memoize sidebar width calculation
+  const sidebarWidth =
+    activeSection === "billing"
+      ? "w-[180px] min-w-[180px]"
+      : "w-1/3 max-w-[200px]";
+
+  // Memoize open change handler
+  const handleOpenChange = useCallback(
+    (newOpen: boolean) => {
+      setOpen(newOpen);
+      onOpenChange?.(newOpen);
+    },
+    [onOpenChange]
+  );
 
   return (
-    <Dialog
-      open={open}
-      onOpenChange={(newOpen) => {
-        setOpen(newOpen);
-        onOpenChange?.(newOpen);
-      }}
-    >
+    <Dialog open={open} onOpenChange={handleOpenChange}>
       <DialogContent className="sm:max-w-[95vw] md:max-w-[1000px] max-h-[90vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight">
@@ -88,7 +94,7 @@ export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
           </DialogTitle>
         </DialogHeader>
         <div className="pt-8 flex flex-row flex-grow overflow-hidden">
-          <aside className={`${getSidebarWidth()} pr-6 overflow-y-auto`}>
+          <aside className={`${sidebarWidth} pr-6 overflow-y-auto`}>
             <SidebarNav
               items={sidebarNavItems}
               activeSection={activeSection}

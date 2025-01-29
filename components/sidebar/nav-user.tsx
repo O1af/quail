@@ -41,6 +41,7 @@ export function NavUser({
   };
 }) {
   const { isMobile } = useSidebar();
+  const [isOpen, setIsOpen] = useState(false);
 
   const [clientUser, setClientUser] = useState<any>(null);
   const supabase = createClient();
@@ -58,7 +59,7 @@ export function NavUser({
     <>
       <SidebarMenu>
         <SidebarMenuItem>
-          <DropdownMenu>
+          <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size="lg"
@@ -101,6 +102,7 @@ export function NavUser({
               <DropdownMenuGroup>
                 <DropdownMenuItem
                   onSelect={() => {
+                    setIsOpen(false);
                     const event = new CustomEvent("openSettings", {});
                     window.dispatchEvent(event);
                   }}
@@ -110,6 +112,7 @@ export function NavUser({
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onSelect={() => {
+                    setIsOpen(false);
                     const event = new CustomEvent("openSettings", {
                       detail: { section: "billing" },
                     });
@@ -123,6 +126,7 @@ export function NavUser({
               <DropdownMenuSeparator />
               <DropdownMenuItem
                 onClick={() => {
+                  setIsOpen(false);
                   signout();
                   setClientUser(null);
                 }}
