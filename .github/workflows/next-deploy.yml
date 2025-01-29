@@ -48,7 +48,6 @@ jobs:
           npm run build
           cp -r .next/static .next/standalone/.next/
           cp -r public .next/standalone/
-          cp .next/standalone/.env.production .next/standalone/.env  # Rename to .env for Azure runtime
 
       - name: "Deploy to Azure Web App"
         id: deploy-to-webapp
