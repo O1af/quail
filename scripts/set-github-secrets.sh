@@ -10,7 +10,7 @@ fi
 gh auth status || gh auth login
 
 # Read .env.production and set secrets
-while IFS='=' read -r key value; do
+cat .env.production | while IFS='=' read -r key value; do
     # Skip comments and empty lines
     [[ $key =~ ^#.*$ ]] && continue
     [[ -z $key ]] && continue
@@ -21,7 +21,9 @@ while IFS='=' read -r key value; do
     
     # Set GitHub secret
     echo "Setting secret: $key"
+    echo "Value: $value"
     echo "$value" | gh secret set "$key" --repo "$(git remote get-url origin)"
-done < .env.production
+    echo "----------------------------------------"
+done
 
 echo "Secrets have been set successfully!"
