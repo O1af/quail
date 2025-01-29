@@ -45,7 +45,7 @@ const ResetPasswordPage = () => {
           </div>
           Quail
         </a>
-        <ResetPasswordForm />
+        <ResetPasswordForm searchParams={{}} />
       </div>
     </div>
   );

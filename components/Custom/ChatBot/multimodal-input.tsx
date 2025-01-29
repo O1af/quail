@@ -21,20 +21,6 @@ import { ArrowUpIcon, StopIcon } from "./icons";
 import { ChartNoAxesCombined } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { useDatabaseStructure } from "@/components/stores/table_store";
-import { generateChartConfig } from "@/app/app/api/chat/actions";
-import { Config } from "@/lib/types";
-import { Results } from "./Results";
-import { Result } from "@/lib/types";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogFooter,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
 
 function PureMultimodalInput({
   input,
@@ -119,7 +105,7 @@ function PureMultimodalInput({
     handleSubmit();
   }, [handleSubmit, setLocalStorageInput, width]);
 
-  console.log(messages);
+  // console.log(messages);
 
   return (
     <div className="relative w-full flex flex-col gap-4">

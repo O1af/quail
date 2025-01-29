@@ -27,7 +27,7 @@ export const DownloadButton = React.memo(function DownloadButton() {
     setIsDownloading(true);
     setIsOpen(false);
     try {
-      console.log(format, selectedType);
+      // console.log(format, selectedType);
       if (format === "SQL") {
         await downloadSQL("query");
       } else if (format === "CSV") {

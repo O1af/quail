@@ -1,7 +1,7 @@
 export async function getTier(
   supabase: any,
   userId: string,
-  columnName: string,
+  columnName: string
 ) {
   const [profileResponse, miniCountResponse, fullCountResponse] =
     await Promise.all([
@@ -12,7 +12,7 @@ export async function getTier(
 
   if (profileResponse.error) {
     throw new Error(
-      `Failed to get user tier: ${profileResponse.error.message}`,
+      `Failed to get user tier: ${profileResponse.error.message}`
     );
   }
 
@@ -36,21 +36,21 @@ export async function getTier(
     count = miniCountResponse.data?.[columnName] || 0;
   }
 
-  //console.log(`User tier: ${tier}, usage count: ${count}`);
+  //// console.log(`User tier: ${tier}, usage count: ${count}`);
 
   // Check tier limits
   if (tier === "Free") {
     const freeLimit = parseInt(process.env.FREE_TIER_MONTHLY_LIMIT || "100");
     if (count >= freeLimit) {
       throw new Error(
-        "Free tier monthly limit reached. Please upgrade your plan to continue.",
+        "Free tier monthly limit reached. Please upgrade your plan to continue."
       );
     }
   } else if (tier === "Pro") {
     const proLimit = 10000;
     if (count >= proLimit) {
       throw new Error(
-        "Pro tier monthly limit reached. Please contact support if you need a higher limit.",
+        "Pro tier monthly limit reached. Please contact support if you need a higher limit."
       );
     }
   }
@@ -63,7 +63,7 @@ export async function updateTokenUsage(
   userId: string,
   columnName: string,
   tokenCount: number,
-  tier: string,
+  tier: string
 ) {
   const rpcName =
     tier === "Pro" ? "increment_full_tokens" : "increment_mini_tokens";
@@ -79,7 +79,7 @@ export async function updateUsage(
   supabase: any,
   userId: string,
   columnName: string,
-  tier: string,
+  tier: string
 ) {
   const rpcName =
     tier === "Pro" ? "increment_full_count" : "increment_mini_count";

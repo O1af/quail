@@ -143,7 +143,7 @@ export function BillingForm() {
   const [user, setUser] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState<string>("Free");
-  const [end_at, setEnd_at] = useState<Date>(null);
+  const [end_at, setEnd_at] = useState<Date | null>(null);
 
   useEffect(() => {
     const fetchUserAndTier = async () => {
@@ -263,7 +263,7 @@ export function BillingForm() {
                 </Button>
               ) : (
                 <Checkout
-                  priceId={plan.priceId}
+                  priceId={plan.priceId!}
                   plan={plan.name}
                   current={tier}
                   end_at={end_at}

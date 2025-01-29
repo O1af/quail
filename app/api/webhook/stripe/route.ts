@@ -11,7 +11,7 @@ export async function POST(req: any) {
   const rawBody = await buffer(req.body);
   const headersList = await headers();
   try {
-    console.log("rawBody", rawBody);
+    // console.log("rawBody", rawBody);
     let event;
     try {
       const sig = headersList.get("stripe-signature");
@@ -26,7 +26,7 @@ export async function POST(req: any) {
         const result = event.data.object;
         const supabase = await supabaseAdmin();
         const end_at = new Date(
-          result.lines.data[0].period.end * 1000,
+          result.lines.data[0].period.end * 1000
         ).toISOString();
         const customer_id = result.customer as string;
         const subscription_id = result.subscription as string;
@@ -46,14 +46,14 @@ export async function POST(req: any) {
           })
           .eq("email", email);
         if (error) {
-          console.log(error);
+          // console.log(error);
           return Response.json({ error: error.message });
         }
 
         break;
       case "customer.subscription.updated":
         const updateSubscription = event.data.object;
-        console.log("updateSubscription", updateSubscription);
+        // console.log("updateSubscription", updateSubscription);
         const cancellation = updateSubscription.cancel_at_period_end;
         const udpateSupabase = await supabaseAdmin();
         const { error: updateError } = await udpateSupabase
@@ -64,14 +64,14 @@ export async function POST(req: any) {
           .eq("subscription_id", updateSubscription.id);
 
         if (updateError) {
-          console.log(updateError);
+          // console.log(updateError);
           return Response.json({ error: updateError.message });
         }
 
         break;
       case "customer.subscription.deleted":
         const deleteSubscription = event.data.object;
-        console.log("HELP I DELETE", deleteSubscription.customer);
+        // console.log("HELP I DELETE", deleteSubscription.customer);
         const delSupabase = await supabaseAdmin();
         const { error: delError } = await delSupabase
           .from("profiles")
@@ -84,13 +84,13 @@ export async function POST(req: any) {
           .eq("customer_id", deleteSubscription.customer);
 
         if (delError) {
-          console.log(delError);
+          // console.log(delError);
           return Response.json({ error: delError.message });
         }
 
         break;
       default:
-      //console.log(`Unhandled event type ${event.type}`);
+      //// console.log(`Unhandled event type ${event.type}`);
     }
     return Response.json({});
   } catch (e) {

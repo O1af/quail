@@ -25,7 +25,7 @@ export const maxDuration = 30;
 export const dynamic = "force-dynamic";
 
 export async function POST(req: Request) {
-  //console.log("noStore called");
+  //// console.log("noStore called");
   noStore();
 
   const supabase = await createClient();
@@ -131,7 +131,7 @@ export async function POST(req: Request) {
         description: "Generate a chart.",
         parameters: z.object({}),
         execute: async ({}) => {
-          //console.log("Executing chart tool");
+          //// console.log("Executing chart tool");
           function generateSchemaString(data: Result[]) {
             if (!Array.isArray(data) || data.length === 0) {
               return "No data available to infer schema.";
@@ -160,7 +160,7 @@ export async function POST(req: Request) {
             Ensure that the generated SQL query strictly uses only the table and column names provided in the schema. Do not invent any new table or column names. 
             Output only valid SQL code as plain text, without formatting, explanations, or comments. Keep in mind the database is of type ${dbType}.`,
           });
-          //console.log(`Generated SQL query: ${text}`);
+          //// console.log(`Generated SQL query: ${text}`);
 
           let response;
           try {
@@ -183,7 +183,7 @@ export async function POST(req: Request) {
           });
 
           const resultsSchema = generateSchemaString(results);
-          //console.log(`Results schema: ${resultsSchema}`);
+          //// console.log(`Results schema: ${resultsSchema}`);
 
           const { object: config } = await generateObject({
             model: azure(getModelName(userTier)),

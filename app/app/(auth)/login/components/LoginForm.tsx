@@ -53,7 +53,7 @@ export function LoginForm({
       formData.append("password", data.password);
       await login(formData);
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       setError("Invalid email or password. Please try again.");
     }
   };

@@ -57,7 +57,7 @@ export function ForgotPasswordForm() {
         variant: "success",
       });
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       setError("There was an error resetting your password. Please try again.");
     }
   };

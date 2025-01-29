@@ -49,43 +49,43 @@ export default function Checkout({
   }, [supabase]);
 
   const handleCheckout = async () => {
-    console.log("checkout", plan, priceId, current);
+    // console.log("checkout", plan, priceId, current);
     const data = JSON.parse(
       await checkout(
         user?.email,
         priceId,
-        `http://localhost:3000/success?subscription=${plan}`,
-      ),
+        `http://localhost:3000/success?subscription=${plan}`
+      )
     );
 
     const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PK!);
     const res = await stripe?.redirectToCheckout({ sessionId: data.id });
     if (res?.error) {
-      console.log("failure");
+      // console.log("failure");
       alert(`Fail to checkout, ${res.error}`);
     }
   };
 
   const handleBilling = async () => {
-    console.log("manage billing");
+    // console.log("manage billing");
     if (customerId) {
-      console.log(customerId);
+      // console.log(customerId);
       const data = JSON.parse(await manageBilling(customerId));
       window.location.href = data.url;
     }
   };
 
   const handleRenew = async () => {
-    console.log("handleRenew");
+    // console.log("handleRenew");
     if (subscriptionId) {
       const data = JSON.parse(await renewSubscription(subscriptionId));
-      console.log(data);
+      // console.log(data);
       window.location.href = `http://localhost:3000/success?subscription=${current}`;
     }
   };
 
-  console.log(subscriptionId, "subscriptionId");
-  console.log(current, "current");
+  // console.log(subscriptionId, "subscriptionId");
+  // console.log(current, "current");
 
   return (
     <Button
@@ -100,8 +100,8 @@ export default function Checkout({
         current === "Pro" && plan === "Pro" && inCancellationPeriod === true
           ? handleRenew
           : plan === "Free"
-            ? handleBilling
-            : handleCheckout
+          ? handleBilling
+          : handleCheckout
       }
       disabled={
         (current === "Free" && plan === "Free") ||
@@ -114,16 +114,14 @@ export default function Checkout({
       {current !== "Free" && plan === "Free" && inCancellationPeriod === true
         ? `Activates ${new Date(end_at).toDateString()}`
         : current !== "Free" &&
-            plan === current &&
-            inCancellationPeriod === true
-          ? `Renew`
-          : current !== "Free" &&
-              inCancellationPeriod === null &&
-              plan === "Free"
-            ? `Cancel ${current} Plan`
-            : current === plan
-              ? "Current Plan"
-              : `Get ${plan}`}
+          plan === current &&
+          inCancellationPeriod === true
+        ? `Renew`
+        : current !== "Free" && inCancellationPeriod === null && plan === "Free"
+        ? `Cancel ${current} Plan`
+        : current === plan
+        ? "Current Plan"
+        : `Get ${plan}`}
     </Button>
   );
 }

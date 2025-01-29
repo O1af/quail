@@ -6,6 +6,7 @@ import { ForgotPasswordForm } from "./components/ForgotPasswordForm";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
 import { useTheme } from "next-themes";
+import botIconDark from "@/assets/BotIconDark.png";
 
 const ForgotPasswordPage = () => {
   const [user, setUser] = useState<any>(null);

@@ -71,7 +71,7 @@ export function SignUpForm() {
 
       form.reset();
     } catch (err) {
-      console.log(err);
+      // console.log(err);
       setError("There was an error creating your account. Please try again.");
     }
   };

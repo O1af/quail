@@ -97,7 +97,7 @@ export function DynamicChart({
 
     chartData = parsedChartData;
 
-    console.log({ chartData, chartConfig });
+    // console.log({ chartData, chartConfig });
 
     switch (chartConfig.type) {
       case "bar":

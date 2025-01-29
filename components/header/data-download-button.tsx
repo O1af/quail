@@ -28,7 +28,7 @@ export const DataDownloadButton = React.memo(function DownloadButton() {
         await downloadSelectedCSV();
       } else if (format === "Excel") {
         // Implement Excel download functionality
-        console.log("Excel download");
+        // console.log("Excel download");
       }
     } finally {
       setIsDownloading(false);
