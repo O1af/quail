@@ -156,11 +156,15 @@ export async function POST(req: Request) {
           const { text } = await generateText({
             model: azure(getModelName(userTier)),
             system: "You are an SQL expert.",
-            prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. 
-            Ensure that the generated SQL query strictly uses only the table and column names provided in the schema. Do not invent any new table or column names. 
-            Output only valid SQL code as plain text, without formatting, explanations, or comments. Keep in mind the database is of type ${dbType}.`,
+            prompt: `The database schema is as follows: ${formattedSchemas}. 
+              Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. 
+              Ensure that the generated SQL query strictly uses only the table and column names provided in the schema. 
+              Do not invent any new table or column names. 
+              Output only valid SQL code as plain text, **without wrapping it in triple backticks or code fences**, 
+              and without any formatting, explanations, or comments. 
+              Keep in mind the database is of type ${dbType}.`,
           });
-          //// console.log(`Generated SQL query: ${text}`);
+          //console.log(`Generated SQL query: ${text}`);
 
           let response;
           try {
