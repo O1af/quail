@@ -83,7 +83,7 @@ export default function ContactUs() {
               <input
                 type="hidden"
                 name="_next"
-                value="http://localhost:3000/thanks"
+                value={`${process.env.NEXT_PUBLIC_BASE_URL}/thanks`}
               />
               <input
                 type="hidden"

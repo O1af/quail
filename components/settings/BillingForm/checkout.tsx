@@ -54,7 +54,7 @@ export default function Checkout({
       await checkout(
         user?.email,
         priceId,
-        `http://localhost:3000/success?subscription=${plan}`
+        `${process.env.NEXT_PUBLIC_BASE_URL}/success?subscription=${plan}`
       )
     );
 
@@ -80,7 +80,7 @@ export default function Checkout({
     if (subscriptionId) {
       const data = JSON.parse(await renewSubscription(subscriptionId));
       // console.log(data);
-      window.location.href = `http://localhost:3000/success?subscription=${current}`;
+      window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/success?subscription=${current}`;
     }
   };
 

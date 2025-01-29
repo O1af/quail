@@ -5,10 +5,14 @@ export async function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const path = request.nextUrl.pathname;
   const appUrl = new URL(
-    process.env.NEXT_PUBLIC_APP_URL || "http://app.localhost:3000"
+    process.env.NEXT_PUBLIC_APP_URL ||
+      `http://app.${process.env.NEXT_PUBLIC_BASE_URL}`
   );
 
-  if (hostname === "localhost:3000" && path.startsWith("/app")) {
+  if (
+    hostname === new URL(process.env.NEXT_PUBLIC_BASE_URL || "").host &&
+    path.startsWith("/app")
+  ) {
     const url = new URL(request.nextUrl);
     url.host = appUrl.host;
     url.pathname = path.replace("/app", "");

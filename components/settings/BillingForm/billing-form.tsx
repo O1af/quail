@@ -256,7 +256,7 @@ export function BillingForm() {
                   className="w-full"
                   disabled={plan.name === tier}
                   onClick={() =>
-                    (window.location.href = "http://localhost:3000/contact")
+                    (window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/contact`)
                   }
                 >
                   {tier === plan.name ? "Current Plan" : "Contact Us"}

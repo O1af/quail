@@ -10,7 +10,7 @@ export async function checkout(
 ) {
   return JSON.stringify(
     await stripe.checkout.sessions.create({
-      success_url: redirectTo || "http://localhost:3000/success",
+      success_url: redirectTo || `${process.env.NEXT_PUBLIC_BASE_URL}/success`,
       cancel_url: `${process.env.NEXT_PUBLIC_APP_URL}/`,
       customer_email: email,
       line_items: [{ price: priceId, quantity: 1 }],
