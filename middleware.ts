@@ -4,10 +4,13 @@ import { updateSession } from "@/utils/supabase/middleware";
 export async function middleware(request: NextRequest) {
   const hostname = request.headers.get("host") || "";
   const path = request.nextUrl.pathname;
+  const appUrl = new URL(
+    process.env.NEXT_PUBLIC_APP_URL || "http://app.localhost:3000"
+  );
 
   if (hostname === "localhost:3000" && path.startsWith("/app")) {
     const url = new URL(request.nextUrl);
-    url.host = "app.localhost:3000";
+    url.host = appUrl.host;
     url.pathname = path.replace("/app", "");
     return NextResponse.redirect(url);
   }
@@ -19,7 +22,7 @@ export async function middleware(request: NextRequest) {
 
     // Then rewrite the URL to /app path
     return NextResponse.rewrite(
-      new URL(`/app${path === "/" ? "" : path}`, request.url),
+      new URL(`/app${path === "/" ? "" : path}`, request.url)
     );
   }
 

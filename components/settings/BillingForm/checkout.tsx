@@ -32,7 +32,7 @@ export default function Checkout({
       } = await supabase.auth.getUser();
       setUser(user);
       if (!user) {
-        window.location.href = "http://app.localhost:3000/login";
+        window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
       }
       if (user) {
         const { data, error } = await supabase

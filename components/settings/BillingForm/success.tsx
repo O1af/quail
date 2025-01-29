@@ -14,7 +14,7 @@ export default function Success() {
       router.push("/");
     } else {
       const timer = setTimeout(() => {
-        router.push("http://app.localhost:3000/login/");
+        router.push(`${process.env.NEXT_PUBLIC_APP_URL}/login`);
       }, 5000);
 
       return () => clearTimeout(timer);
@@ -33,7 +33,7 @@ export default function Success() {
           <p className="mt-4 text-gray-400">
             You will be redirected shortly. If you aren&apos;t redirected,{" "}
             <Link
-              href="http://app.localhost:3000/login/"
+              href={`${process.env.NEXT_PUBLIC_APP_URL}/login`}
               className="text-blue-500"
             >
               click here

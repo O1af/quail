@@ -42,7 +42,7 @@ export async function signup(formData: FormData) {
         full_name: `${firstName} ${lastName}`,
         email,
       },
-      emailRedirectTo: "http://app.localhost:3000/login",
+      emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/login`,
     },
   };
 
@@ -63,7 +63,7 @@ export async function signout() {
     redirect("/error");
   }
 
-  redirect("http://app.localhost:3000/logout");
+  redirect(`${process.env.NEXT_PUBLIC_APP_URL}/logout`);
 }
 
 export async function signInWithGoogle() {
@@ -91,7 +91,7 @@ export async function forgotPassword(formData: FormData) {
   const supabase = await createClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `http://app.localhost:3000/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
   });
 
   if (error) {

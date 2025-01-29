@@ -8,7 +8,7 @@ export async function GET(request: NextRequest) {
   const token_hash = searchParams.get("token_hash");
   const type = searchParams.get("type") as EmailOtpType | null;
 
-  const redirectTo = new URL("http://app.localhost:3000/login");
+  const redirectTo = new URL(`${process.env.NEXT_PUBLIC_APP_URL}/login`);
 
   if (token_hash && type) {
     const supabase = await createClient();
