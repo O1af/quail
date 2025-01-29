@@ -30,6 +30,11 @@ export default function RootLayout({
       <head>
         {/* <script src="https://unpkg.com/react-scan/dist/auto.global.js" /> */}
         {/* rest of your scripts go under */}
+        <script
+          defer
+          src="https://cloud.umami.is/script.js"
+          data-website-id="b4e773e1-0632-4b83-b0d9-46548dc71a37"
+        ></script>
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
