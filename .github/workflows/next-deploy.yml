@@ -29,7 +29,17 @@ jobs:
 
       - name: Convert filenames in public folder to lowercase
         run: |
-          find public -depth -exec rename 's/(.*)\/([^\/]*)/$1\/\L$2/' {} \;
+          # This will find all files, and rename them to lowercase
+          find public -depth | while read file; do
+          # Skip directories
+          [ -d "$file" ] && continue
+          # Convert basename to lowercase
+          newFileName="$(dirname "$file")/$(basename "$file" | tr '[:upper:]' '[:lower:]')"
+          # If old != new, rename it
+          if [ "$file" != "$newFileName" ]; then
+            mv "$file" "$newFileName"
+          fi
+          done
 
       - name: Set up Node.js version
         uses: actions/setup-node@v4
