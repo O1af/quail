@@ -55,9 +55,9 @@ const plans = [
         tooltip: "Professional VSCode-based SQL editor with data display",
       },
       {
-        name: "OpenAI 4o Mini",
+        name: "OpenAI GPT 4o Mini",
         included: true,
-        tooltip: "AI assistance powered by OpenAI 4o Mini",
+        tooltip: "AI assistance powered by OpenAI GPT 4o Mini",
       },
     ],
   },
@@ -93,9 +93,9 @@ const plans = [
         tooltip: "Beta access to new features and improvements",
       },
       {
-        name: "OpenAI 4o",
+        name: "OpenAI GPT 4o",
         included: true,
-        tooltip: "Enhanced AI assistance with OpenAI 4o",
+        tooltip: "Enhanced AI assistance with OpenAI GPT 4o",
       },
     ],
   },
