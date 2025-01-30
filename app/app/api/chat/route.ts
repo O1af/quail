@@ -1,7 +1,7 @@
 import { streamText, Message } from "ai";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
-import { Column, Schema, Table } from "@/components/stores/table_store";
+import { Column, Schema, Table, Index } from "@/components/stores/table_store";
 import { unstable_noStore as noStore } from "next/cache";
 import { countTokens } from "gpt-tokenizer";
 import {
@@ -69,36 +69,60 @@ export async function POST(req: Request) {
           const columns = table.columns
             .map((col: Column) => `${col.name} (${col.dataType})`)
             .join(", ");
-          return `Table ${table.name} contains columns: { ${columns}}`;
+
+          const indexes = table.indexes
+            ?.map((idx: Index) => {
+              const type = idx.isPrimary
+                ? "PRIMARY KEY"
+                : idx.isUnique
+                ? "UNIQUE INDEX"
+                : "INDEX";
+              return `${type} ${idx.name} (${idx.columns.join(", ")})`;
+            })
+            .join(", ");
+
+          return `Table ${table.name} contains columns: { ${columns} }${
+            indexes ? `\nIndexes: { ${indexes} }` : ""
+          }`;
         })
         .join("\n");
       return `In schema "${schema.name}":\n${tableSummaries}`;
     })
     .join("\n\n");
+  console.log("formattedSchemas", formattedSchemas);
 
   const systemPrompt = {
     role: "system",
-    content: `You are A (${dbType}) SQL Expert Assistant
-
-    CONTEXT:
-    Schema: ${formattedSchemas}
-    ${editorValue ? `User's Current Query:\n${editorValue}\n` : ""}
-    ${editorError ? `User's Current Error:\n${editorError}\n` : ""}
-
-    CAPABILITIES & RULES:
-    • Query Analysis & Optimization
-    • Error Resolution
-    • Schema Validation
-    • Performance Tuning
-    • Text Search: LOWER(column) ILIKE LOWER('%term%')
-    • Proper JOIN usage
-    • Index-aware queries
-
-    OUTPUT:
-    1. Analysis/Solution
-    2. Optimized Query
-    3. Performance Notes
-    ${editorError ? "4. Error Resolution\n" : ""}`,
+    content: `You are a SQL Editor Assistant specializing in ${dbType}. Focus on writing, analyzing, and fixing SQL queries.
+  
+  CONTEXT:
+  Database Schema:
+  ${formattedSchemas}
+  ${editorValue ? `Active Query:\n${editorValue}` : ""}
+  ${editorError ? `Current Error:\n${editorError}` : ""}
+  
+  RULES:
+  1. Schema Compliance
+     - Only reference tables and columns from the provided schema
+     - Use correct case sensitivity for identifiers
+     - Include schema names in table references
+  
+  2. SQL Standards
+     - Use double quotes for uppercase identifiers in PostgreSQL
+     - Implement proper JOIN conditions
+     - Write performant queries using appropriate indexes
+     - Use LOWER(column) ILIKE LOWER('%term%') for text search
+  
+  3. Query Requirements
+     - Write clear, maintainable SQL
+     - Follow standard SQL formatting
+     - Include proper table aliases
+     - Handle NULL values appropriately
+  
+  4. Error Handling
+     - Provide specific error fixes
+     - Explain query problems concisely
+     - Suggest query improvements`,
   };
 
   // Count and log tokens

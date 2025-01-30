@@ -132,14 +132,21 @@ export const chartTool = (params: ChartToolParams) =>
         Based on this schema and conversation context, generate an SQL query to fulfill the following request: ${jsonQuery}.
         
         IMPORTANT RULES:
-        1. ONLY use tables and columns that are explicitly defined in the schema above
-        2. Tables must be referenced in lowercase in PostgreSQL
-        3. Example format: SELECT "DNAME", "EMPNO" FROM dept WHERE "DEPTNO" = 10
-        4. Table names should NOT be quoted, but column names must be quoted
-        5. Table aliases are optional but if used should also be lowercase
-        6. DO NOT use any columns or tables that aren't in the schema
+        1. Query MUST start with SELECT keyword
+        2. Query MUST return data suitable for visualization (typically with aggregation)
+        3. ONLY use tables and columns that are explicitly defined in the schema above
+        4. Tables must be referenced in lowercase in PostgreSQL
+        5. ALL identifiers containing uppercase characters MUST be quoted with double quotes
+        6. ALL column names must be quoted with double quotes regardless of case
+        7. Table names should NOT be quoted unless they contain uppercase characters
+        8. Table aliases if used must be lowercase and should not be quoted
+        9. Schema names must be lowercase and should not be quoted
+        10. DO NOT use any columns or tables that aren't in the schema
+        11. DO NOT include any markdown, code blocks, or backticks
+        12. DO NOT include any explanations or comments
+        13. Output MUST be a single valid SQL query
         
-        Output only valid SQL code as plain text, without any formatting or comments.`;
+        Output the SQL query directly without any formatting or surrounding characters.`;
 
       try {
         const result = await generateText({

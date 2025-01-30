@@ -16,10 +16,18 @@ export interface Column {
   dataType: string;
 }
 
+export interface Index {
+  name: string;
+  columns: string[];
+  isUnique: boolean;
+  isPrimary: boolean;
+}
+
 export interface Table {
   name: string;
   type: string;
   columns: Column[];
+  indexes: Index[];
 }
 
 export interface Schema {
