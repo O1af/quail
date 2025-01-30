@@ -36,7 +36,31 @@ export function CodeBlock({
   const { toast } = useToast();
   const { setValue } = useEditorStore();
 
+  const formatSqlWithHighlighting = (sql: string) => {
+    const keywords = {
+      blue: ["SELECT", "FROM", "WHERE", "GROUP BY", "ORDER BY", "DESC", "AS"],
+      purple: ["COUNT"],
+      green: ["'active'"],
+    };
+
+    let formattedSql = sql;
+    Object.entries(keywords).forEach(([color, words]) => {
+      words.forEach((word) => {
+        const regex = new RegExp(`\\b${word}\\b`, "gi");
+        formattedSql = formattedSql.replace(
+          regex,
+          `<span class='text-${color}-500'>${word}</span>`,
+        );
+      });
+    });
+
+    return formattedSql;
+  };
+
   const isSQL = sqlRegex.test(children);
+  const highlightedCode = isSQL
+    ? formatSqlWithHighlighting(children)
+    : children;
 
   const handleCopy = async () => {
     await copyToClipboard(children);
@@ -98,9 +122,10 @@ export function CodeBlock({
               {...props}
               className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 pt-12 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
             >
-              <code className="whitespace-pre-wrap break-words">
-                {children}
-              </code>
+              <code
+                className="whitespace-pre-wrap break-words"
+                dangerouslySetInnerHTML={{ __html: highlightedCode }}
+              />
             </pre>
           </div>
         ) : (
