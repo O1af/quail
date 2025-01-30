@@ -33,7 +33,7 @@ export function CodeBlock({
   const [output, setOutput] = useState<string | null>(null);
   const [tab, setTab] = useState<"code" | "run">("code");
   const [_, copyToClipboard] = useCopyToClipboard();
-  const { toast } = useToast(); // Initialize the toast hook
+  const { toast } = useToast();
   const { setValue } = useEditorStore();
 
   const isSQL = sqlRegex.test(children);
@@ -47,8 +47,7 @@ export function CodeBlock({
   };
 
   const insertCode = (children: React.ReactNode) => {
-    // Set the new value for the editor when the button is clicked
-    const newValue = `${children}`; // Example: Dynamically use the children content
+    const newValue = `${children}`;
     setValue(newValue);
     toast({
       description: "Editor content replaced!",
@@ -105,7 +104,16 @@ export function CodeBlock({
             </pre>
           </div>
         ) : (
-          <p className="font-bold italic"> {children} </p>
+          <div className="not-prose flex flex-col relative">
+            <pre
+              {...props}
+              className={`text-sm w-full overflow-x-auto rounded-xl dark:text-zinc-50 text-zinc-900`}
+            >
+              <code className="whitespace-pre-wrap break-words">
+                {children}
+              </code>
+            </pre>
+          </div>
         )}
       </div>
     );
