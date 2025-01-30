@@ -16,6 +16,8 @@ import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback } from "react";
 import { downloadSQL } from "../stores/utils/downloadSQL";
 import { downloadCSV } from "../stores/utils/downloadCSV";
+import { downloadPDF } from "../stores/utils/downloadPDF";
+import { downloadExcel } from "../stores/utils/downloadExcel";
 import React from "react";
 
 export const DownloadButton = React.memo(function DownloadButton() {
@@ -27,12 +29,14 @@ export const DownloadButton = React.memo(function DownloadButton() {
     setIsDownloading(true);
     setIsOpen(false);
     try {
-      // console.log(format, selectedType);
       if (format === "SQL") {
         await downloadSQL("query");
       } else if (format === "CSV") {
         await downloadCSV();
-      } else {
+      } else if (format === "PDF") {
+        await downloadPDF();
+      } else if (format === "Excel") {
+        await downloadExcel();
       }
     } finally {
       setIsDownloading(false);
@@ -119,6 +123,14 @@ export const DownloadButton = React.memo(function DownloadButton() {
                   disabled={isDownloading}
                 >
                   Download CSV
+                </Button>
+                <Button
+                  variant="outline"
+                  className="w-full justify-start hover:bg-secondary"
+                  onClick={() => handleDownload("Excel")}
+                  disabled={isDownloading}
+                >
+                  Download Excel
                 </Button>
                 <Button
                   variant="outline"

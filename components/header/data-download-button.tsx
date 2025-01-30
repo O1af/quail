@@ -14,6 +14,8 @@ import {
 } from "@/components/ui/tooltip";
 import { useState, useEffect, useCallback } from "react";
 import { downloadSelectedCSV } from "../stores/utils/downloadCSV";
+import { downloadSelectedExcel } from "../stores/utils/downloadExcel";
+import { downloadSelectedPDF } from "../stores/utils/downloadPDF";
 import React from "react";
 
 export const DataDownloadButton = React.memo(function DownloadButton() {
@@ -27,8 +29,9 @@ export const DataDownloadButton = React.memo(function DownloadButton() {
       if (format === "CSV") {
         await downloadSelectedCSV();
       } else if (format === "Excel") {
-        // Implement Excel download functionality
-        // console.log("Excel download");
+        await downloadSelectedExcel();
+      } else if (format === "PDF") {
+        await downloadSelectedPDF();
       }
     } finally {
       setIsDownloading(false);
@@ -89,6 +92,14 @@ export const DataDownloadButton = React.memo(function DownloadButton() {
             disabled={isDownloading}
           >
             Download Excel
+          </Button>
+          <Button
+            variant="outline"
+            className="w-full justify-start hover:bg-secondary"
+            onClick={() => handleDownload("PDF")}
+            disabled={isDownloading}
+          >
+            Download PDF
           </Button>
         </div>
       </DropdownMenuContent>

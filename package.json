@@ -39,6 +39,8 @@
     "cmdk": "^1.0.0",
     "framer-motion": "^11.15.0",
     "gpt-tokenizer": "^2.8.1",
+    "jspdf": "^2.5.2",
+    "jspdf-autotable": "^3.8.4",
     "login-form": "^1.0.0-alpha-1",
     "lucide-react": "^0.469.0",
     "monaco-editor": "^0.52.2",
@@ -61,6 +63,7 @@
     "tailwind-merge": "^2.5.5",
     "tailwindcss-animate": "^1.0.7",
     "usehooks-ts": "^3.1.0",
+    "xlsx": "^0.18.5",
     "zod": "^3.24.1",
     "zustand": "^5.0.2"
   },
