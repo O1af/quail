@@ -3,8 +3,8 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 const exampleMessages = [
   {
-    heading: "How do I select",
-    subheading: "all records from a table?",
+    heading: "Generate an informative",
+    subheading: "chart for my data",
   },
   {
     heading: "Write a query to",

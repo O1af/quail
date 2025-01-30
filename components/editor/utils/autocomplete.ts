@@ -179,7 +179,7 @@ function getDatabaseSuggestions(
   // Always add schema and table suggestions
   structure.schemas.forEach((schema) => {
     schema.tables.forEach((table) => {
-      const fullName = `${schema.name}.${table.name}`;
+      const fullName = `${table.name}`;
       suggestions.push({
         label: fullName,
         kind: monaco.languages.CompletionItemKind.Class,

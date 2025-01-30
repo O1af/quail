@@ -87,13 +87,13 @@ export function SettingsDialog({ onOpenChange }: SettingsDialogProps) {
 
   return (
     <Dialog open={open} onOpenChange={handleOpenChange}>
-      <DialogContent className="sm:max-w-[95vw] md:max-w-[1000px] max-h-[90vh] flex flex-col">
+      <DialogContent className="sm:max-w-[1000px] w-[95vw] h-[700px] max-h-[95vh] flex flex-col">
         <DialogHeader>
           <DialogTitle className="text-2xl font-bold tracking-tight">
             Settings
           </DialogTitle>
         </DialogHeader>
-        <div className="pt-8 flex flex-row flex-grow overflow-hidden">
+        <div className="flex-1 flex flex-row overflow-hidden">
           <aside className={`${sidebarWidth} pr-6 overflow-y-auto`}>
             <SidebarNav
               items={sidebarNavItems}

@@ -51,11 +51,11 @@ Please note that the following subscription plans are provided as guidelines and
 - 10-second query execution limit
 - 10MB query size limit
 - VSCode-based editor + data display
-- OpenAI 4o Mini model
+- OpenAI GPT 4o Mini model
 
 #### Pro Plan:
 - Everything in Free Plan
-- OpenAI 4o model
+- OpenAI GPT 4o model
 - 30-second query execution limit
 - 50MB query size limit
 - Early access to new features

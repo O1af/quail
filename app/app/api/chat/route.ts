@@ -131,7 +131,7 @@ export async function POST(req: Request) {
         description: "Generate a chart.",
         parameters: z.object({}),
         execute: async ({}) => {
-          //// console.log("Executing chart tool");
+          // console.log("Executing chart tool");
           function generateSchemaString(data: Result[]) {
             if (!Array.isArray(data) || data.length === 0) {
               return "No data available to infer schema.";
@@ -153,14 +153,59 @@ export async function POST(req: Request) {
           const jsonQuery = messages[messages.length - 1].content;
           const myQuery = JSON.stringify(jsonQuery, null, 2);
 
-          const { text } = await generateText({
-            model: azure(getModelName(userTier)),
-            system: "You are an SQL expert.",
-            prompt: `The database schema is as follows: ${formattedSchemas}. Based on this schema, generate an SQL query to fulfill the following request: ${myQuery}. 
-            Ensure that the generated SQL query strictly uses only the table and column names provided in the schema. Do not invent any new table or column names. 
-            Output only valid SQL code as plain text, without formatting, explanations, or comments. Keep in mind the database is of type ${dbType}.`,
-          });
-          //// console.log(`Generated SQL query: ${text}`);
+          // Create a conversation history string from all messages
+          const conversationHistory = messages
+            .map((msg: Message) => `${msg.role}: ${msg.content}`)
+            .join("\n\n");
+
+          const sqlPrompt = `The database schema is as follows: ${formattedSchemas}. 
+
+Previous conversation context:
+${conversationHistory}
+
+Based on this schema and conversation context, generate an SQL query to fulfill the following request: ${myQuery}. 
+Ensure that the generated SQL query strictly uses only the table and column names provided in the schema. 
+Do not invent any new table or column names. 
+Output only valid SQL code as plain text, **without wrapping it in triple backticks or code fences**, 
+and without any formatting, explanations, or comments. 
+Keep in mind the database is of type ${dbType}.`;
+
+          // Collect all token update promises
+          const tokenUpdatePromises: Promise<void>[] = [];
+
+          // Count tokens for SQL generation
+          const sqlPromptTokens = countTokens(sqlPrompt);
+          // console.log(`SQL Prompt tokens: ${sqlPromptTokens}`);
+          let text;
+          try {
+            const result = await generateText({
+              model: azure(getModelName(userTier)),
+              system: "You are an SQL expert.",
+              prompt: sqlPrompt,
+            });
+            text = result.text;
+            const sqlResponseTokens = countTokens(text);
+            // console.log(`SQL Response tokens: ${sqlResponseTokens}`);
+            // console.log(
+            //   `Total SQL tokens: ${sqlPromptTokens + sqlResponseTokens}`
+            // );
+            // Add SQL token usage promise to collection
+            tokenUpdatePromises.push(
+              updateTokenUsage(
+                supabase,
+                user.user.id,
+                getCurrentUsageColumn(),
+                sqlPromptTokens + countTokens(text),
+                userTier
+              ).catch((error) => {
+                console.error("Failed to update SQL token usage:", error);
+              })
+            );
+          } catch (error) {
+            console.error("Error generating SQL query:", error);
+            throw new Error("Failed to generate SQL query");
+          }
+          // console.log(`Generated SQL query: ${text}`);
 
           let response;
           try {
@@ -183,12 +228,9 @@ export async function POST(req: Request) {
           });
 
           const resultsSchema = generateSchemaString(results);
-          //// console.log(`Results schema: ${resultsSchema}`);
+          // console.log(`Results schema: ${resultsSchema}`);
 
-          const { object: config } = await generateObject({
-            model: azure(getModelName(userTier)),
-            system: "You are a data visualization expert.",
-            prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query. For multiple groups use multi-lines. Match the field names in the results exactly.
+          const chartPrompt = `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query. For multiple groups use multi-lines. Match the field names in the results exactly.
 
               Here is an example complete config:
               export const chartConfig = {
@@ -207,9 +249,48 @@ export async function POST(req: Request) {
               ${myQuery}
 
               Database Schema:
-              ${resultsSchema}`,
+              ${resultsSchema}`;
+
+          // Count tokens for chart config generation
+          const chartPromptTokens = countTokens(chartPrompt);
+          // console.log(`Chart Prompt tokens: ${chartPromptTokens}`);
+          const { object: config } = await generateObject({
+            model: azure(getModelName(userTier)),
+            system: "You are a data visualization expert.",
+            prompt: chartPrompt,
             schema: configSchema,
           });
+          const chartResponseTokens = countTokens(JSON.stringify(config));
+          // console.log(`Chart Response tokens: ${chartResponseTokens}`);
+          // console.log(
+          //   `Total Chart tokens: ${chartPromptTokens + chartResponseTokens}`
+          // );
+          // console.log(
+          //   `Total Tool tokens: ${
+          //     sqlPromptTokens +
+          //     countTokens(text) +
+          //     chartPromptTokens +
+          //     chartResponseTokens
+          //   }`
+          // );
+
+          // Add chart config token usage promise to collection
+          tokenUpdatePromises.push(
+            updateTokenUsage(
+              supabase,
+              user.user.id,
+              getCurrentUsageColumn(),
+              chartPromptTokens + countTokens(JSON.stringify(config)),
+              userTier
+            ).catch((error) => {
+              console.error("Failed to update chart token usage:", error);
+            })
+          );
+
+          // Add token update promises to the main update promises array
+          updatePromises.push(...tokenUpdatePromises);
+
+          // console.log(`Generated chart config: ${JSON.stringify(config)}`);
 
           if (!config) {
             console.error("Failed to generate chart config");
