@@ -89,7 +89,6 @@ export async function POST(req: Request) {
       return `In schema "${schema.name}":\n${tableSummaries}`;
     })
     .join("\n\n");
-  console.log("formattedSchemas", formattedSchemas);
 
   const systemPrompt = {
     role: "system",
