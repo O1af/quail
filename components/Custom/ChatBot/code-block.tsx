@@ -38,9 +38,64 @@ export function CodeBlock({
 
   const formatSqlWithHighlighting = (sql: string) => {
     const keywords = {
-      blue: ["SELECT", "FROM", "WHERE", "GROUP BY", "ORDER BY", "DESC", "AS"],
-      purple: ["COUNT"],
-      green: ["'active'"],
+      blue: [
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "GROUP BY",
+        "ORDER BY",
+        "HAVING",
+        "DISTINCT",
+        "LIMIT",
+        "OFFSET",
+        "FETCH",
+        "ASC",
+        "DESC",
+        "AS",
+        "JOIN",
+        "INNER JOIN",
+        "LEFT JOIN",
+        "RIGHT JOIN",
+        "FULL JOIN",
+        "ON",
+      ],
+      purple: [
+        "COUNT",
+        "SUM",
+        "AVG",
+        "MIN",
+        "MAX",
+        "LOWER",
+        "UPPER",
+        "ROUND",
+        "LENGTH",
+        "SUBSTRING",
+        "TRIM",
+        "REPLACE",
+        "CONCAT",
+        "COALESCE",
+        "EXTRACT",
+        "DATE_PART",
+      ],
+      green: ["TRUE", "FALSE", "NULL"],
+      yellow: ["INSERT", "UPDATE", "DELETE", "INTO", "VALUES", "SET"],
+      red: [
+        "AND",
+        "OR",
+        "NOT",
+        "IN",
+        "EXISTS",
+        "LIKE",
+        "BETWEEN",
+        "CASE",
+        "WHEN",
+        "THEN",
+        "ELSE",
+        "END",
+      ],
+      cyan: ["CREATE", "DROP", "ALTER", "TABLE", "DATABASE", "INDEX", "VIEW"],
+      pink: ["GRANT", "REVOKE", "COMMIT", "ROLLBACK", "SAVEPOINT"],
+      orange: ["'active'", "'inactive'", "'pending'"],
     };
 
     let formattedSql = sql;
@@ -49,7 +104,7 @@ export function CodeBlock({
         const regex = new RegExp(`\\b${word}\\b`, "gi");
         formattedSql = formattedSql.replace(
           regex,
-          `<span class='text-${color}-500'>${word}</span>`,
+          `<span class='text-${color}-500 font-semibold'>${word}</span>`,
         );
       });
     });

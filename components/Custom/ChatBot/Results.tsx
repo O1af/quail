@@ -41,7 +41,7 @@ export const Results = ({
     return title
       .split("_")
       .map((word, index) =>
-        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word
+        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word,
       )
       .join(" ");
   };
@@ -83,29 +83,75 @@ export const Results = ({
 
   const formatSqlWithHighlighting = (sql: string) => {
     const keywords = {
-      blue: ["SELECT", "FROM", "WHERE", "GROUP BY", "ORDER BY", "DESC", "AS"],
-      purple: ["COUNT"],
-      green: ["'active'"],
+      blue: [
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "GROUP BY",
+        "ORDER BY",
+        "HAVING",
+        "DISTINCT",
+        "LIMIT",
+        "OFFSET",
+        "FETCH",
+        "ASC",
+        "DESC",
+        "AS",
+        "JOIN",
+        "INNER JOIN",
+        "LEFT JOIN",
+        "RIGHT JOIN",
+        "FULL JOIN",
+        "ON",
+      ],
+      purple: [
+        "COUNT",
+        "SUM",
+        "AVG",
+        "MIN",
+        "MAX",
+        "LOWER",
+        "UPPER",
+        "ROUND",
+        "LENGTH",
+        "SUBSTRING",
+        "TRIM",
+        "REPLACE",
+        "CONCAT",
+        "COALESCE",
+        "EXTRACT",
+        "DATE_PART",
+      ],
+      green: ["TRUE", "FALSE", "NULL"],
+      yellow: ["INSERT", "UPDATE", "DELETE", "INTO", "VALUES", "SET"],
+      red: [
+        "AND",
+        "OR",
+        "NOT",
+        "IN",
+        "EXISTS",
+        "LIKE",
+        "BETWEEN",
+        "CASE",
+        "WHEN",
+        "THEN",
+        "ELSE",
+        "END",
+      ],
+      cyan: ["CREATE", "DROP", "ALTER", "TABLE", "DATABASE", "INDEX", "VIEW"],
+      pink: ["GRANT", "REVOKE", "COMMIT", "ROLLBACK", "SAVEPOINT"],
+      orange: ["'active'", "'inactive'", "'pending'"],
     };
 
     let formattedSql = sql;
-    keywords.blue.forEach((keyword) => {
-      formattedSql = formattedSql.replace(
-        new RegExp(`\\b${keyword}\\b`, "g"),
-        `<span class="text-blue-500">${keyword}</span>`
-      );
-    });
-    keywords.purple.forEach((keyword) => {
-      formattedSql = formattedSql.replace(
-        new RegExp(`\\b${keyword}\\b`, "g"),
-        `<span class="text-purple-500">${keyword}</span>`
-      );
-    });
-    keywords.green.forEach((keyword) => {
-      formattedSql = formattedSql.replace(
-        keyword,
-        `<span class="text-green-500">${keyword}</span>`
-      );
+    Object.entries(keywords).forEach(([color, words]) => {
+      words.forEach((word) => {
+        const regex = new RegExp(`\\b${word}\\b`, "gi");
+        formattedSql = formattedSql.replace(
+          regex,
+          `<span class='text-${color}-500 font-semibold'>${word}</span>`,
+        );
+      });
     });
 
     return formattedSql;
