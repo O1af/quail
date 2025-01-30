@@ -1,6 +1,5 @@
 "use client";
 
-import { useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
@@ -42,8 +41,6 @@ const contactReasons = [
 ];
 
 export default function ContactUs() {
-  const [isSubmitting, setIsSubmitting] = useState(false);
-
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -54,6 +51,20 @@ export default function ContactUs() {
     },
   });
 
+  const onSubmit = (data: z.infer<typeof formSchema>) => {
+    const subject = `Contact Form: ${data.reason}`;
+    const body = `Name: ${data.name}
+Email: ${data.email}
+Reason: ${data.reason}
+
+Message:
+${data.message}`;
+
+    window.location.href = `mailto:support@quailbi.com?subject=${encodeURIComponent(
+      subject
+    )}&body=${encodeURIComponent(body)}`;
+  };
+
   return (
     <div className="min-h-screen bg-background text-foreground">
       <div className="container mx-auto py-10 px-4">
@@ -61,36 +72,17 @@ export default function ContactUs() {
           <div className="text-center mb-10">
             <h1 className="text-4xl font-bold mb-4">Contact Us</h1>
             <p className="text-muted-foreground">
-              We'd love to hear from you. Please fill out this form and we'll
-              get back to you soon.
+              We'd love to hear from you. Please fill out this form to send us
+              an email and we'll do our best to get back to you as soon as
+              possible.
             </p>
           </div>
 
           <Form {...form}>
             <form
-              action="https://formsubmit.co/710e496cd75dce98f62dfccb00b424be"
-              method="POST"
+              onSubmit={form.handleSubmit(onSubmit)}
               className="space-y-6 bg-card p-6 rounded-lg shadow-sm"
             >
-              {/* FormSubmit Configuration */}
-              <input
-                type="hidden"
-                name="_subject"
-                value="New Contact Form Submission!"
-              />
-              <input type="hidden" name="_template" value="table" />
-              <input type="hidden" name="_captcha" value="true" />
-              <input
-                type="hidden"
-                name="_next"
-                value={"https://quailbi.com/thanks"}
-              />
-              <input
-                type="hidden"
-                name="_autoresponse"
-                value="Thank you for contacting us. We'll get back to you shortly."
-              />
-
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField
                   control={form.control}
@@ -174,8 +166,8 @@ export default function ContactUs() {
                 )}
               />
 
-              <Button type="submit" className="w-full" disabled={isSubmitting}>
-                {isSubmitting ? "Sending..." : "Send Message"}
+              <Button type="submit" className="w-full">
+                Send Message
               </Button>
             </form>
           </Form>
