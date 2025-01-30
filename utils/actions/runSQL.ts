@@ -78,11 +78,17 @@ async function executeWithUsageTracking<T>(
 export async function runPostgres(
   request: PostgresRequest
 ): Promise<PostgresResponse> {
-  return executeWithUsageTracking("/runPostgres", request);
+  return executeWithUsageTracking(
+    "/runPostgres?code=V0PdXraT6fpnnYarj7Ighojfva5GIEWI3cIiiS_USbq6AzFuWAw2iQ==",
+    request
+  );
 }
 
 export async function runMySQL(
   request: MySQLRequest
 ): Promise<PostgresResponse> {
-  return executeWithUsageTracking("/runMySQL", request);
+  return executeWithUsageTracking(
+    "/runMySQL?code=V0PdXraT6fpnnYarj7Ighojfva5GIEWI3cIiiS_USbq6AzFuWAw2iQ==",
+    request
+  );
 }
