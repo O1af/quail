@@ -9,6 +9,7 @@ export interface PostgresRequest {
 export interface PostgresResponse {
   rowCount: number;
   rows: any[];
+  error?: string;
 }
 
 export interface MySQLRequest {

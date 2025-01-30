@@ -23,22 +23,22 @@ export async function executeQuery(
     ? { connectionString, type: dbType || "postgres" }
     : await getDbConnection();
 
-  try {
-    if (dbInfo.type === "mysql") {
-      return await runMySQL({
-        connectionString: dbInfo.connectionString,
-        query: query,
-      });
-    }
-    return await runPostgres({
-      connectionString: dbInfo.connectionString,
-      query: query,
-    });
-  } catch (error) {
-    const errorMessage =
-      error instanceof Error ? error.message : "Unknown error";
-    throw new Error(`Error: ${errorMessage}`);
+  const response =
+    dbInfo.type === "mysql"
+      ? await runMySQL({
+          connectionString: dbInfo.connectionString,
+          query: query,
+        })
+      : await runPostgres({
+          connectionString: dbInfo.connectionString,
+          query: query,
+        });
+
+  if (response.error) {
+    throw new Error(response.error);
   }
+
+  return response;
 }
 
 export async function testConnection(connectionString: string, type: string) {
@@ -51,23 +51,29 @@ export async function handleQuery(queryString?: string): Promise<void> {
   const query = queryString ?? useEditorStore.getState().value;
   const { setData, setColumns } = useTableStore.getState();
 
-  const result = await executeQuery(query);
+  try {
+    const result = await executeQuery(query);
 
-  if (result.rows.length > 0) {
-    const columns: ColumnDef<SQLData, any>[] = Object.keys(result.rows[0]).map(
-      (key) => ({
+    if (result.rows.length > 0) {
+      const columns: ColumnDef<SQLData, any>[] = Object.keys(
+        result.rows[0]
+      ).map((key) => ({
         accessorKey: key,
         header: key,
         enableSorting: true,
         sortingFn: "basic",
-      })
-    );
+      }));
 
-    setColumns(columns);
-    setData(result.rows);
-  } else {
+      setColumns(columns);
+      setData(result.rows);
+    } else {
+      setColumns([]);
+      setData([]);
+    }
+  } catch (error) {
     setColumns([]);
     setData([]);
+    throw error; // Re-throw for the UI to handle
   }
 }
 
@@ -115,42 +121,46 @@ ORDER BY t.TABLE_SCHEMA, t.TABLE_NAME, c.ORDINAL_POSITION;`
     ON t.table_schema = c.table_schema AND t.table_name = c.table_name
     WHERE t.table_schema NOT IN ('pg_catalog', 'information_schema')
     ORDER BY t.table_schema, t.table_name, c.ordinal_position;`;
-
-  const result = await executeQuery(metadataQuery, connectionString, dbType);
-
   const { setDatabaseStructure } = useTableStore.getState();
 
-  if (result.rows.length > 0) {
-    const structure: DatabaseStructure = { schemas: [] };
-    const schemaMap = new Map<string, Schema>();
+  try {
+    const result = await executeQuery(metadataQuery, connectionString, dbType);
 
-    for (const rawRow of result.rows) {
-      const row = normalizeMetadataRow(rawRow);
-      const schemaName = row.table_schema;
-      const tableName = row.table_name;
-      const tableType = row.table_type;
-      const columnName = row.column_name;
-      const dataType = row.data_type;
+    if (result.rows.length > 0) {
+      const structure: DatabaseStructure = { schemas: [] };
+      const schemaMap = new Map<string, Schema>();
 
-      if (!schemaMap.has(schemaName)) {
-        schemaMap.set(schemaName, { name: schemaName, tables: [] });
+      for (const rawRow of result.rows) {
+        const row = normalizeMetadataRow(rawRow);
+        const schemaName = row.table_schema;
+        const tableName = row.table_name;
+        const tableType = row.table_type;
+        const columnName = row.column_name;
+        const dataType = row.data_type;
+
+        if (!schemaMap.has(schemaName)) {
+          schemaMap.set(schemaName, { name: schemaName, tables: [] });
+        }
+
+        const schema = schemaMap.get(schemaName)!;
+        let table = schema.tables.find((t) => t.name === tableName);
+
+        if (!table) {
+          table = { name: tableName, type: tableType, columns: [] };
+          schema.tables.push(table);
+        }
+
+        if (columnName) {
+          table.columns.push({ name: columnName, dataType });
+        }
       }
-
-      const schema = schemaMap.get(schemaName)!;
-      let table = schema.tables.find((t) => t.name === tableName);
-
-      if (!table) {
-        table = { name: tableName, type: tableType, columns: [] };
-        schema.tables.push(table);
-      }
-
-      if (columnName) {
-        table.columns.push({ name: columnName, dataType });
-      }
+      structure.schemas = Array.from(schemaMap.values());
+      setDatabaseStructure(structure);
+    } else {
+      setDatabaseStructure({ schemas: [] });
     }
-    structure.schemas = Array.from(schemaMap.values());
-    setDatabaseStructure(structure);
-  } else {
+  } catch (error) {
     setDatabaseStructure({ schemas: [] });
+    throw error; // Re-throw for the UI to handle
   }
 }

@@ -27,13 +27,13 @@ async function executeWithUsageTracking<T>(
   request: T
 ): Promise<PostgresResponse> {
   if (!process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT) {
-    throw new Error("Function endpoint not configured");
+    return { rows: [], rowCount: 0, error: "Function endpoint not configured" };
   }
   const supabase = await createClient();
 
-  const { data: user, error } = await supabase.auth.getUser();
-  if (error || !user) {
-    throw new Error("Unauthorized");
+  const { data: user, error: authError } = await supabase.auth.getUser();
+  if (authError || !user) {
+    return { rows: [], rowCount: 0, error: "Unauthorized" };
   }
 
   // Start metrics update in background
@@ -56,23 +56,34 @@ async function executeWithUsageTracking<T>(
     userTier: tier.data?.tier,
   };
 
-  const response = await fetch(
-    process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT + endpoint,
-    {
-      method: "POST",
-      body: JSON.stringify(requestWithTier),
+  try {
+    const response = await fetch(
+      process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT + endpoint,
+      {
+        method: "POST",
+        body: JSON.stringify(requestWithTier),
+      }
+    );
+
+    if (!response.ok) {
+      const err = await response.text();
+      return {
+        rows: [],
+        rowCount: 0,
+        error: err || "Database error occurred",
+      };
     }
-  );
+    const result = await response.json();
 
-  if (!response.ok) {
-    const error = await response.text();
-    throw new Error(`Database error: ${error}`);
+    await metricsPromise;
+    return result;
+  } catch (error) {
+    return {
+      rows: [],
+      rowCount: 0,
+      error: error instanceof Error ? error.message : "Unknown error occurred",
+    };
   }
-
-  const result = await response.json();
-  await metricsPromise;
-
-  return result;
 }
 
 export async function runPostgres(
