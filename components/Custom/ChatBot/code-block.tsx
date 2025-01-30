@@ -36,7 +36,86 @@ export function CodeBlock({
   const { toast } = useToast();
   const { setValue } = useEditorStore();
 
+  const formatSqlWithHighlighting = (sql: string) => {
+    const keywords = {
+      blue: [
+        "SELECT",
+        "FROM",
+        "WHERE",
+        "GROUP BY",
+        "ORDER BY",
+        "HAVING",
+        "DISTINCT",
+        "LIMIT",
+        "OFFSET",
+        "FETCH",
+        "ASC",
+        "DESC",
+        "AS",
+        "JOIN",
+        "INNER JOIN",
+        "LEFT JOIN",
+        "RIGHT JOIN",
+        "FULL JOIN",
+        "ON",
+      ],
+      purple: [
+        "COUNT",
+        "SUM",
+        "AVG",
+        "MIN",
+        "MAX",
+        "LOWER",
+        "UPPER",
+        "ROUND",
+        "LENGTH",
+        "SUBSTRING",
+        "TRIM",
+        "REPLACE",
+        "CONCAT",
+        "COALESCE",
+        "EXTRACT",
+        "DATE_PART",
+      ],
+      green: ["TRUE", "FALSE", "NULL"],
+      yellow: ["INSERT", "UPDATE", "DELETE", "INTO", "VALUES", "SET"],
+      red: [
+        "AND",
+        "OR",
+        "NOT",
+        "IN",
+        "EXISTS",
+        "LIKE",
+        "BETWEEN",
+        "CASE",
+        "WHEN",
+        "THEN",
+        "ELSE",
+        "END",
+      ],
+      cyan: ["CREATE", "DROP", "ALTER", "TABLE", "DATABASE", "INDEX", "VIEW"],
+      pink: ["GRANT", "REVOKE", "COMMIT", "ROLLBACK", "SAVEPOINT"],
+      orange: ["'active'", "'inactive'", "'pending'"],
+    };
+
+    let formattedSql = sql;
+    Object.entries(keywords).forEach(([color, words]) => {
+      words.forEach((word) => {
+        const regex = new RegExp(`\\b${word}\\b`, "gi");
+        formattedSql = formattedSql.replace(
+          regex,
+          `<span class='text-${color}-500 font-semibold'>${word}</span>`,
+        );
+      });
+    });
+
+    return formattedSql;
+  };
+
   const isSQL = sqlRegex.test(children);
+  const highlightedCode = isSQL
+    ? formatSqlWithHighlighting(children)
+    : children;
 
   const handleCopy = async () => {
     await copyToClipboard(children);
@@ -98,9 +177,10 @@ export function CodeBlock({
               {...props}
               className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 pt-12 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
             >
-              <code className="whitespace-pre-wrap break-words">
-                {children}
-              </code>
+              <code
+                className="whitespace-pre-wrap break-words"
+                dangerouslySetInnerHTML={{ __html: highlightedCode }}
+              />
             </pre>
           </div>
         ) : (
