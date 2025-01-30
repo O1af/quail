@@ -75,16 +75,15 @@ export async function POST(req: Request) {
       return `In schema "${schema.name}":\n${tableSummaries}`;
     })
     .join("\n\n");
-  console.log(editorError);
+
   const systemPrompt = {
     role: "system",
-    content: `SQL (${dbType}) Expert Assistant
+    content: `You are A (${dbType}) SQL Expert Assistant
 
     CONTEXT:
-    Database: ${dbType}
     Schema: ${formattedSchemas}
-    ${editorValue ? `Active Query:\n${editorValue}\n` : ""}
-    ${editorError ? `Current Error:\n${editorError}\n` : ""}
+    ${editorValue ? `User's Current Query:\n${editorValue}\n` : ""}
+    ${editorError ? `User's Current Error:\n${editorError}\n` : ""}
 
     CAPABILITIES & RULES:
     • Query Analysis & Optimization
