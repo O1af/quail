@@ -80,24 +80,32 @@ export async function POST(req: Request) {
 
   const systemPrompt = {
     role: "system",
-    content: `You are a SQL (${dbType}) and Data expert. Your job is to help the user write a SQL query to retrieve the data they need. 
-    The table schema is as follows: \n\n${formattedSchemas}\n\n
-    Use only the table and column names provided in the schema. Do not create or invent new table names or column names. 
-    For string fields, use the ILIKE operator and convert both the search term and the field to lowercase using LOWER() function. 
-    For example: LOWER(industry) ILIKE LOWER('%search_term%').The user currently has this query in their editor which may or may not be of value:${editorValue}.`,
-  };
+    content: `SQL (${dbType}) Expert Assistant
 
-  const promptMessage = {
-    role: "user",
-    content: `Please provide the best SQL queries to fulfill the user's request.`,
+    CONTEXT:
+    Database: ${dbType}
+    Schema: ${formattedSchemas}
+    ${editorValue ? `Active Query:\n${editorValue}\n` : ""}
+    ${editorError ? `Current Error:\n${editorError}\n` : ""}
+
+    CAPABILITIES & RULES:
+    • Query Analysis & Optimization
+    • Error Resolution
+    • Schema Validation
+    • Performance Tuning
+    • Text Search: LOWER(column) ILIKE LOWER('%term%')
+    • Proper JOIN usage
+    • Index-aware queries
+
+    OUTPUT:
+    1. Analysis/Solution
+    2. Optimized Query
+    3. Performance Notes
+    ${editorError ? "4. Error Resolution\n" : ""}`,
   };
-  if (editorError) {
-    // If there is an error in the editor, add it to the prompt message
-    systemPrompt.content += `\nThe user has just faced this Error when trying to run the query: ${editorError}`;
-  }
 
   // Count and log tokens
-  const allMessages = [systemPrompt, promptMessage, ...messages];
+  const allMessages = [systemPrompt, ...messages];
   const totalTokens = allMessages.reduce(
     (sum, msg) => sum + countTokens(msg.content),
     0
@@ -308,7 +316,7 @@ Keep in mind the database is of type ${dbType}.`;
         },
       }),
     },
-    messages: [systemPrompt, promptMessage, ...messages],
+    messages: [systemPrompt, ...messages],
     maxTokens: 1000,
   });
 
