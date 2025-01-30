@@ -15,6 +15,14 @@ export interface DatabaseConfig {
   password?: string;
 }
 
+const defaultDatabase: DatabaseConfig = {
+  id: 1,
+  name: "Quail Test DB",
+  type: "postgres",
+  connectionString:
+    "postgresql://neondb_owner:npg_4LjT9XmwAqPH@ep-black-lab-a8zi1wg9-pooler.eastus2.azure.neon.tech/neondb?sslmode=require",
+};
+
 type DbState = {
   databases: DatabaseConfig[];
   currentDatabaseId: number | null;
@@ -35,9 +43,9 @@ type DbActions = {
 export const useDbStore = create<DbState & DbActions>()(
   persist(
     (set, get) => ({
-      databases: [],
-      currentDatabaseId: null,
-      nextId: 1,
+      databases: [defaultDatabase],
+      currentDatabaseId: 1,
+      nextId: 2,
       isDatabaseChanged: false,
 
       addDatabase: (config) =>
@@ -65,7 +73,7 @@ export const useDbStore = create<DbState & DbActions>()(
       updateDatabase: (id, config) =>
         set((state) => ({
           databases: state.databases.map((db) =>
-            db.id === id ? { ...db, ...config } : db,
+            db.id === id ? { ...db, ...config } : db
           ),
         })),
       setDatabaseChange: () => set({ isDatabaseChanged: true }),
@@ -74,6 +82,6 @@ export const useDbStore = create<DbState & DbActions>()(
     {
       name: "database-storage",
       storage: createJSONStorage(() => encryptedStorage),
-    },
-  ),
+    }
+  )
 );

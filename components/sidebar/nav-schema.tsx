@@ -1,5 +1,6 @@
 "use client";
 
+import { useEffect } from "react";
 import {
   ChevronRight,
   Database,
@@ -44,6 +45,13 @@ export function NavSchema() {
   const databaseStructure = useDatabaseStructure();
   const executeQuery = useEditorStore((state) => state.executeQuery);
   const setValue = useEditorStore((state) => state.setValue);
+
+  useEffect(() => {
+    const currentDb = getCurrentDatabase();
+    if (currentDb) {
+      handleRefresh();
+    }
+  }, []); // Empty dependency array means it only runs once on mount
 
   const handleRefresh = async () => {
     const currentDb = getCurrentDatabase();
