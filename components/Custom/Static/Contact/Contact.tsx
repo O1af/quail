@@ -83,7 +83,7 @@ export default function ContactUs() {
               <input
                 type="hidden"
                 name="_next"
-                value={`${process.env.NEXT_PUBLIC_BASE_URL}/thanks`}
+                value={"https://quailbi.com/thanks"}
               />
               <input
                 type="hidden"
