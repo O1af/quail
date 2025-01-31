@@ -14,10 +14,10 @@ import {
 } from "@/components/ui/tooltip";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useState, useEffect, useCallback } from "react";
-import { downloadSQL } from "../stores/utils/downloadSQL";
-import { downloadCSV } from "../stores/utils/downloadCSV";
-import { downloadPDF } from "../stores/utils/downloadPDF";
-import { downloadExcel } from "../stores/utils/downloadExcel";
+import { downloadSQL } from "../stores/utils/downloads/downloadSQL";
+import { downloadCSV } from "../stores/utils/downloads/downloadCSV";
+import { downloadPDF } from "../stores/utils/downloads/downloadPDF";
+import { downloadExcel } from "../stores/utils/downloads/downloadExcel";
 import React from "react";
 
 export const DownloadButton = React.memo(function DownloadButton() {

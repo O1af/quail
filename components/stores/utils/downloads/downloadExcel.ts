@@ -1,24 +1,26 @@
-import { useTableStore } from "../table_store";
-import { SQLData } from "../table_store";
+import { useTableStore } from "../../table_store";
+import { SQLData } from "../../table_store";
 import { ColumnDef } from "@tanstack/react-table";
-import jsPDF from "jspdf";
-import autoTable from "jspdf-autotable";
+import * as XLSX from "xlsx";
 
-export const downloadPDF = (customFilename?: string) => {
+export const downloadExcel = (customFilename?: string) => {
   const store = useTableStore.getState();
   const { data, columns } = store;
   const columnVisibility = store.columnVisibility;
 
   if (!data.length) return;
 
+  // Only include visible columns
   const visibleColumns = columns.filter(
-    (col) => columnVisibility[col.header as string] !== false
+    (col) => col.header && columnVisibility[col.header as string] !== false
   );
   if (!visibleColumns.length) return;
 
-  // Prepare headers and data for PDF
+  // Prepare headers
   const headers = visibleColumns.map((col) => String(col.header || ""));
-  const tableData = data.map((row) => {
+
+  // Prepare data rows using only visible columns
+  const excelData = data.map((row) => {
     return visibleColumns.map((col) => {
       let value: any = "";
       const typedCol = col as ColumnDef<SQLData, any>;
@@ -32,26 +34,23 @@ export const downloadPDF = (customFilename?: string) => {
         value = typedCol.accessorFn(row, 0);
       }
 
-      return value === null || value === undefined ? "" : String(value);
+      return value === null || value === undefined ? "" : value;
     });
   });
 
-  // Create PDF
-  const doc = new jsPDF();
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...excelData]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Data");
 
-  autoTable(doc, {
-    head: [headers],
-    body: tableData,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [66, 66, 66] },
-    margin: { top: 20 },
-  });
-
-  // Save the PDF
-  doc.save(customFilename ? `${customFilename}.pdf` : "query_results.pdf");
+  // Generate Excel file
+  XLSX.writeFile(
+    wb,
+    customFilename ? `${customFilename}.xlsx` : "query_results.xlsx"
+  );
 };
 
-export const downloadSelectedPDF = (customFilename?: string) => {
+export const downloadSelectedExcel = (customFilename?: string) => {
   const store = useTableStore.getState();
   const { data, columns } = store;
   const selectedRows = store.rowSelection;
@@ -64,14 +63,17 @@ export const downloadSelectedPDF = (customFilename?: string) => {
 
   if (!selectedData.length) return;
 
+  // Only include visible columns
   const visibleColumns = columns.filter(
-    (col) => columnVisibility[col.header as string] !== false
+    (col) => col.header && columnVisibility[col.header as string] !== false
   );
   if (!visibleColumns.length) return;
 
-  // Prepare headers and data for PDF
+  // Prepare headers
   const headers = visibleColumns.map((col) => String(col.header || ""));
-  const tableData = selectedData.map((row) => {
+
+  // Prepare data rows using only visible columns
+  const excelData = selectedData.map((row) => {
     return visibleColumns.map((col) => {
       let value: any = "";
       const typedCol = col as ColumnDef<SQLData, any>;
@@ -85,21 +87,18 @@ export const downloadSelectedPDF = (customFilename?: string) => {
         value = typedCol.accessorFn(row, 0);
       }
 
-      return value === null || value === undefined ? "" : String(value);
+      return value === null || value === undefined ? "" : value;
     });
   });
 
-  // Create PDF
-  const doc = new jsPDF();
+  // Create worksheet
+  const ws = XLSX.utils.aoa_to_sheet([headers, ...excelData]);
+  const wb = XLSX.utils.book_new();
+  XLSX.utils.book_append_sheet(wb, ws, "Selected Data");
 
-  autoTable(doc, {
-    head: [headers],
-    body: tableData,
-    styles: { fontSize: 8 },
-    headStyles: { fillColor: [66, 66, 66] },
-    margin: { top: 20 },
-  });
-
-  // Save the PDF
-  doc.save(customFilename ? `${customFilename}.pdf` : "selected_data.pdf");
+  // Generate Excel file
+  XLSX.writeFile(
+    wb,
+    customFilename ? `${customFilename}.xlsx` : "selected_data.xlsx"
+  );
 };

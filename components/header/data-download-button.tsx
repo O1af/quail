@@ -13,9 +13,9 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState, useEffect, useCallback } from "react";
-import { downloadSelectedCSV } from "../stores/utils/downloadCSV";
-import { downloadSelectedExcel } from "../stores/utils/downloadExcel";
-import { downloadSelectedPDF } from "../stores/utils/downloadPDF";
+import { downloadSelectedCSV } from "../stores/utils/downloads/downloadCSV";
+import { downloadSelectedExcel } from "../stores/utils/downloads/downloadExcel";
+import { downloadSelectedPDF } from "../stores/utils/downloads/downloadPDF";
 import React from "react";
 
 export const DataDownloadButton = React.memo(function DownloadButton() {
