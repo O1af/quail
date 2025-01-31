@@ -4,7 +4,8 @@ import { runPostgres, runMySQL } from "@/utils/actions/runSQL";
 import { ColumnDef } from "@tanstack/react-table";
 import { SQLData } from "../table_store";
 import { useDbStore } from "../db_store";
-import { DatabaseStructure, Schema } from "../table_store";
+import { DatabaseStructure, Schema, Column, Index } from "../table_store";
+import { mysqlMeta, pgMeta } from "./metadataQueries";
 
 async function getDbConnection() {
   const currentDb = useDbStore.getState().getCurrentDatabase();
@@ -88,65 +89,149 @@ function normalizeMetadataRow(row: RawMetadataRow) {
     table_type: row.table_type || row.TABLE_TYPE,
     column_name: row.column_name || row.COLUMN_NAME,
     data_type: row.data_type || row.DATA_TYPE,
-    index_name: row.index_name || row.INDEX_NAME,
-    is_unique: row.is_unique || row.IS_UNIQUE,
+    ordinal_position: row.ordinal_position || row.ORDINAL_POSITION,
+    character_maximum_length:
+      row.character_maximum_length || row.CHARACTER_MAXIMUM_LENGTH,
+    numeric_precision: row.numeric_precision || row.NUMERIC_PRECISION,
+    column_default: row.column_default || row.COLUMN_DEFAULT,
+    is_nullable: row.is_nullable || row.IS_NULLABLE,
+    is_identity: row.is_identity || row.IS_IDENTITY,
+    identity_generation: row.identity_generation || row.IDENTITY_GENERATION,
+    extra: row.extra || row.EXTRA,
+    column_comment: row.column_comment || row.COLUMN_COMMENT,
     is_primary: row.is_primary || row.IS_PRIMARY,
-    index_column: row.index_column || row.INDEX_COLUMN,
+    is_unique: row.is_unique || row.IS_UNIQUE,
+    is_foreign_key: row.is_foreign_key || row.IS_FOREIGN_KEY,
+    referenced_table: row.referenced_table || row.REFERENCED_TABLE,
+    referenced_column: row.referenced_column || row.REFERENCED_COLUMN,
+    table_comment: row.table_comment || row.TABLE_COMMENT,
+    indexes: Array.isArray(row.indexes)
+      ? row.indexes
+      : typeof row.indexes === "string"
+      ? row.indexes.split(", ").filter(Boolean)
+      : [],
+    check_constraints: Array.isArray(row.check_constraints)
+      ? row.check_constraints
+      : typeof row.check_constraints === "string"
+      ? row.check_constraints.split("; ").filter(Boolean)
+      : [],
   };
 }
 
-export async function queryMetadata(connectionString?: string, dbType?: string) {
-  const metadataQuery = dbType === "mysql"
-    ? `SELECT 
-        t.TABLE_SCHEMA,
-        t.TABLE_NAME,
-        t.TABLE_TYPE,
-        c.COLUMN_NAME,
-        c.DATA_TYPE,
-        i.INDEX_NAME,
-        i.NON_UNIQUE = 0 as IS_UNIQUE,
-        i.INDEX_NAME = 'PRIMARY' as IS_PRIMARY,
-        ic.COLUMN_NAME as INDEX_COLUMN
-      FROM information_schema.tables AS t
-      LEFT JOIN information_schema.columns AS c
-        ON t.TABLE_SCHEMA = c.TABLE_SCHEMA AND t.TABLE_NAME = c.TABLE_NAME
-      LEFT JOIN information_schema.statistics AS i
-        ON t.TABLE_SCHEMA = i.TABLE_SCHEMA AND t.TABLE_NAME = i.TABLE_NAME
-      LEFT JOIN information_schema.statistics AS ic
-        ON i.INDEX_NAME = ic.INDEX_NAME AND i.TABLE_SCHEMA = ic.TABLE_SCHEMA AND i.TABLE_NAME = ic.TABLE_NAME
-      WHERE t.TABLE_SCHEMA NOT IN ('information_schema', 'mysql', 'performance_schema', 'sys')
-      ORDER BY t.TABLE_SCHEMA, t.TABLE_NAME, c.ORDINAL_POSITION;`
-    : `SELECT 
-        t.table_schema,
-        t.table_name,
-        t.table_type,
-        c.column_name,
-        c.data_type,
-        i.indexname as index_name,
-        i.indexdef LIKE '%UNIQUE%' as is_unique,
-        i.indexdef LIKE '%PRIMARY%' as is_primary,
-        ic.column_name as index_column
-      FROM information_schema.tables t
-      LEFT JOIN information_schema.columns c
-        ON t.table_schema = c.table_schema AND t.table_name = c.table_name
-      LEFT JOIN pg_indexes i
-        ON t.table_schema = i.schemaname AND t.table_name = i.tablename
-      LEFT JOIN (
-        SELECT 
-          a.attname as column_name,
-          i.relname as index_name,
-          n.nspname as schema_name,
-          t.relname as table_name
-        FROM pg_class t
-        JOIN pg_namespace n ON n.oid = t.relnamespace
-        JOIN pg_index ix ON t.oid = ix.indrelid
-        JOIN pg_class i ON i.oid = ix.indexrelid
-        JOIN pg_attribute a ON a.attrelid = t.oid AND a.attnum = ANY(ix.indkey)
-      ) ic ON ic.schema_name = t.table_schema 
-        AND ic.table_name = t.table_name 
-        AND ic.index_name = i.indexname
-      WHERE t.table_schema NOT IN ('pg_catalog', 'information_schema')
-      ORDER BY t.table_schema, t.table_name, c.ordinal_position;`;
+function processMetadataRow(
+  row: RawMetadataRow,
+  schemaMap: Map<string, Schema>
+) {
+  const normalizedRow = normalizeMetadataRow(row);
+  const schemaName = normalizedRow.table_schema;
+  const tableName = normalizedRow.table_name;
+
+  // Get or create schema
+  if (!schemaMap.has(schemaName)) {
+    schemaMap.set(schemaName, { name: schemaName, tables: [] });
+  }
+  const schema = schemaMap.get(schemaName)!;
+
+  // Get or create table metadata
+  let tableMetadata = schema.tables.find((t) => t.name === tableName);
+  if (!tableMetadata) {
+    tableMetadata = {
+      name: tableName,
+      type: normalizedRow.table_type,
+      comment: normalizedRow.table_comment,
+      columns: [],
+      indexes: [],
+    };
+    schema.tables.push(tableMetadata);
+  }
+
+  // Process column information
+  if (normalizedRow.column_name) {
+    const column: Column = {
+      name: normalizedRow.column_name,
+      dataType: normalizedRow.data_type,
+      ordinalPosition: parseInt(normalizedRow.ordinal_position) || undefined,
+      characterMaximumLength:
+        parseInt(normalizedRow.character_maximum_length) || undefined,
+      numericPrecision: parseInt(normalizedRow.numeric_precision) || undefined,
+      columnDefault: normalizedRow.column_default,
+      isNullable: normalizedRow.is_nullable,
+      isIdentity:
+        normalizedRow.is_identity === "1" ||
+        normalizedRow.is_identity === "true",
+      identityGeneration: normalizedRow.identity_generation,
+      extra: normalizedRow.extra,
+      columnComment: normalizedRow.column_comment,
+      isPrimary:
+        normalizedRow.is_primary === "1" || normalizedRow.is_primary === "true",
+      isUnique:
+        normalizedRow.is_unique === "1" || normalizedRow.is_unique === "true",
+      isForeignKey:
+        normalizedRow.is_foreign_key === "1" ||
+        normalizedRow.is_foreign_key === "true",
+      referencedTable: normalizedRow.referenced_table,
+      referencedColumn: normalizedRow.referenced_column,
+    };
+
+    // Only add if column doesn't exist
+    if (!tableMetadata.columns.some((c) => c.name === column.name)) {
+      tableMetadata.columns.push(column);
+    }
+
+    // Handle indexes
+    if (normalizedRow.indexes && normalizedRow.indexes.length > 0) {
+      for (const indexName of normalizedRow.indexes) {
+        let index = tableMetadata.indexes.find((i) => i.name === indexName);
+        if (!index) {
+          index = {
+            name: indexName,
+            columns: [normalizedRow.column_name],
+            isUnique:
+              indexName.toLowerCase().includes("_unique") || column.isUnique,
+            isPrimary:
+              indexName.toLowerCase().includes("_pkey") || column.isPrimary,
+          };
+          tableMetadata.indexes.push(index);
+        } else if (!index.columns.includes(normalizedRow.column_name)) {
+          index.columns.push(normalizedRow.column_name);
+        }
+      }
+    }
+
+    // Handle primary key if not already covered by indexes
+    if (column.isPrimary && !tableMetadata.indexes.some((i) => i.isPrimary)) {
+      tableMetadata.indexes.push({
+        name: `${tableName}_pkey`,
+        columns: [column.name],
+        isUnique: true,
+        isPrimary: true,
+      });
+    }
+
+    // Handle standalone unique constraints if not already covered by indexes
+    if (
+      column.isUnique &&
+      !column.isPrimary &&
+      !tableMetadata.indexes.some(
+        (i) =>
+          i.isUnique && i.columns.length === 1 && i.columns[0] === column.name
+      )
+    ) {
+      tableMetadata.indexes.push({
+        name: `${tableName}_${column.name}_unique`,
+        columns: [column.name],
+        isUnique: true,
+        isPrimary: false,
+      });
+    }
+  }
+}
+
+export async function queryMetadata(
+  connectionString?: string,
+  dbType?: string
+) {
+  const metadataQuery = dbType === "mysql" ? mysqlMeta : pgMeta;
 
   const { setDatabaseStructure } = useTableStore.getState();
 
@@ -154,53 +239,18 @@ export async function queryMetadata(connectionString?: string, dbType?: string) 
     const result = await executeQuery(metadataQuery, connectionString, dbType);
 
     if (result.rows.length > 0) {
-      const structure: DatabaseStructure = { schemas: [] };
       const schemaMap = new Map<string, Schema>();
 
-      // First pass: Create tables and columns
-      for (const rawRow of result.rows) {
-        const row = normalizeMetadataRow(rawRow);
-        const schemaName = row.table_schema;
-        const tableName = row.table_name;
-        const tableType = row.table_type;
-        const columnName = row.column_name;
-        const dataType = row.data_type;
-
-        if (!schemaMap.has(schemaName)) {
-          schemaMap.set(schemaName, { name: schemaName, tables: [] });
-        }
-
-        const schema = schemaMap.get(schemaName)!;
-        let table = schema.tables.find((t) => t.name === tableName);
-
-        if (!table) {
-          table = { name: tableName, type: tableType, columns: [], indexes: [] };
-          schema.tables.push(table);
-        }
-
-        if (columnName && !table.columns.some(c => c.name === columnName)) {
-          table.columns.push({ name: columnName, dataType });
-        }
-
-        // Handle indexes
-        if (row.index_name && row.index_column) {
-          let index = table.indexes.find(i => i.name === row.index_name);
-          if (!index) {
-            index = {
-              name: row.index_name,
-              columns: [],
-              isUnique: Boolean(row.is_unique),
-              isPrimary: Boolean(row.is_primary)
-            };
-            table.indexes.push(index);
-          }
-          if (!index.columns.includes(row.index_column)) {
-            index.columns.push(row.index_column);
-          }
-        }
+      // Process each row into the schema map
+      for (const row of result.rows) {
+        processMetadataRow(row, schemaMap);
       }
 
-      structure.schemas = Array.from(schemaMap.values());
+      // Convert the map to the final structure
+      const structure: DatabaseStructure = {
+        schemas: Array.from(schemaMap.values()),
+      };
+
       setDatabaseStructure(structure);
     } else {
       setDatabaseStructure({ schemas: [] });

@@ -1,4 +1,4 @@
-import { useEditorStore } from "../editor_store";
+import { useEditorStore } from "../../editor_store";
 
 export async function downloadSQL(customFilename?: string) {
   try {

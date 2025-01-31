@@ -1,5 +1,5 @@
-import { useTableStore } from "../table_store";
-import { SQLData } from "../table_store";
+import { useTableStore } from "../../table_store";
+import { SQLData } from "../../table_store";
 import { ColumnDef } from "@tanstack/react-table";
 
 export const downloadCSV = (customFilename?: string) => {

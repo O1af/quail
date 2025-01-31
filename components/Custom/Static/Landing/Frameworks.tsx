@@ -1,0 +1,130 @@
+import { Card } from "@/components/ui/card";
+import { Container } from "@/components/ui/container";
+import { useState, useCallback, useEffect } from "react";
+import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
+import { useTheme } from "next-themes";
+import { cn } from "@/lib/utils";
+
+const NeonLogo = () => {
+  const { resolvedTheme } = useTheme();
+  const logoSrc =
+    resolvedTheme === "dark"
+      ? "https://neon.tech/brand/neon-logomark-dark-color.svg"
+      : "https://neon.tech/brand/neon-logomark-light-color.svg";
+
+  return <img src={logoSrc} alt="Neon" className="w-full h-full" />;
+};
+
+const frameworks = [
+  {
+    name: "PostgreSQL",
+    href: "/docs/guides/getting-started/quickstarts/postgresql",
+    icon: SiPostgresql,
+    color: "#336791",
+  },
+  {
+    name: "MySQL",
+    href: "/docs/guides/getting-started/quickstarts/mysql",
+    icon: SiMysql,
+    color: "#00758F",
+  },
+  {
+    name: "Supabase",
+    href: "/docs/guides/getting-started/quickstarts/elasticsearch",
+    icon: SiSupabase,
+    color: "#3ECF8E",
+  },
+  {
+    name: "Neon.tech",
+    href: "/docs/guides/getting-started/quickstarts/neon",
+    icon: NeonLogo,
+    color: "#00E699",
+  },
+];
+
+export default function FrameworksSection() {
+  const [hoveredFramework, setHoveredFramework] = useState<string | null>(null);
+  const [isAnimating, setIsAnimating] = useState(false);
+
+  useEffect(() => {
+    setIsAnimating(true);
+    const timer = setTimeout(() => setIsAnimating(false), 300);
+    return () => clearTimeout(timer);
+  }, [hoveredFramework]);
+
+  const handleMouseEnter = useCallback((name: string) => {
+    setHoveredFramework(name);
+  }, []);
+
+  const handleMouseLeave = useCallback(() => {
+    setHoveredFramework(null);
+  }, []);
+
+  const displayText = hoveredFramework || "Your Database";
+
+  return (
+    <section className="py-12 md:py-24">
+      <Container>
+        <div className="flex flex-col xl:flex-row gap-8 items-center justify-between">
+          <div className="text-center xl:text-left">
+            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl text-foreground/90">
+              Use Quail with
+              <div className="mt-2">
+                <div
+                  className="inline-block overflow-hidden align-bottom"
+                  style={{ height: "1.2em" }}
+                >
+                  <span
+                    className={cn(
+                      "inline-block transition-all duration-300 ease-out text-foreground/60",
+                      isAnimating
+                        ? "translate-y-5 opacity-0"
+                        : "translate-y-0 opacity-100"
+                    )}
+                    style={{
+                      color: hoveredFramework
+                        ? frameworks.find((f) => f.name === hoveredFramework)
+                            ?.color
+                        : undefined,
+                    }}
+                  >
+                    {displayText}
+                  </span>
+                </div>
+              </div>
+            </h2>
+          </div>
+          <div
+            className="grid grid-cols-5 gap-4 md:grid-cols-10"
+            onMouseLeave={handleMouseLeave}
+          >
+            {frameworks.map(({ name, href, icon: Icon, color }) => (
+              <a
+                key={name}
+                href={href}
+                className="transition-all duration-300 group"
+                onMouseEnter={() => handleMouseEnter(name)}
+              >
+                <div
+                  className="flex h-14 w-14 items-center justify-center rounded-lg border bg-background/50 p-3 group-hover:border-primary group-hover:bg-background/80 transition-all duration-300 hover:shadow-lg"
+                  style={
+                    {
+                      "--hover-color": color,
+                    } as React.CSSProperties
+                  }
+                >
+                  <Icon
+                    className="w-full h-full text-muted-foreground transition-colors duration-300"
+                    style={{
+                      color: hoveredFramework === name ? color : "currentColor",
+                    }}
+                  />
+                </div>
+              </a>
+            ))}
+          </div>
+        </div>
+      </Container>
+    </section>
+  );
+}
