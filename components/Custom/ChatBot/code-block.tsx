@@ -190,7 +190,7 @@ export function CodeBlock({
                 {...props}
                 className="inline overflow-x-auto dark:text-zinc-50 text-zinc-900"
               >
-                <code className="italic not-prose inline-block whitespace-pre-wrap break-words">
+                <code className="not-prose inline-block whitespace-pre-wrap break-words">
                   {children}
                 </code>
               </span>
