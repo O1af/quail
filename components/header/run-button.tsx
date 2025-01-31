@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useCallback } from "react";
+import React, { useEffect, useCallback, useState } from "react";
 import { AlertCircle, Loader2, Play, Check } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
@@ -49,6 +49,7 @@ const ExecuteButton = React.memo(function ExecuteButton({
 export const RunButton = React.memo(function RunButton() {
   const isExecuting = useEditorStore((state) => state.isExecuting);
   const error = useEditorStore((state) => state.error);
+  const [displayError, setDisplayError] = useState(false);
   const executeQuery = useEditorStore((state) => state.executeQuery);
   const clearError = useEditorStore((state) => state.clearError);
   const [success, setSuccess] = React.useState(false);
@@ -56,15 +57,16 @@ export const RunButton = React.memo(function RunButton() {
 
   useEffect(() => {
     if (error) {
+      setDisplayError(true);
       toast({
         variant: "destructive",
         title: "Error executing query",
         description: error,
       });
-      const timer = setTimeout(clearError, 3000);
+      const timer = setTimeout(() => setDisplayError(false), 3000);
       return () => clearTimeout(timer);
     }
-  }, [error, clearError]);
+  }, [error]);
 
   useEffect(() => {
     if (success) {
@@ -74,6 +76,7 @@ export const RunButton = React.memo(function RunButton() {
   }, [success]);
 
   const handleExecute = useCallback(() => {
+    clearError();
     executeQuery().then(() => {
       if (!error) setSuccess(true);
     });
@@ -85,7 +88,7 @@ export const RunButton = React.memo(function RunButton() {
         <TooltipTrigger asChild>
           <span>
             <ExecuteButton
-              error={error}
+              error={displayError ? error : null}
               isExecuting={isExecuting}
               success={success}
               onClick={handleExecute}

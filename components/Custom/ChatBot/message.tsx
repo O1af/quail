@@ -77,22 +77,26 @@ const PurePreviewMessage = ({
                       const { result } = toolInvocation;
                       return (
                         <div key={toolCallId}>
-                          <Dialog>
-                            <DialogTrigger asChild>
-                              <Button
-                                variant="outline"
-                                className="justify-start text-left font-normal"
-                              >
-                                <BarChart3 className="h-4 w-4" />
-                                <span>View Chart</span>
-                              </Button>
-                            </DialogTrigger>
-                            <DialogContent className="sm:max-w-[95dvw] max-h-[85dvh] overflow-y-auto">
-                              <DialogHeader>
-                                <DialogTitle></DialogTitle>
-                                <DialogDescription></DialogDescription>
-                              </DialogHeader>
-                              {result.config ? (
+                          {result.error ? (
+                            <div className="text-destructive">
+                              {result.error}
+                            </div>
+                          ) : (
+                            <Dialog>
+                              <DialogTrigger asChild>
+                                <Button
+                                  variant="outline"
+                                  className="justify-start text-left font-normal"
+                                >
+                                  <BarChart3 className="h-4 w-4" />
+                                  <span>View Chart</span>
+                                </Button>
+                              </DialogTrigger>
+                              <DialogContent className="sm:max-w-[95dvw] max-h-[85dvh] overflow-y-auto">
+                                <DialogHeader>
+                                  <DialogTitle></DialogTitle>
+                                  <DialogDescription></DialogDescription>
+                                </DialogHeader>
                                 <Results
                                   results={result.results}
                                   chartConfig={result.config}
@@ -103,13 +107,9 @@ const PurePreviewMessage = ({
                                       : []
                                   }
                                 />
-                              ) : (
-                                <div className="flex items-center justify-center h-full">
-                                  <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-12 w-12" />
-                                </div>
-                              )}
-                            </DialogContent>
-                          </Dialog>
+                              </DialogContent>
+                            </Dialog>
+                          )}
                         </div>
                       );
                     }

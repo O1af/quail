@@ -9,11 +9,12 @@ export function ChatCard() {
   const [isUserTypingDone, setIsUserTypingDone] = useState(false);
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
-  const fullUserText = "Show active users by country";
-  const fullSqlQuery = `SELECT country, COUNT(*) as users
-FROM users WHERE status = 'active'
-GROUP BY country 
-ORDER BY users DESC`;
+  const fullUserText = "Count orders by product type";
+  const fullSqlQuery = `SELECT product_type,
+    COUNT(*) as total_orders
+FROM order_items
+GROUP BY product_type
+ORDER BY total_orders DESC`;
 
   const formatSqlWithHighlighting = (sql: string) => {
     const keywords = {

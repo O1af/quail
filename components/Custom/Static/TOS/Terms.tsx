@@ -3,31 +3,44 @@ import { termsContent } from "./termsContent";
 
 const MarkdownComponents = {
   h1: ({ children }: any) => (
-    <h1 className="text-4xl font-bold mb-8 text-gray-900">{children}</h1>
+    <h1 className="text-4xl font-bold mb-8 text-gray-900 dark:text-gray-100">
+      {children}
+    </h1>
   ),
   h2: ({ children }: any) => (
-    <h2 className="text-3xl font-semibold mt-8 mb-4 text-gray-800">
+    <h2 className="text-3xl font-semibold mt-8 mb-4 text-gray-800 dark:text-gray-200">
       {children}
     </h2>
   ),
   h3: ({ children }: any) => (
-    <h3 className="text-2xl font-semibold mt-6 mb-3 text-gray-700">
+    <h3 className="text-2xl font-semibold mt-6 mb-3 text-gray-700 dark:text-gray-300">
       {children}
     </h3>
   ),
   h4: ({ children }: any) => (
-    <h4 className="text-xl font-medium mt-4 mb-2 text-gray-700">{children}</h4>
+    <h4 className="text-xl font-medium mt-4 mb-2 text-gray-700 dark:text-gray-300">
+      {children}
+    </h4>
   ),
   p: ({ children }: any) => (
-    <p className="text-gray-600 mb-4 leading-relaxed">{children}</p>
+    <p className="text-gray-600 dark:text-gray-400 mb-4 leading-relaxed">
+      {children}
+    </p>
   ),
   ul: ({ children }: any) => (
-    <ul className="list-disc pl-6 mb-4 text-gray-600">{children}</ul>
+    <ul className="list-disc pl-6 mb-4 text-gray-600 dark:text-gray-400">
+      {children}
+    </ul>
   ),
   li: ({ children }: any) => <li className="mb-2">{children}</li>,
-  hr: () => <hr className="my-8 border-t border-gray-200" />,
+  hr: () => (
+    <hr className="my-8 border-t border-gray-200 dark:border-gray-700" />
+  ),
   a: ({ href, children }: any) => (
-    <a href={href} className="text-blue-600 hover:text-blue-800 underline">
+    <a
+      href={href}
+      className="text-blue-600 hover:text-blue-800 dark:text-blue-400 dark:hover:text-blue-300 underline"
+    >
       {children}
     </a>
   ),
@@ -36,7 +49,7 @@ const MarkdownComponents = {
 export const Terms = () => {
   return (
     <div className="max-w-4xl mx-auto py-12 px-6">
-      <article className="prose prose-lg max-w-none">
+      <article className="prose prose-lg max-w-none dark:prose-invert">
         <ReactMarkdown components={MarkdownComponents}>
           {termsContent}
         </ReactMarkdown>
