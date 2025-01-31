@@ -136,7 +136,7 @@ export function CodeBlock({
 
   if (!inline) {
     return (
-      <div>
+      <>
         {tab === "code" && isSQL ? (
           <div className="not-prose flex flex-col relative">
             <div className="absolute top-0 left-0 right-0 flex justify-end bg-zinc-100 dark:bg-zinc-800 rounded-t-xl border-b border-zinc-200 dark:border-zinc-700">
@@ -184,18 +184,20 @@ export function CodeBlock({
             </pre>
           </div>
         ) : (
-          <div className="not-prose flex flex-col relative">
-            <pre
-              {...props}
-              className={`text-sm w-full overflow-x-auto rounded-xl dark:text-zinc-50 text-zinc-900`}
-            >
-              <code className="whitespace-pre-wrap break-words">
-                {children}
-              </code>
-            </pre>
-          </div>
+          <>
+            <div className="not-prose inline-block relative">
+              <span
+                {...props}
+                className="inline overflow-x-auto dark:text-zinc-50 text-zinc-900"
+              >
+                <code className="italic not-prose inline-block whitespace-pre-wrap break-words">
+                  {children}
+                </code>
+              </span>
+            </div>
+          </>
         )}
-      </div>
+      </>
     );
   } else {
     return (
