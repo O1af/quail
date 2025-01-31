@@ -26,7 +26,7 @@ const plans = [
   {
     name: "Free",
     price: 0,
-    priceId: "price_1QlG8ZPolF2uvnj4wEPZNaDS",
+    priceId: "",
     description: "Perfect for learning and small projects",
     features: [
       {
@@ -64,7 +64,7 @@ const plans = [
   {
     name: "Pro",
     price: 20,
-    priceId: "price_1QlG73PolF2uvnj4fHWOCwGo",
+    priceId: "price_1QnBW9LTqurwLvRFgrda5plk",
     description: "For professional developers and small teams",
     features: [
       {

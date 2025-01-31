@@ -26,14 +26,14 @@ export async function POST(req: any) {
         const result = event.data.object;
         const supabase = await supabaseAdmin();
         const end_at = new Date(
-          result.lines.data[0].period.end * 1000
+          result.lines.data[0].period.end * 1000,
         ).toISOString();
         const customer_id = result.customer as string;
         const subscription_id = result.subscription as string;
         const email = result.customer_email as string;
         const planID = result.lines.data[0].plan?.id;
         const tier =
-          planID === "price_1QlG73PolF2uvnj4fHWOCwGo" ? "Pro" : "Free";
+          planID === "price_1QnBW9LTqurwLvRFgrda5plk" ? "Pro" : "Free";
 
         const { error } = await supabase
           .from("profiles")
