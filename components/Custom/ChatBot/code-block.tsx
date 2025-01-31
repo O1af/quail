@@ -185,7 +185,7 @@ export function CodeBlock({
           </div>
         ) : (
           <>
-            <code className="contents not-prose inline-block whitespace-pre-wrap break-words">
+            <code className="contents not-prose whitespace-pre-wrap break-words">
               {children}
             </code>
           </>
