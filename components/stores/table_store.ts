@@ -14,6 +14,20 @@ export interface SQLData {
 export interface Column {
   name: string;
   dataType: string;
+  ordinalPosition?: number;
+  characterMaximumLength?: number;
+  numericPrecision?: number;
+  columnDefault?: string;
+  isNullable?: string;
+  isIdentity?: boolean;
+  identityGeneration?: string;
+  extra?: string;
+  columnComment?: string;
+  isPrimary?: boolean;
+  isUnique?: boolean;
+  isForeignKey?: boolean;
+  referencedTable?: string;
+  referencedColumn?: string;
 }
 
 export interface Index {
@@ -26,6 +40,7 @@ export interface Index {
 export interface Table {
   name: string;
   type: string;
+  comment?: string;
   columns: Column[];
   indexes: Index[];
 }

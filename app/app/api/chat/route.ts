@@ -12,6 +12,7 @@ import {
   getModelName,
 } from "@/utils/metrics/AI";
 import { chartTool } from "./chartTool";
+import { DatabaseStructure } from "@/components/stores/table_store";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -21,6 +22,70 @@ const azure = createAzure({
 // Allow streaming responses up to 120 seconds
 export const maxDuration = 30;
 export const dynamic = "force-dynamic";
+
+function formatDatabaseSchema(databaseStructure: DatabaseStructure): string {
+  const schemaContext = `
+Key Terms:
+- PK: Primary Key, unique identifier for each row
+- FK: Foreign Key, references another table's primary key
+- UQ: Unique constraint, ensures values are unique
+- IDX: Index, improves query performance
+- NOT NULL: Column must have a value
+- DEFAULT: Default value if none provided
+- Schema: Logical grouping of database objects
+- Table: Structure that holds data in rows and columns
+- Column: Individual field in a table
+- Index: Data structure for faster data retrieval\n\n`;
+
+  const formattedSchema =
+    schemaContext +
+    databaseStructure.schemas
+      .map((schema: Schema) => {
+        const tableSummaries = schema.tables
+          .map((table: Table) => {
+            const columns = table.columns
+              .map((col: Column) => {
+                const constraints = [
+                  col.isPrimary ? "PK" : "",
+                  col.isUnique ? "UQ" : "",
+                  col.isNullable === "NO" ? "NOT NULL" : "",
+                  col.isForeignKey
+                    ? `FK->${col.referencedTable}.${col.referencedColumn}`
+                    : "",
+                  col.columnDefault ? `DEFAULT=${col.columnDefault}` : "",
+                ]
+                  .filter(Boolean)
+                  .join(",");
+
+                return `${col.name} (${col.dataType}${
+                  constraints ? ` [${constraints}]` : ""
+                })`;
+              })
+              .join(", ");
+
+            const indexes = table.indexes
+              ?.filter((idx) => !idx.isPrimary)
+              .map(
+                (idx: Index) =>
+                  `${idx.isUnique ? "UQ" : "IDX"} ${
+                    idx.name
+                  }(${idx.columns.join(",")})`
+              )
+              .join(", ");
+
+            return (
+              `Table ${table.name}${
+                table.comment ? ` - ${table.comment}` : ""
+              }:\n` +
+              `Columns: {${columns}}${indexes ? `\nIndexes: {${indexes}}` : ""}`
+            );
+          })
+          .join("\n\n");
+        return `Schema "${schema.name}":\n${tableSummaries}`;
+      })
+      .join("\n\n");
+  return formattedSchema;
+}
 
 export async function POST(req: Request) {
   //// console.log("noStore called");
@@ -62,41 +127,15 @@ export async function POST(req: Request) {
     editorError,
   } = await req.json();
 
-  const formattedSchemas = databaseStructure.schemas
-    .map((schema: Schema) => {
-      const tableSummaries = schema.tables
-        .map((table: Table) => {
-          const columns = table.columns
-            .map((col: Column) => `${col.name} (${col.dataType})`)
-            .join(", ");
-
-          const indexes = table.indexes
-            ?.map((idx: Index) => {
-              const type = idx.isPrimary
-                ? "PRIMARY KEY"
-                : idx.isUnique
-                ? "UNIQUE INDEX"
-                : "INDEX";
-              return `${type} ${idx.name} (${idx.columns.join(", ")})`;
-            })
-            .join(", ");
-
-          return `Table ${table.name} contains columns: { ${columns} }${
-            indexes ? `\nIndexes: { ${indexes} }` : ""
-          }`;
-        })
-        .join("\n");
-      return `In schema "${schema.name}":\n${tableSummaries}`;
-    })
-    .join("\n\n");
+  const formattedSchema = formatDatabaseSchema(databaseStructure);
 
   const systemPrompt = {
     role: "system",
     content: `You are a SQL Editor Assistant specializing in ${dbType}. Focus on writing, analyzing, and fixing SQL queries.
-  
+
   CONTEXT:
   Database Schema:
-  ${formattedSchemas}
+  ${formattedSchema}
   ${editorValue ? `Active Query:\n${editorValue}` : ""}
   ${editorError ? `Current Error:\n${editorError}` : ""}
   
@@ -160,7 +199,7 @@ export async function POST(req: Request) {
         supabase,
         user,
         messages,
-        formattedSchemas,
+        formattedSchemas: formattedSchema,
         dbType,
         connectionString,
         updatePromises,
