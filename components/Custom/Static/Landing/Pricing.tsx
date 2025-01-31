@@ -16,6 +16,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { cn } from "@/lib/utils";
 import { APP_URL } from "@/lib/constants";
 
 const pricingPlans = [
@@ -150,10 +151,10 @@ export function Pricing() {
     <section className="w-full min-h-screen flex items-center justify-center py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background to-background/80">
       <div className="container px-4 md:px-6 mx-auto">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl">
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl bg-gradient-to-r from-primary/90 to-primary bg-clip-text text-transparent">
             Simple, Transparent Pricing
           </h2>
-          <p className="max-w-[700px] text-gray-500 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed dark:text-gray-400">
+          <p className="max-w-[700px] text-muted-foreground/80 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
             Choose the perfect plan for your needs. All plans include our core
             features.
           </p>
@@ -161,29 +162,36 @@ export function Pricing() {
 
         <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 md:mt-12 lg:mt-16">
           {pricingPlans.map((plan) => (
-            <Card key={plan.name} className="flex flex-col h-full relative">
+            <Card
+              key={plan.name}
+              className="flex flex-col h-full relative backdrop-blur-sm bg-gradient-to-b from-background/80 to-background hover:shadow-lg hover:shadow-primary/20 transition-all duration-300"
+            >
               {plan.highlight && (
                 <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                  <span className="bg-primary text-primary-foreground text-sm font-medium px-3 py-1 rounded-full">
+                  <span className="bg-gradient-to-r from-primary/80 to-primary text-primary-foreground text-sm font-medium px-4 py-1 rounded-full shadow-lg">
                     {plan.highlight}
                   </span>
                 </div>
               )}
 
               <CardHeader className="flex flex-col space-y-2 pb-6">
-                <CardTitle className="text-2xl font-bold">
+                <CardTitle className="text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
                   {plan.name}
                 </CardTitle>
                 <div className="flex items-baseline justify-center gap-1">
                   {plan.price !== null ? (
                     <>
-                      <span className="text-4xl font-bold">${plan.price}</span>
-                      <span className="text-sm text-muted-foreground">
+                      <span className="text-4xl font-bold text-primary">
+                        ${plan.price}
+                      </span>
+                      <span className="text-sm text-primary/70">
                         /{plan.billing}
                       </span>
                     </>
                   ) : (
-                    <span className="text-2xl font-bold">Custom Pricing</span>
+                    <span className="text-2xl font-bold text-primary">
+                      Custom Pricing
+                    </span>
                   )}
                 </div>
                 <CardDescription>{plan.description}</CardDescription>
@@ -215,7 +223,11 @@ export function Pricing() {
 
               <CardFooter className="pt-6">
                 <Button
-                  className="w-full"
+                  className={cn(
+                    "w-full",
+                    plan.name === "Pro" &&
+                      "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+                  )}
                   variant={plan.name === "Pro" ? "default" : "outline"}
                   size="lg"
                   asChild
