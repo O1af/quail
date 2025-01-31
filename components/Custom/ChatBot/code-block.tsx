@@ -185,16 +185,9 @@ export function CodeBlock({
           </div>
         ) : (
           <>
-            <div className="not-prose inline-block relative">
-              <span
-                {...props}
-                className="inline overflow-x-auto dark:text-zinc-50 text-zinc-900"
-              >
-                <code className="not-prose inline-block whitespace-pre-wrap break-words">
-                  {children}
-                </code>
-              </span>
-            </div>
+            <code className="contents not-prose inline-block whitespace-pre-wrap break-words">
+              {children}
+            </code>
           </>
         )}
       </>
