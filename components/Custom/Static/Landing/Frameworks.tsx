@@ -67,7 +67,7 @@ export default function FrameworksSection() {
       <Container>
         <div className="flex flex-col xl:flex-row gap-8 items-center justify-between">
           <div className="text-center xl:text-left">
-            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent">
+            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl text-foreground/90">
               Use Quail with
               <div className="mt-2">
                 <div
@@ -76,13 +76,16 @@ export default function FrameworksSection() {
                 >
                   <span
                     className={cn(
-                      "inline-block transition-all duration-300 ease-out bg-gradient-to-r from-primary to-primary/80 bg-clip-text text-transparent",
+                      "inline-block transition-all duration-300 ease-out text-foreground/60",
                       isAnimating
                         ? "translate-y-5 opacity-0"
                         : "translate-y-0 opacity-100"
                     )}
                     style={{
-                      color: hoveredFramework ? frameworks.find(f => f.name === hoveredFramework)?.color : undefined
+                      color: hoveredFramework
+                        ? frameworks.find((f) => f.name === hoveredFramework)
+                            ?.color
+                        : undefined,
                     }}
                   >
                     {displayText}
