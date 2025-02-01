@@ -54,7 +54,7 @@ export default function Checkout({
       await checkout(
         user?.email,
         priceId,
-        "https://quailbi.com/success?subscription=Pro",
+        `https://quailbi.com/success?subscription=${plan}`,
       ),
     );
 
