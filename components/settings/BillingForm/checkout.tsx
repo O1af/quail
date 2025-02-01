@@ -54,8 +54,8 @@ export default function Checkout({
       await checkout(
         user?.email,
         priceId,
-        `${process.env.NEXT_PUBLIC_BASE_URL}/success?subscription=${plan}`
-      )
+        `https://quailbi.com/success?subscription=${plan}`,
+      ),
     );
 
     const stripe = await loadStripe(process.env.NEXT_PUBLIC_STRIPE_PK!);
@@ -100,8 +100,8 @@ export default function Checkout({
         current === "Pro" && plan === "Pro" && inCancellationPeriod === true
           ? handleRenew
           : plan === "Free"
-          ? handleBilling
-          : handleCheckout
+            ? handleBilling
+            : handleCheckout
       }
       disabled={
         (current === "Free" && plan === "Free") ||
@@ -114,14 +114,16 @@ export default function Checkout({
       {current !== "Free" && plan === "Free" && inCancellationPeriod === true
         ? `Activates ${new Date(end_at).toDateString()}`
         : current !== "Free" &&
-          plan === current &&
-          inCancellationPeriod === true
-        ? `Renew`
-        : current !== "Free" && inCancellationPeriod === null && plan === "Free"
-        ? `Cancel ${current} Plan`
-        : current === plan
-        ? "Current Plan"
-        : `Get ${plan}`}
+            plan === current &&
+            inCancellationPeriod === true
+          ? `Renew`
+          : current !== "Free" &&
+              inCancellationPeriod === null &&
+              plan === "Free"
+            ? `Cancel ${current} Plan`
+            : current === plan
+              ? "Current Plan"
+              : `Get ${plan}`}
     </Button>
   );
 }
