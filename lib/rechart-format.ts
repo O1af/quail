@@ -40,20 +40,16 @@ export function transformDataForMultiLineChart(
 
   const transformedData: TransformedDataPoint[] = xAxisValues.map((xValue) => {
     const dataPoint: TransformedDataPoint = { [xAxisField]: xValue };
+    const matchingItem = data.find(
+      (item) => String(item[xAxisField]) === xValue
+    );
+
     lineCategories?.forEach((category) => {
-      const matchingItem = data.find(
-        (item) =>
-          String(item[xAxisField]) === xValue &&
-          String(item[lineField]) === category
-      );
-      dataPoint[category] = matchingItem
-        ? matchingItem[measurementColumn ?? ""]
-        : null;
+      dataPoint[category] = matchingItem ? matchingItem[category] : null;
     });
+
     return dataPoint;
   });
-
-  transformedData.sort((a, b) => Number(a[xAxisField]) - Number(b[xAxisField]));
 
   // // console.log("Transformed data:", transformedData);
 

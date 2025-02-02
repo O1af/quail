@@ -54,11 +54,14 @@ function validateSQL(
     return { isValid: false, error: "Query must start with SELECT" };
   }
 
+  // Updated regex to handle schema-qualified table names
   const tableRefs = [
-    ...normalizedQuery.matchAll(/from\s+"([^"]+)"|join\s+"([^"]+)"/gi),
+    ...normalizedQuery.matchAll(
+      /from\s+(\w+\.)?"([^"]+)"|join\s+(\w+\.)?"([^"]+)"/gi
+    ),
   ];
   for (const ref of tableRefs) {
-    const tableName = (ref[1] || ref[2]).toLowerCase();
+    const tableName = (ref[2] || ref[4]).toLowerCase();
     if (!tableNames.has(tableName)) {
       return {
         isValid: false,
@@ -125,7 +128,6 @@ export const chartTool = (params: ChartToolParams) =>
     execute: async () => {
       const jsonQuery = params.messages[params.messages.length - 1].content;
       const conversationHistory = formatConversationHistory(params.messages);
-      console.log("Conversation history:", conversationHistory);
 
       const sqlPrompt = `The database(${params.dbType}) schema is as follows: ${params.formattedSchemas}. 
         Previous conversation context:\n${conversationHistory}
@@ -141,10 +143,11 @@ export const chartTool = (params: ChartToolParams) =>
         7. Table names should NOT be quoted unless they contain uppercase characters
         8. Table aliases if used must be lowercase and should not be quoted
         9. Schema names must be lowercase and should not be quoted
-        10. DO NOT use any columns or tables that aren't in the schema
-        11. DO NOT include any markdown, code blocks, or backticks
-        12. DO NOT include any explanations or comments
-        13. Output MUST be a single valid SQL query
+        10. ALWAYS prefix table names with their schema name (e.g., schema_name.table_name)
+        11. DO NOT use any columns or tables that aren't in the schema
+        12. DO NOT include any markdown, code blocks, or backticks
+        13. DO NOT include any explanations or comments
+        14. Output MUST be a single valid SQL query
         
         Output the SQL query directly without any formatting or surrounding characters.`;
 
