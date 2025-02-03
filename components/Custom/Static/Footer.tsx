@@ -19,7 +19,7 @@ const footerData = {
   sections: [
     {
       title: "Product",
-      links: [{ name: "SQL Editor", href: "/app" }],
+      links: [{ name: "SQL Editor", href: "https://app.quailbi.com/" }],
     },
     {
       title: "Resources",

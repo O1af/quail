@@ -28,7 +28,8 @@ interface ChartToolParams {
 
 function extractTableNames(schemaString: string): Map<string, string> {
   const tableMap = new Map<string, string>();
-  const matches = schemaString.matchAll(/Table\s+(\w+)\s+contains columns:/g);
+  // Look for "Table <tableName>" in the schema text.
+  const matches = schemaString.matchAll(/Table\s+(\w+)/g);
   for (const match of matches) {
     const tableName = match[1];
     tableMap.set(tableName.toLowerCase(), tableName);
@@ -54,14 +55,26 @@ function validateSQL(
     return { isValid: false, error: "Query must start with SELECT" };
   }
 
-  // Updated regex to handle schema-qualified table names
+  // Check that all column references in the SELECT clause are table-qualified.
+  const selectClause = normalizedQuery
+    .split("from")[0]
+    .replace("select", "")
+    .trim();
+  if (selectClause.match(/(?<!\.)\b[a-z_][a-z0-9_]*\b(?!\s*\()/)) {
+    return {
+      isValid: false,
+      error: "All column references must be table-qualified to avoid ambiguity",
+    };
+  }
+
+  // Validate that table references (FROM and JOIN clauses) match those in the schema.
   const tableRefs = [
     ...normalizedQuery.matchAll(
-      /from\s+(\w+\.)?"([^"]+)"|join\s+(\w+\.)?"([^"]+)"/gi
+      /(?:from|join)\s+((?:\w+\.)?)(?:"?)(\w+)(?:"?)/gi
     ),
   ];
   for (const ref of tableRefs) {
-    const tableName = (ref[2] || ref[4]).toLowerCase();
+    const tableName = ref[2].toLowerCase();
     if (!tableNames.has(tableName)) {
       return {
         isValid: false,
@@ -82,9 +95,10 @@ function generateSchemaString(data: Result[]): string {
       `  "${key}" ${typeof value === "number" ? "INTEGER" : "VARCHAR"}`
   );
 
-  return `Schema: InferredTable\n\nTable: GeneratedSchema\n${schemaEntries.join(
-    ",\n"
-  )};`;
+  return `Schema: InferredTable
+
+Table: GeneratedSchema
+${schemaEntries.join(",\n")};`;
 }
 
 function formatConversationHistory(messages: Message[]): string {
@@ -112,10 +126,8 @@ function formatConversationHistory(messages: Message[]): string {
             )}`;
           })
           .join("\n");
-
         messageText += "\n" + toolCalls;
       }
-
       return messageText;
     })
     .join("\n---\n");
@@ -123,51 +135,55 @@ function formatConversationHistory(messages: Message[]): string {
 
 export const chartTool = (params: ChartToolParams) =>
   tool({
-    description: "Generate a chart.",
+    description: "Generate a chart based on a user query.",
     parameters: z.object({}),
     execute: async () => {
       const jsonQuery = params.messages[params.messages.length - 1].content;
       const conversationHistory = formatConversationHistory(params.messages);
 
-      const sqlPrompt = `The database(${params.dbType}) schema is as follows: ${params.formattedSchemas}. 
-        Previous conversation context:\n${conversationHistory}
-        Based on this schema and conversation context, generate an SQL query to fulfill the following request: ${jsonQuery}.
-        
-        IMPORTANT RULES:
-        1. Query MUST start with SELECT keyword
-        2. Query MUST return data suitable for visualization (typically with aggregation)
-        3. ONLY use tables and columns that are explicitly defined in the schema above
-        4. Tables must be referenced in lowercase in PostgreSQL
-        5. ALL identifiers containing uppercase characters MUST be quoted with double quotes
-        6. ALL column names must be quoted with double quotes regardless of case
-        7. Table names should NOT be quoted unless they contain uppercase characters
-        8. Table aliases if used must be lowercase and should not be quoted
-        9. Schema names must be lowercase and should not be quoted
-        10. ALWAYS prefix table names with their schema name (e.g., schema_name.table_name)
-        11. DO NOT use any columns or tables that aren't in the schema
-        12. DO NOT include any markdown, code blocks, or backticks
-        13. DO NOT include any explanations or comments
-        14. Output MUST be a single valid SQL query
-        
-        Output the SQL query directly without any formatting or surrounding characters.`;
+      // The SQL prompt now emphasizes the schema formatting details.
+      const sqlPrompt = `
+Database Type: ${params.dbType}
+
+Formatted Database Schema:
+${params.formattedSchemas}
+
+Note: The schema above is generated with detailed context including table names, column names, and constraints (e.g., PK, FK). You MUST use only the table and column names exactly as shown.
+
+Conversation History:
+${conversationHistory}
+
+User Request:
+${jsonQuery}
+
+INSTRUCTIONS:
+1. The SQL query MUST start with the keyword SELECT.
+2. The query MUST be designed for data visualization, typically using aggregation.
+3. ONLY reference tables and columns explicitly defined in the provided schema.
+4. Table names in PostgreSQL MUST be in lowercase.
+5. Any identifier containing uppercase letters MUST be enclosed in double quotes.
+6. ALL column names MUST be enclosed in double quotes.
+7. Do NOT quote table names unless they contain uppercase letters.
+8. Table aliases, if used, MUST be in lowercase and unquoted.
+9. Schema names MUST be in lowercase and unquoted.
+10. Prefix all table names with their schema name (e.g., schema_name.table_name).
+11. Fully qualify every column reference with its table name or alias (e.g., table_name."column_name" or alias."column_name").
+12. Do NOT reference any tables or columns not included in the schema.
+13. Ensure the query returns at least one categorical column (for grouping or x-axis) and one or more quantitative columns (for y-axis), using aggregation functions (e.g., COUNT, SUM, AVG) as needed.
+14. When joining tables, verify that the join columns exist in both tables as defined in the schema.
+15. Do NOT include any markdown, code blocks, backticks, explanations, or comments.
+16. Output MUST be a single, valid SQL query with no extra text.
+
+Output only the SQL query.
+      `.trim();
 
       try {
         const result = await generateText({
           model: azure(getModelName(params.userTier)),
           system:
-            "You are an SQL expert focusing on data visualization queries.",
+            "You are an expert SQL developer specializing in data visualization queries. Generate only the SQL query, ensuring that every table and column reference exactly matches the provided schema context.",
           prompt: sqlPrompt,
         });
-
-        const validation = validateSQL(result.text, params.formattedSchemas);
-        if (!validation.isValid) {
-          return {
-            error: validation.error,
-            results: [],
-            sql: result.text,
-            config: null,
-          };
-        }
 
         const response = await executeQuery(
           result.text,
@@ -183,12 +199,30 @@ export const chartTool = (params: ChartToolParams) =>
           )
         ) as Result[];
 
+        // Chart configuration prompt with explicit data type guidelines.
+        const configPrompt = `
+You are a data visualization expert.
+Using the SQL query result data provided, generate a chart configuration that best visualizes the data and answers the user's query.
+Ensure that:
+- The x-axis (or category) field is based on categorical data (e.g., strings, dates) and the y-axis fields are based on quantitative (numeric) data.
+- For a pie chart, select one categorical field paired with one quantitative field.
+- For bar, line, or area charts, the x-axis should represent categories or a time dimension and the y-axis should use aggregated quantitative values.
+- If the data contains multiple groups, use multi-line charts and clearly distinguish between each group.
+- Field names in the configuration must exactly match those in the SQL result.
+- The configuration follows best practices for chart visualization.
+User Query:
+${jsonQuery}
+
+Inferred Database Schema:
+${generateSchemaString(results)}
+
+Output the chart configuration as valid JSON with no extra text.
+        `.trim();
+
         const { object: config } = await generateObject({
           model: azure(getModelName(params.userTier)),
           system: "You are a data visualization expert.",
-          prompt: `Given the following data from a SQL query result, generate the chart config that best visualises the data and answers the users query. For multiple groups use multi-lines. Match the field names in the results exactly.
-            User Query: ${jsonQuery}
-            Database Schema: ${generateSchemaString(results)}`,
+          prompt: configPrompt,
           schema: configSchema,
         });
 
@@ -198,7 +232,7 @@ export const chartTool = (params: ChartToolParams) =>
           config.yKeys.map((key, i) => [key, `hsl(var(--chart-${i + 1}))`])
         );
 
-        // Handle token updates
+        // Update token usage.
         params.updatePromises.push(
           updateTokenUsage(
             params.supabase,
