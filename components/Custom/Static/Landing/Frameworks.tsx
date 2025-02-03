@@ -101,7 +101,6 @@ export default function FrameworksSection() {
             {frameworks.map(({ name, href, icon: Icon, color }) => (
               <a
                 key={name}
-                href={href}
                 className="transition-all duration-300 group"
                 onMouseEnter={() => handleMouseEnter(name)}
               >
