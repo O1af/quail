@@ -68,7 +68,7 @@ export default function FrameworksSection() {
         <div className="flex flex-col xl:flex-row gap-8 items-center justify-between">
           <div className="text-center xl:text-left">
             <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl text-foreground/90">
-              Use Quail with
+              Use Quail With
               <div className="mt-2">
                 <div
                   className="inline-block overflow-hidden align-bottom"
@@ -95,7 +95,7 @@ export default function FrameworksSection() {
             </h2>
           </div>
           <div
-            className="grid grid-cols-5 gap-4 md:grid-cols-10"
+            className="grid grid-cols-4 gap-4 md:grid-cols-4"
             onMouseLeave={handleMouseLeave}
           >
             {frameworks.map(({ name, href, icon: Icon, color }) => (
