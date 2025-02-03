@@ -1,4 +1,14 @@
-import { ShieldCheck, Database, Brain, Key, CreditCard } from "lucide-react";
+import {
+  ShieldCheck,
+  Database,
+  Brain,
+  Key,
+  CreditCard,
+  Archive,
+  Trash2,
+  Share2,
+  Lock,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -53,22 +63,65 @@ const securityCards = [
   },
 ];
 
+const privacyPolicySections = [
+  ...securityCards,
+  {
+    icon: Lock,
+    title: "Google User Data",
+    description: (
+      <>
+        When you sign in with Google, we access only the necessary OAuth scopes
+        to provide our service. This includes your basic profile information. We
+        never sell or transfer this data to third parties, and it's used solely
+        to authenticate you and provide our core services.
+      </>
+    ),
+  },
+  {
+    icon: Share2,
+    title: "Third-Party Sharing",
+    description:
+      "We do not share, transfer, or disclose your Google user data to third parties except as necessary to provide our core services. Any third-party processing is conducted under strict data protection agreements.",
+  },
+  {
+    icon: Archive,
+    title: "Data Retention",
+    description:
+      "We retain your Google user data only for as long as necessary to provide our services. You can request data deletion at any time through your account settings.",
+  },
+  {
+    icon: Trash2,
+    title: "Data Deletion",
+    description: (
+      <>
+        You can request complete deletion of your data, including Google user
+        data, at any time. Contact us at support@quailbi.com for data deletion
+        requests. We will process your request within 30 days and confirm once
+        completed.
+      </>
+    ),
+  },
+];
+
 export default function PrivacyPage() {
   return (
     <div className="bg-background min-h-screen text-foreground p-6 md:p-12">
       <div className="max-w-7xl mx-auto">
         <div className="mb-16 max-w-2xl">
           <h1 className="text-4xl md:text-5xl lg:text-6xl font-medium tracking-tight mb-4">
-            Security & Privacy
+            Privacy Policy
           </h1>
-          <p className="text-muted-foreground text-lg md:text-xl">
+          <p className="text-muted-foreground text-lg md:text-xl mb-4">
             Quail empowers developers with secure, privacy-focused data
             analytics
+          </p>
+          <p className="text-muted-foreground">
+            Last updated: {new Date().toLocaleDateString()}
           </p>
         </div>
 
         <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {securityCards.map((card, index) => {
+          {privacyPolicySections.map((card, index) => {
             const Icon = card.icon;
             return (
               <Card key={index}>
