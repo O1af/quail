@@ -17,7 +17,7 @@ export interface DatabaseConfig {
 
 const defaultDatabase: DatabaseConfig = {
   id: 1,
-  name: "Quail Test DB",
+  name: "Quail Test DB(READ ONLY)",
   type: "postgres",
   connectionString:
     "postgresql://neondb_owner:npg_4LjT9XmwAqPH@ep-black-lab-a8zi1wg9-pooler.eastus2.azure.neon.tech/neondb?sslmode=require",
