@@ -43,12 +43,11 @@ const SSL_MODES = {
     "verify_ca", // Verify server certificate
     "verify_identity", // Verify server certificate and hostname
   ],
-  sqlite: [], // SQLite doesn't use SSL
 } as const;
 
 const formSchema = z.object({
   name: z.string().min(1, "Name is required"),
-  type: z.enum(["postgres", "mysql", "sqlite"]),
+  type: z.enum(["postgres", "mysql"]),
   connectionString: z.string().min(1, "Connection string is required"),
   sslMode: z.string().optional(),
 });
@@ -56,7 +55,6 @@ const formSchema = z.object({
 const CONNECTION_FORMATS = {
   postgres: "postgresql://[username]:[password]@[host]:[port]/[database]",
   mysql: "mysql://[username]:[password]@[host]:[port]/[database]",
-  sqlite: "[path_to_database]",
 } as const;
 
 function parseConnectionString(connString: string) {
@@ -69,7 +67,6 @@ function parseConnectionString(connString: string) {
       params,
     };
   } catch {
-    // For non-URL formats (like SQLite)
     return {
       base: connString,
       sslMode: undefined,
@@ -83,8 +80,6 @@ function buildConnectionString(
   sslMode: string | undefined,
   type: string
 ) {
-  if (type === "sqlite") return base;
-
   try {
     const url = new URL(base);
     if (sslMode) {
@@ -220,7 +215,6 @@ export const DatabaseDialog = memo(function DatabaseDialog({
               <SelectContent>
                 <SelectItem value="postgres">PostgreSQL</SelectItem>
                 <SelectItem value="mysql">MySQL</SelectItem>
-                {/* <SelectItem value="sqlite">SQLite</SelectItem> */}
               </SelectContent>
             </Select>
           </div>
@@ -232,7 +226,7 @@ export const DatabaseDialog = memo(function DatabaseDialog({
               {...form.register("connectionString")}
             />
           </div>
-          {form.watch("type") !== "sqlite" && !hasSSLInString && (
+          {!hasSSLInString && (
             <div className="grid gap-2">
               <Label>SSL Mode</Label>
               <Select

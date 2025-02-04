@@ -1,8 +1,7 @@
 import { create } from "zustand";
 import { persist, createJSONStorage } from "zustand/middleware";
 import { encryptedStorage } from "./utils/encrypted_store";
-
-export type DbType = "postgres" | "mysql" | "sqlite";
+export type DbType = "postgres" | "mysql";
 
 export interface DatabaseConfig {
   id: number;
