@@ -120,7 +120,7 @@ export function SignUpForm() {
                 id="email"
                 type="email"
                 {...form.register("email")}
-                placeholder="user@quailclient.com"
+                placeholder="user@quailbi.com"
               />
               {form.formState.errors.email && (
                 <div className="text-red-500 text-sm">

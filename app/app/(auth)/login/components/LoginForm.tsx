@@ -103,10 +103,7 @@ export function LoginForm({
                       <FormItem>
                         <FormLabel>Email</FormLabel>
                         <FormControl>
-                          <Input
-                            placeholder="user@quailclient.com"
-                            {...field}
-                          />
+                          <Input placeholder="user@quailbi.com" {...field} />
                         </FormControl>
                         <FormMessage />
                       </FormItem>
