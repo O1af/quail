@@ -18,12 +18,16 @@ export async function GET(request: NextRequest) {
       token_hash,
     });
 
+    console.log(error);
+
     if (!error) {
       redirectTo.searchParams.delete("next");
+      console.log(redirectTo.toString());
       return NextResponse.redirect(redirectTo);
     }
   }
 
   redirectTo.pathname = "/error";
+  console.log(redirectTo.toString());
   return NextResponse.redirect(redirectTo);
 }
