@@ -6,7 +6,7 @@ import { ModeToggle } from "@/components/header/mode-toggle";
 import { createClient } from "@/utils/supabase/client";
 import { RunButton } from "@/components/header/run-button";
 import { DownloadButton } from "@/components/header/download-button";
-import { AppSidebar } from "@/components/sidebar/app-sidebar";
+import { DevSidebar } from "@/components/sidebar/dev-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { ClearChat } from "@/components/header/clear-chat";
 import { UploadButton } from "@/components/header/upload-button";
@@ -28,7 +28,7 @@ export default function Page() {
   }, [supabase]);
   return (
     <SidebarProvider>
-      <AppSidebar />
+      <DevSidebar />
       <SidebarInset>
         <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
           <div className="flex items-center gap-2 px-4">

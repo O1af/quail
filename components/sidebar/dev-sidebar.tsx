@@ -24,11 +24,6 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 import { NavSchema } from "./nav-schema";
-import {
-  ResizableHandle,
-  ResizablePanel,
-  ResizablePanelGroup,
-} from "@/components/ui/resizable";
 
 // This is sample data.
 const data = {
@@ -73,7 +68,7 @@ const data = {
   ],
 };
 
-export function AppSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function DevSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
   const router = useRouter();
