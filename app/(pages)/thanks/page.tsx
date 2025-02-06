@@ -1,4 +1,4 @@
-import Thanks from "@/components/Custom/Static/Contact/Thanks";
+import Thanks from "@/components/Static/Contact/Thanks";
 
 export default function Contact() {
   return <Thanks />;

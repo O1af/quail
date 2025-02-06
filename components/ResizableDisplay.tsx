@@ -4,9 +4,9 @@ import {
   ResizablePanel,
   ResizablePanelGroup,
 } from "@/components/ui/resizable";
-import SQLEditor from "./editor/Editor";
-import { DataTable } from "./Custom/DataTable/data-table";
-import Chat from "@/components/Custom/ChatBot/Chat";
+import SQLEditor from "@/components/Dev/editor/Editor";
+import { DataTable } from "./Dev/DataTable/data-table";
+import Chat from "@/components/Dev/ChatBot/Chat";
 
 export function ResizableDisplay() {
   return (

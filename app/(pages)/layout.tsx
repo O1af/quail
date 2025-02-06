@@ -1,5 +1,5 @@
-import Footer from "@/components/Custom/Static/Footer";
-import { Header } from "@/components/Custom/Static/Landing/header";
+import Footer from "@/components/Static/Footer";
+import { Header } from "@/components/Static/Landing/header";
 export default function Layout({ children }: { children: React.ReactNode }) {
   return (
     <>

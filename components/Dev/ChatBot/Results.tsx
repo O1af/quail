@@ -1,4 +1,4 @@
-import { Config, Result } from "@/lib/types";
+import { Config, Result } from "@/lib/types/chartTypes";
 import { DynamicChart } from "./dynamic-chart";
 import { SkeletonCard } from "./skeleton-card";
 import {
@@ -41,7 +41,7 @@ export const Results = ({
     return title
       .split("_")
       .map((word, index) =>
-        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word,
+        index === 0 ? word.charAt(0).toUpperCase() + word.slice(1) : word
       )
       .join(" ");
   };
@@ -149,7 +149,7 @@ export const Results = ({
         const regex = new RegExp(`\\b${word}\\b`, "gi");
         formattedSql = formattedSql.replace(
           regex,
-          `<span class='text-${color}-500 font-semibold'>${word}</span>`,
+          `<span class='text-${color}-500 font-semibold'>${word}</span>`
         );
       });
     });
