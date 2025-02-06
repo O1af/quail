@@ -33,6 +33,7 @@ export async function signup(formData: FormData) {
   const lastName = formData.get("last-name") as string;
   const email = formData.get("email") as string;
   const password = formData.get("password") as string;
+  const captchaToken = formData.get("captchaToken") as string;
 
   const data = {
     email,
@@ -43,6 +44,7 @@ export async function signup(formData: FormData) {
         email,
       },
       emailRedirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/login`,
+      captchaToken,
     },
   };
 
@@ -96,26 +98,26 @@ export async function forgotPassword(formData: FormData) {
 
   if (error) {
     throw new Error(
-      "An error occurred while attempting to reset your password."
+      "An error occurred while attempting to reset your password.",
     );
   }
 }
 
 export async function resetPassword(
   formData: FormData,
-  searchParams: { code?: string }
+  searchParams: { code?: string },
 ) {
   const password = formData.get("password") as string;
   const supabase = await createClient();
 
   if (searchParams.code) {
     const { error } = await supabase.auth.exchangeCodeForSession(
-      searchParams.code
+      searchParams.code,
     );
 
     if (error) {
       return redirect(
-        `/reset-password?message=Unable to reset Password. Link expired!`
+        `/reset-password?message=Unable to reset Password. Link expired!`,
       );
     }
   }
@@ -127,7 +129,7 @@ export async function resetPassword(
   if (error) {
     // console.log(error);
     return redirect(
-      `/reset-password?message=Unable to reset Password. Try again!`
+      `/reset-password?message=Unable to reset Password. Try again!`,
     );
   }
 }
