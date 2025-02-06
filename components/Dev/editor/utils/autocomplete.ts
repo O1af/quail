@@ -1,5 +1,5 @@
 import { languages, IDisposable, IPosition, IRange } from "monaco-editor";
-import { DatabaseStructure } from "../../stores/table_store";
+import { DatabaseStructure } from "@/components/stores/table_store";
 
 const SQL_CONFIG = {
   keywords: [
