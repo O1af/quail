@@ -8,8 +8,8 @@ import { useRouter } from "next/navigation"; // For client-side navigation
 import { DataDownloadButton } from "@/components/header/data-download-button";
 import { AppSidebar } from "@/components/sidebar/app-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { BetterDataTable } from "@/components/Custom/DataTable/better-data-table";
-import DataHeader from "@/components/Custom/DataTable/header";
+import { BetterDataTable } from "@/components/Dev/DataTable/better-data-table";
+import DataHeader from "@/components/Dev/DataTable/header";
 
 export default function Page() {
   const [user, setUser] = useState<any>(null);

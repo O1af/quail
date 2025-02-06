@@ -4,8 +4,8 @@ import Editor, { OnMount } from "@monaco-editor/react";
 import { useTheme } from "next-themes";
 import React, { useEffect, useCallback } from "react";
 import { setupSQLAutocomplete } from "./utils/autocomplete";
-import { useEditorStore } from "../stores/editor_store";
-import { useTableStore } from "../stores/table_store";
+import { useEditorStore } from "@/components/stores/editor_store";
+import { useTableStore } from "@/components/stores/table_store";
 
 export default React.memo(function SQLEditor() {
   const { resolvedTheme } = useTheme();

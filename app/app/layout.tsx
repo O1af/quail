@@ -1,5 +1,5 @@
 "use client";
-import Loading from "@/components/Custom/Loading/Loading";
+import Loading from "@/components/Dev/Loading/Loading";
 import { useAuth } from "@/context/AuthContext";
 
 export default function DashboardLayout({

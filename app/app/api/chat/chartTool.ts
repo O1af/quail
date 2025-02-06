@@ -2,7 +2,7 @@ import { generateText, generateObject, tool, Message } from "ai";
 import { z } from "zod";
 import { createAzure } from "@ai-sdk/azure";
 import { executeQuery } from "@/components/stores/utils/query";
-import { Result, configSchema } from "@/lib/types";
+import { Result, configSchema } from "@/lib/types/chartTypes";
 import { countTokens } from "gpt-tokenizer";
 import {
   updateTokenUsage,

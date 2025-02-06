@@ -1,7 +1,7 @@
 "use server";
-import { PostgresRequest, PostgresResponse } from "@/types/DatabaseTypes";
+import { PostgresRequest, PostgresResponse } from "@/lib/types/DBQueryTypes";
 import { createClient } from "../supabase/server";
-import { MySQLRequest } from "@/types/DatabaseTypes";
+import { MySQLRequest } from "@/lib/types/DBQueryTypes";
 
 function getCurrentUsageColumn(): string {
   const now = new Date();

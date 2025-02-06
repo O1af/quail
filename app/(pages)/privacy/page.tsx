@@ -1,4 +1,4 @@
-import PrivacyPage from "@/components/Custom/Static/Privacy/PrivacyPage";
+import PrivacyPage from "@/components/Static/Privacy/PrivacyPage";
 
 export default function Privacy() {
   return (

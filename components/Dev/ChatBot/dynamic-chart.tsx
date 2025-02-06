@@ -21,7 +21,7 @@ import {
   ChartTooltip,
   ChartTooltipContent,
 } from "@/components/ui/chart";
-import { Config, Result } from "@/lib/types";
+import { Config, Result } from "@/lib/types/chartTypes";
 import { Label } from "recharts";
 import { transformDataForMultiLineChart } from "@/lib/rechart-format";
 
