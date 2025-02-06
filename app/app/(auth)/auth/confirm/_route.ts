@@ -20,7 +20,6 @@ export async function GET(request: NextRequest) {
 
     if (!error) {
       redirectTo.searchParams.delete("next");
-      console.log(redirectTo.toString());
       return NextResponse.redirect(redirectTo);
     }
   }
