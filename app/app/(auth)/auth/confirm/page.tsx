@@ -90,7 +90,6 @@ export default function ConfirmEmail() {
                 value={otp}
                 onChange={setOtp}
                 numInputs={6}
-                isInputNum
                 shouldAutoFocus
                 containerStyle="flex justify-center gap-4"
                 inputStyle="text-3xl text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
