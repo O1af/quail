@@ -9,6 +9,7 @@ interface InputProps {
   handleInputChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleSubmit: (e: FormEvent<HTMLFormElement>) => void;
   className?: string;
+  disabled?: boolean;
 }
 
 export function Input({
@@ -16,10 +17,16 @@ export function Input({
   handleInputChange,
   handleSubmit,
   className,
+  disabled,
 }: InputProps) {
+  const onSubmit = (e: React.FormEvent<HTMLFormElement>) => {
+    e.preventDefault();
+    handleSubmit(e);
+  };
+
   return (
     <form
-      onSubmit={handleSubmit}
+      onSubmit={onSubmit}
       className={cn("flex items-end gap-2", className)}
     >
       <Textarea
@@ -27,8 +34,9 @@ export function Input({
         onChange={handleInputChange}
         placeholder="Type a message..."
         className="min-h-[60px] resize-none"
+        disabled={disabled}
       />
-      <Button type="submit" size="icon">
+      <Button type="submit" size="icon" disabled={disabled || !input.trim()}>
         <SendIcon className="h-4 w-4" />
       </Button>
     </form>

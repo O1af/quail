@@ -1,12 +1,13 @@
 import { Message } from "ai";
 import { cn } from "@/lib/utils";
+import { memo } from "react";
 
 interface MessagesProps {
   messages: Message[];
   className?: string;
 }
 
-export function Messages({ messages, className }: MessagesProps) {
+export const Messages = memo(function Messages({ messages, className }: MessagesProps) {
   return (
     <div className={cn("space-y-4 overflow-y-auto", className)}>
       {messages.map((message) => (
@@ -25,4 +26,7 @@ export function Messages({ messages, className }: MessagesProps) {
       ))}
     </div>
   );
-}
+}, (prevProps, nextProps) => {
+  return prevProps.messages.length === nextProps.messages.length &&
+    prevProps.messages.every((msg, i) => msg.id === nextProps.messages[i].id);
+});

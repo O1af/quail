@@ -5,12 +5,10 @@ import { ModeToggle } from "@/components/header/mode-toggle";
 import { DashSidebar } from "@/components/sidebar/dash-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import Chat from "@/components/BI/Chat/Chat";
-import { useSearchParams } from "next/navigation";
+import { useParams } from "next/navigation";
 
 export default function Page() {
-  const searchParams = useSearchParams();
-  const id = searchParams.get("id");
-
+  const params = useParams<{ id: string }>();
   return (
     <SidebarProvider>
       <DashSidebar />
@@ -24,7 +22,7 @@ export default function Page() {
           </div>
         </header>
         <div className="flex-1 p-4">
-          <Chat className="h-[calc(100vh-12rem)]" id={id || undefined} />
+          <Chat className="h-[calc(100vh-12rem)]" id={params.id} />
         </div>
       </SidebarInset>
     </SidebarProvider>
