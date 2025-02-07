@@ -1,7 +1,13 @@
 import { appendResponseMessages, streamText } from "ai";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
-import { saveChat, createChat } from "@/components/stores/chat_store";
+import {
+  saveChat,
+  createChat,
+  updateChatTitle,
+  deleteChat,
+} from "@/components/stores/chat_store";
+import { generateTitleFromUserMessage } from "./title";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -22,13 +28,12 @@ export async function POST(req: Request) {
   }
 
   const { messages, id } = await req.json();
+  let titlePromise: Promise<void> | undefined;
 
-  // Only create a new chat if this is the first message
-  let chatId = id;
-  if (id === "new" && messages.length === 1) {
-    chatId = await createChat(user.user.id);
-  } else if (id === "new") {
-    chatId = id;
+  if (messages.length === 1) {
+    await createChat(user.user.id, id);
+    titlePromise = generateTitleFromUserMessage({ message: messages[0], azure })
+      .then(title => updateChatTitle(id, title, user.user.id));
   }
 
   const stream = streamText({
@@ -36,23 +41,46 @@ export async function POST(req: Request) {
     system: "You are a helpful assistant.",
     messages,
     maxTokens: 300,
-    async onFinish({ response, usage }) {
-      if (chatId !== "new") {
-        const allMessages = appendResponseMessages({
-          messages,
-          responseMessages: response.messages,
-        });
-        await saveChat(chatId, allMessages, user.user.id);
-      }
+    async onFinish({ response }) {
+      const allMessages = appendResponseMessages({
+        messages,
+        responseMessages: response.messages,
+      });
+      await Promise.all([
+        saveChat(id, allMessages, user.user.id),
+        titlePromise
+      ].filter(Boolean));
     },
   });
 
-  const headers = new Headers({
-    "X-Chat-Id": chatId,
-    "Content-Type": "text/event-stream",
-    "Cache-Control": "no-cache",
-    Connection: "keep-alive",
-  });
+  return stream.toDataStreamResponse();
+}
 
-  return new Response(stream.toDataStream(), { headers });
+export async function DELETE(req: Request) {
+  const supabase = await createClient();
+  const { data: user, error } = await supabase.auth.getUser();
+
+  if (error || !user) {
+    return new Response(JSON.stringify({ message: "Unauthorized" }), {
+      status: 401,
+    });
+  }
+
+  const { searchParams } = new URL(req.url);
+  const id = searchParams.get("id");
+
+  if (!id) {
+    return new Response(JSON.stringify({ message: "Missing chat ID" }), {
+      status: 400,
+    });
+  }
+
+  try {
+    await deleteChat(id, user.user.id);
+    return new Response(JSON.stringify({ success: true }));
+  } catch (error) {
+    return new Response(JSON.stringify({ message: "Failed to delete chat" }), {
+      status: 500,
+    });
+  }
 }

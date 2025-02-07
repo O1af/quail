@@ -7,6 +7,8 @@ import { loadChat } from "@/components/stores/chat_store";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Message } from "ai/react";
+import { Trash2 } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 interface ChatProps {
   className?: string;
@@ -16,9 +18,28 @@ interface ChatProps {
 export default function Chat({ className, id }: ChatProps) {
   const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const [localId, setLocalId] = useState<string | undefined>(id);
+  const [localId, setLocalId] = useState<string>(id || "");
   const [initialMessages, setInitialMessages] = useState<Message[]>([]);
   const [isInitialLoad, setIsInitialLoad] = useState(true);
+  const [title, setTitle] = useState<string>("New Chat");
+
+  useEffect(() => {
+    async function initChat() {
+      if (!id && !localId) {
+        try {
+          const response = await fetch("/api/biChat/id");
+          const data = await response.json();
+          if (data.id) {
+            setLocalId(data.id);
+            router.push(`/chat/${data.id}`, { scroll: false });
+          }
+        } catch (err) {
+          setError("Failed to initialize chat");
+        }
+      }
+    }
+    initChat();
+  }, [id, localId, router]);
 
   const {
     messages,
@@ -29,23 +50,36 @@ export default function Chat({ className, id }: ChatProps) {
     setMessages,
   } = useChat({
     api: "/api/biChat",
-    id: localId || "new",
+    id: localId,
     initialMessages,
     sendExtraMessageFields: true,
-    onResponse: (response) => {
-      const chatId = response.headers.get("X-Chat-Id");
-      if (chatId && (!localId || localId === "new")) {
-        setLocalId(chatId);
-        router.replace(`/chat/${chatId}`, {
-          scroll: false,
-        });
+    onFinish: async () => {
+      // Fetch updated chat details including title
+      if (localId) {
+        const supabase = await createClient();
+        const { data: user } = await supabase.auth.getUser();
+        if (user.user) {
+          const chat = await loadChat(localId, user.user.id);
+          setTitle(chat.title);
+        }
       }
     },
   });
 
-  const handleSubmit = (e: React.FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
-    originalHandleSubmit(e);
+  const handleDelete = async () => {
+    if (!localId || localId === "new") return;
+
+    try {
+      const response = await fetch(`/api/biChat?id=${localId}`, {
+        method: "DELETE",
+      });
+
+      if (response.ok) {
+        router.push("/chat", { scroll: false });
+      }
+    } catch (err) {
+      console.error("Failed to delete chat:", err);
+    }
   };
 
   useEffect(() => {
@@ -61,11 +95,18 @@ export default function Chat({ className, id }: ChatProps) {
       }
 
       try {
-        const { messages: chatMessages } = await loadChat(id, user.user.id);
+        const { messages: chatMessages, title: chatTitle } = await loadChat(
+          id,
+          user.user.id
+        );
         setInitialMessages(chatMessages);
         setMessages(chatMessages);
+        if (chatTitle !== "New Chat") {
+          setTitle(chatTitle);
+        }
       } catch (err) {
-        setError("Failed to load chat");
+        console.error("Failed to load chat:", err);
+        // Don't set error for new chats
       } finally {
         setIsInitialLoad(false);
       }
@@ -73,7 +114,13 @@ export default function Chat({ className, id }: ChatProps) {
     fetchChat();
   }, [id, setMessages, isInitialLoad]);
 
-  const memoizedMessages = useMemo(() => messages, [messages]);
+  const memoizedMessages = useMemo(
+    () => messages?.filter((m) => m.content?.trim()),
+    [messages]
+  );
+
+  const showWelcome =
+    (!memoizedMessages?.length && title === "New Chat") || (!id && !localId);
 
   if (error) {
     return (
@@ -83,7 +130,7 @@ export default function Chat({ className, id }: ChatProps) {
     );
   }
 
-  if (!id && !localId) {
+  if (showWelcome) {
     return (
       <div className={cn("flex flex-col h-full", className)}>
         <div className="flex-1 flex items-center justify-center text-center p-4">
@@ -97,7 +144,7 @@ export default function Chat({ className, id }: ChatProps) {
         <Input
           input={input}
           handleInputChange={handleInputChange}
-          handleSubmit={handleSubmit}
+          handleSubmit={originalHandleSubmit}
           className="px-4 py-2 border-t"
           disabled={isChatLoading}
         />
@@ -107,11 +154,24 @@ export default function Chat({ className, id }: ChatProps) {
 
   return (
     <div className={cn("flex flex-col h-full", className)}>
+      {(id || localId) && (
+        <div className="px-4 py-2 border-b flex justify-between items-center">
+          <h1 className="text-lg font-semibold truncate">{title}</h1>
+          <Button
+            variant="ghost"
+            size="icon"
+            onClick={handleDelete}
+            className="text-muted-foreground hover:text-destructive"
+          >
+            <Trash2 className="h-4 w-4" />
+          </Button>
+        </div>
+      )}
       <Messages messages={memoizedMessages} className="flex-1 px-4 py-4" />
       <Input
         input={input}
         handleInputChange={handleInputChange}
-        handleSubmit={handleSubmit}
+        handleSubmit={originalHandleSubmit}
         className="px-4 py-2 border-t"
         disabled={isChatLoading}
       />

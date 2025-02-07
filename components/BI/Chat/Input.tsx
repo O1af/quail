@@ -25,10 +25,7 @@ export function Input({
   };
 
   return (
-    <form
-      onSubmit={onSubmit}
-      className={cn("flex items-end gap-2", className)}
-    >
+    <form onSubmit={onSubmit} className={cn("flex items-end gap-2", className)}>
       <Textarea
         value={input}
         onChange={handleInputChange}

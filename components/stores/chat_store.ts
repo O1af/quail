@@ -6,13 +6,17 @@ import { ChatDocument, ChatResponse } from "@/lib/types/chat";
 
 const getCollection = () => getDatabase().collection<ChatDocument>("chats");
 
-export async function createChat(userId: string): Promise<string> {
+export async function createChat(
+  userId: string,
+  objId: string
+): Promise<string> {
   try {
     await connectToMongo();
     const collection = getCollection();
     const result = await collection.insertOne({
-      _id: new ObjectId().toString(),
+      _id: objId,
       messages: [],
+      title: "New Chat",
       userId,
       createdAt: new Date(),
       updatedAt: new Date(),
@@ -32,7 +36,17 @@ export async function loadChat(
     await connectToMongo();
     const collection = getCollection();
     const chat = await collection.findOne({ _id: id, userId });
-    if (!chat) throw new Error("Chat not found");
+    if (!chat) {
+      // Return a default chat object if not found
+      return {
+        _id: id,
+        messages: [],
+        title: "New Chat",
+        userId,
+        createdAt: new Date(),
+        updatedAt: new Date(),
+      };
+    }
     return chat;
   } catch (error) {
     console.error("Failed to load chat:", error);
@@ -61,6 +75,27 @@ export async function saveChat(
   }
 }
 
+export async function updateChatTitle(
+  id: string,
+  title: string,
+  userId: string
+): Promise<void> {
+  try {
+    await connectToMongo();
+    const collection = getCollection();
+    const result = await collection.updateOne(
+      { _id: id, userId },
+      { $set: { title, updatedAt: new Date() } }
+    );
+    if (result.matchedCount === 0) {
+      throw new Error("Chat not found or unauthorized");
+    }
+  } catch (error) {
+    console.error("Failed to update chat title:", error);
+    throw new Error("Failed to update chat title");
+  }
+}
+
 export async function listChats(
   userId: string,
   limit = 10
@@ -76,4 +111,50 @@ export async function listChats(
     console.error("Failed to list chats:", error);
     throw new Error("Failed to list chats");
   }
+}
+
+export async function deleteChat(id: string, userId: string): Promise<void> {
+  try {
+    await connectToMongo();
+    const collection = getCollection();
+    const result = await collection.deleteOne({ _id: id, userId });
+    if (result.deletedCount === 0) {
+      throw new Error("Chat not found or unauthorized");
+    }
+  } catch (error) {
+    console.error("Failed to delete chat:", error);
+    throw new Error("Failed to delete chat");
+  }
+}
+
+export async function updateChatTitleAndMessages(
+  id: string,
+  title: string,
+  messages: Message[],
+  userId: string
+): Promise<void> {
+  try {
+    await connectToMongo();
+    const collection = getCollection();
+    const result = await collection.updateOne(
+      { _id: id, userId },
+      {
+        $set: {
+          title,
+          messages,
+          updatedAt: new Date(),
+        },
+      }
+    );
+    if (result.matchedCount === 0) {
+      throw new Error("Chat not found or unauthorized");
+    }
+  } catch (error) {
+    console.error("Failed to update chat:", error);
+    throw new Error("Failed to update chat");
+  }
+}
+
+export async function generateId(): Promise<string> {
+  return new ObjectId().toString();
 }
