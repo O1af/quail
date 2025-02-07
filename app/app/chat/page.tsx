@@ -5,6 +5,7 @@ import { ModeToggle } from "@/components/header/mode-toggle";
 import { createClient } from "@/utils/supabase/client";
 import { DashSidebar } from "@/components/sidebar/dash-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
+import Chat from "@/components/BI/Chat/Chat";
 
 export default function Page() {
   const [user, setUser] = useState<any>(null);
@@ -35,6 +36,9 @@ export default function Page() {
         </header>
         <div className="flex items-center gap-2 px-4 ml-auto">
           <h1 className="text-2xl font-semibold">Dashboard</h1>
+        </div>
+        <div className="flex-1 p-4">
+          <Chat className="h-[calc(100vh-12rem)]" />
         </div>
       </SidebarInset>
     </SidebarProvider>
