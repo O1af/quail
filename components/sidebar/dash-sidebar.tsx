@@ -14,7 +14,9 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-export function DevSidebar({ ...props }: React.ComponentProps<typeof Sidebar>) {
+export function DashSidebar({
+  ...props
+}: React.ComponentProps<typeof Sidebar>) {
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
   const router = useRouter();
