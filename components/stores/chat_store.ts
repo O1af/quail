@@ -2,31 +2,9 @@
 import { Message } from "ai";
 import { ObjectId } from "mongodb";
 import { connectToMongo, getDatabase } from "./utils/mongo";
-import { ChatDocument, ChatResponse } from "@/lib/types/chat";
+import { ChatDocument, ChatResponse, ChatListResponse } from "@/lib/types/chat";
 
 const getCollection = () => getDatabase().collection<ChatDocument>("chats");
-
-export async function createChat(
-  userId: string,
-  objId: string
-): Promise<string> {
-  try {
-    await connectToMongo();
-    const collection = getCollection();
-    const result = await collection.insertOne({
-      _id: objId,
-      messages: [],
-      title: "New Chat",
-      userId,
-      createdAt: new Date(),
-      updatedAt: new Date(),
-    });
-    return result.insertedId.toString();
-  } catch (error) {
-    console.error("Failed to create chat:", error);
-    throw new Error("Failed to create chat");
-  }
-}
 
 export async function loadChat(
   id: string,
@@ -57,55 +35,39 @@ export async function loadChat(
 export async function saveChat(
   id: string,
   messages: Message[],
-  userId: string
+  userId: string,
+  title: string = "New Chat"
 ): Promise<void> {
   try {
     await connectToMongo();
     const collection = getCollection();
     const result = await collection.updateOne(
       { _id: id, userId },
-      { $set: { messages, updatedAt: new Date() } }
+      {
+        $set: {
+          messages,
+          updatedAt: new Date(),
+        },
+        $setOnInsert: {
+          title,
+          createdAt: new Date(),
+          userId,
+        },
+      },
+      { upsert: true }
     );
-    if (result.matchedCount === 0) {
-      throw new Error("Chat not found or unauthorized");
-    }
   } catch (error) {
     console.error("Failed to save chat:", error);
     throw new Error("Failed to save chat");
   }
 }
 
-export async function updateChatTitle(
-  id: string,
-  title: string,
-  userId: string
-): Promise<void> {
-  try {
-    await connectToMongo();
-    const collection = getCollection();
-    const result = await collection.updateOne(
-      { _id: id, userId },
-      { $set: { title, updatedAt: new Date() } }
-    );
-    if (result.matchedCount === 0) {
-      throw new Error("Chat not found or unauthorized");
-    }
-  } catch (error) {
-    console.error("Failed to update chat title:", error);
-    throw new Error("Failed to update chat title");
-  }
-}
-
-export async function listChats(
-  userId: string,
-  limit = 10
-): Promise<ChatResponse[]> {
+export async function listChats(userId: string): Promise<ChatListResponse[]> {
   try {
     await connectToMongo();
     return await getCollection()
-      .find({ userId })
+      .find({ userId }, { projection: { title: 1, updatedAt: 1, _id: 1 } })
       .sort({ updatedAt: -1 })
-      .limit(limit)
       .toArray();
   } catch (error) {
     console.error("Failed to list chats:", error);
@@ -124,34 +86,6 @@ export async function deleteChat(id: string, userId: string): Promise<void> {
   } catch (error) {
     console.error("Failed to delete chat:", error);
     throw new Error("Failed to delete chat");
-  }
-}
-
-export async function updateChatTitleAndMessages(
-  id: string,
-  title: string,
-  messages: Message[],
-  userId: string
-): Promise<void> {
-  try {
-    await connectToMongo();
-    const collection = getCollection();
-    const result = await collection.updateOne(
-      { _id: id, userId },
-      {
-        $set: {
-          title,
-          messages,
-          updatedAt: new Date(),
-        },
-      }
-    );
-    if (result.matchedCount === 0) {
-      throw new Error("Chat not found or unauthorized");
-    }
-  } catch (error) {
-    console.error("Failed to update chat:", error);
-    throw new Error("Failed to update chat");
   }
 }
 

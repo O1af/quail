@@ -6,6 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 import { NavUser } from "@/components/sidebar/nav-user";
+import { NavChats } from "@/components/sidebar/nav-chats";
 import {
   Sidebar,
   SidebarContent,
@@ -45,7 +46,9 @@ export function DashSidebar({
   return (
     <Sidebar collapsible="icon" {...props}>
       <SidebarHeader></SidebarHeader>
-      <SidebarContent></SidebarContent>
+      <SidebarContent>
+        <NavChats />
+      </SidebarContent>
       <SidebarFooter>
         <NavUser user={supabaseData.user} />
       </SidebarFooter>

@@ -9,6 +9,8 @@ import { useRouter } from "next/navigation";
 import { Message } from "ai/react";
 import { Trash2 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { ChatSkeleton } from "./ChatSkeleton";
+import { Skeleton } from "@/components/ui/skeleton";
 
 interface ChatProps {
   className?: string;
@@ -54,13 +56,14 @@ export default function Chat({ className, id }: ChatProps) {
     initialMessages,
     sendExtraMessageFields: true,
     onFinish: async () => {
-      // Fetch updated chat details including title
       if (localId) {
         const supabase = await createClient();
         const { data: user } = await supabase.auth.getUser();
         if (user.user) {
           const chat = await loadChat(localId, user.user.id);
           setTitle(chat.title);
+          // Trigger chat list refresh
+          window.dispatchEvent(new Event("chatUpdated"));
         }
       }
     },
@@ -130,7 +133,23 @@ export default function Chat({ className, id }: ChatProps) {
     );
   }
 
-  if (showWelcome) {
+  if (isInitialLoad) {
+    return (
+      <div className={cn("flex flex-col h-full", className)}>
+        <div className="px-4 py-2 border-b flex justify-between items-center">
+          <Skeleton className="h-6 w-32" />
+        </div>
+        <div className="flex-1 px-4 py-4">
+          <ChatSkeleton />
+        </div>
+        <div className="px-4 py-2 border-t">
+          <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (!memoizedMessages?.length && !id && !localId) {
     return (
       <div className={cn("flex flex-col h-full", className)}>
         <div className="flex-1 flex items-center justify-center text-center p-4">

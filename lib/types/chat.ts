@@ -10,3 +10,9 @@ export interface ChatDocument {
 }
 
 export type ChatResponse = ChatDocument;
+
+export interface ChatListResponse {
+  _id: string;
+  title: string;
+  updatedAt: Date;
+}

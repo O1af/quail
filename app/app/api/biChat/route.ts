@@ -1,12 +1,7 @@
 import { appendResponseMessages, streamText } from "ai";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
-import {
-  saveChat,
-  createChat,
-  updateChatTitle,
-  deleteChat,
-} from "@/components/stores/chat_store";
+import { saveChat, deleteChat } from "@/components/stores/chat_store";
 import { generateTitleFromUserMessage } from "./title";
 
 const azure = createAzure({
@@ -28,13 +23,10 @@ export async function POST(req: Request) {
   }
 
   const { messages, id } = await req.json();
-  let titlePromise: Promise<void> | undefined;
-
-  if (messages.length === 1) {
-    await createChat(user.user.id, id);
-    titlePromise = generateTitleFromUserMessage({ message: messages[0], azure })
-      .then(title => updateChatTitle(id, title, user.user.id));
-  }
+  const title =
+    messages.length === 1
+      ? await generateTitleFromUserMessage({ message: messages[0], azure })
+      : undefined;
 
   const stream = streamText({
     model: azure("gpt-4o"),
@@ -46,10 +38,7 @@ export async function POST(req: Request) {
         messages,
         responseMessages: response.messages,
       });
-      await Promise.all([
-        saveChat(id, allMessages, user.user.id),
-        titlePromise
-      ].filter(Boolean));
+      await saveChat(id, allMessages, user.user.id, title);
     },
   });
 

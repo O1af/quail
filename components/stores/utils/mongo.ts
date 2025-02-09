@@ -45,9 +45,10 @@ class MongoDB {
     if (this.connectionTimeout) {
       clearTimeout(this.connectionTimeout);
     }
-    this.connectionTimeout = setTimeout(() => {
+    this.connectionTimeout = setTimeout(async () => {
       console.log("Closing idle MongoDB connection");
-      this.close();
+      this.connectionTimeout = null;
+      await this.close();
     }, this.IDLE_TIME);
   }
 
