@@ -14,6 +14,7 @@ import {
   Tooltip,
   Legend,
 } from "chart.js";
+import { Button } from "@/components/ui/button";
 
 ChartJS.register(
   CategoryScale,
@@ -53,22 +54,54 @@ const mrrChartData = {
 
 const Dashboard = () => {
   const [layouts, setLayouts] = useState(initialLayouts);
+  const [tempLayouts, setTempLayouts] = useState(initialLayouts);
+  const [isEditing, setIsEditing] = useState(false);
 
-  const handleLayoutChange = (currentLayout, allLayouts) => {
-    setLayouts(allLayouts);
+  const handleLayoutChange = (_currentLayout, allLayouts) => {
+    if (isEditing) setTempLayouts(allLayouts);
+  };
+
+  const handleEdit = () => {
+    setIsEditing(true);
+    setTempLayouts(layouts);
+  };
+
+  const handleSave = () => {
+    setLayouts(tempLayouts);
+    setIsEditing(false);
+  };
+
+  const handleCancel = () => {
+    setTempLayouts(layouts);
+    setIsEditing(false);
   };
 
   return (
     <div className="p-6 bg-gray-900 min-h-screen text-white">
-      <h1 className="text-3xl font-bold mb-6">Dashboard</h1>
+      <div className="flex justify-between items-center mb-4">
+        <h1 className="text-3xl font-bold">Dashboard</h1>
+        {!isEditing ? (
+          <Button onClick={handleEdit}>Edit</Button>
+        ) : (
+          <div className="space-x-2">
+            <Button variant="outline" onClick={handleCancel}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave}>Save</Button>
+          </div>
+        )}
+      </div>
+
       <ResponsiveGridLayout
         className="layout"
-        layouts={layouts}
+        layouts={tempLayouts}
         onLayoutChange={handleLayoutChange}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
         cols={{ lg: 12, md: 12, sm: 12, xs: 12 }}
         rowHeight={30}
         draggableHandle=".drag-handle"
+        isDraggable={isEditing}
+        isResizable={isEditing}
       >
         {layouts.lg.map((item) => (
           <div
