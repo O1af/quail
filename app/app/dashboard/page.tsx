@@ -56,8 +56,9 @@ const Dashboard = () => {
   const [layouts, setLayouts] = useState(initialLayouts);
   const [tempLayouts, setTempLayouts] = useState(initialLayouts);
   const [isEditing, setIsEditing] = useState(false);
+  const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
-  const handleLayoutChange = (_currentLayout, allLayouts) => {
+  const handleLayoutChange = (_currentLayout: any, allLayouts: any) => {
     if (isEditing) setTempLayouts(allLayouts);
   };
 
@@ -69,15 +70,23 @@ const Dashboard = () => {
   const handleSave = () => {
     setLayouts(tempLayouts);
     setIsEditing(false);
+    setSelectedItem(null);
   };
 
   const handleCancel = () => {
     setTempLayouts(layouts);
     setIsEditing(false);
+    setSelectedItem(null);
+  };
+
+  const handleClick = (itemId: string) => {
+    if (isEditing) {
+      setSelectedItem((prev) => (prev === itemId ? null : itemId));
+    }
   };
 
   return (
-    <div className="p-6 bg-gray-900 min-h-screen text-white">
+    <div className="p-6 min-h-screen text-white">
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         {!isEditing ? (
@@ -106,8 +115,10 @@ const Dashboard = () => {
         {layouts.lg.map((item) => (
           <div
             key={item.i}
-            className="bg-gray-800 p-4 rounded-lg shadow-md drag-handle border border-gray-700 
-                 flex flex-col justify-center items-center overflow-hidden h-full"
+            onClick={() => handleClick(item.i)}
+            className={`bg-opacity-0 p-4 rounded-lg shadow-md drag-handle border 
+                 flex flex-col justify-center items-center overflow-hidden h-full cursor-pointer border-gray-700
+                 ${selectedItem === item.i ? "border-sky-500 border-2 border-double" : ""} ${isEditing ? "border-dashed border-blue-300" : ""}`}
           >
             <p className="text-sm font-medium text-gray-400 whitespace-nowrap text-ellipsis overflow-hidden">
               {item.i.replace(/([A-Z])/g, " $1").trim()}
