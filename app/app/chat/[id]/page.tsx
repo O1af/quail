@@ -5,5 +5,5 @@ import { useParams } from "next/navigation";
 
 export default function Page() {
   const params = useParams<{ id: string }>();
-  return <Chat className="h-[calc(100vh-12rem)]" id={params.id} />;
+  return <Chat className="h-full" id={params.id} />;
 }

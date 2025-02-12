@@ -7,8 +7,6 @@ import { loadChat } from "@/components/stores/chat_store";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { Message } from "ai/react";
-import { Trash2 } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { ChatSkeleton } from "./ChatSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 
@@ -50,6 +48,9 @@ export default function Chat({ className, id }: ChatProps) {
     handleSubmit: originalHandleSubmit,
     isLoading: isChatLoading,
     setMessages,
+    setInput,
+    stop,
+    append,
   } = useChat({
     api: "/api/biChat",
     id: localId,
@@ -162,37 +163,51 @@ export default function Chat({ className, id }: ChatProps) {
         </div>
         <Input
           input={input}
-          handleInputChange={handleInputChange}
+          setInput={setInput}
+          isLoading={isChatLoading}
+          stop={stop}
+          messages={messages}
+          setMessages={setMessages}
+          append={append}
           handleSubmit={originalHandleSubmit}
-          className="px-4 py-2 border-t"
-          disabled={isChatLoading}
+          className="px-4 py-2 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75"
         />
       </div>
     );
   }
 
   return (
-    <div className={cn("flex flex-col h-full", className)}>
-      {(id || localId) && (
-        <div className="px-4 py-2 border-b flex justify-between items-center">
-          <h1 className="text-lg font-semibold truncate">{title}</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={handleDelete}
-            className="text-muted-foreground hover:text-destructive"
-          >
-            <Trash2 className="h-4 w-4" />
-          </Button>
-        </div>
+    <div
+      className={cn(
+        "flex flex-col h-full bg-gradient-to-b from-background to-muted/50",
+        className
       )}
-      <Messages messages={memoizedMessages} className="flex-1 px-4 py-4" />
+    >
+      <div className="flex-1 overflow-hidden relative">
+        {showWelcome ? (
+          <div className="flex-1 flex items-center justify-center text-center p-4">
+            <div className="max-w-md space-y-2">
+              <h2 className="text-2xl font-semibold">Welcome to Chat</h2>
+              <p className="text-muted-foreground">
+                Start typing below to begin a new conversation.
+              </p>
+            </div>
+          </div>
+        ) : (
+          <Messages messages={memoizedMessages} className="h-full px-4 py-4" />
+        )}
+      </div>
+
       <Input
         input={input}
-        handleInputChange={handleInputChange}
+        setInput={setInput}
+        isLoading={isChatLoading}
+        stop={stop}
+        messages={messages}
+        setMessages={setMessages}
+        append={append}
         handleSubmit={originalHandleSubmit}
-        className="px-4 py-2 border-t"
-        disabled={isChatLoading}
+        className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75"
       />
     </div>
   );

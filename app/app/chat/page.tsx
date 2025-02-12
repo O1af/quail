@@ -6,6 +6,6 @@ import { useSearchParams } from "next/navigation";
 export default function Page() {
   const searchParams = useSearchParams();
   const id = searchParams.get("id");
-  
-  return <Chat className="h-[calc(100vh-12rem)]" id={id || undefined} />;
+
+  return <Chat className="h-full" id={id || undefined} />;
 }
