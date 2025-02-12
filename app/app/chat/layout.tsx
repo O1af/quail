@@ -5,7 +5,11 @@ import { ModeToggle } from "@/components/header/mode-toggle";
 import { DashSidebar } from "@/components/sidebar/dash-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 
-export default function ChatLayout({ children }: { children: React.ReactNode }) {
+export default function ChatLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <SidebarProvider>
       <DashSidebar />
@@ -18,9 +22,7 @@ export default function ChatLayout({ children }: { children: React.ReactNode }) 
             <ModeToggle />
           </div>
         </header>
-        <div className="flex-1 p-4">
-          {children}
-        </div>
+        <div className="flex-1 p-4">{children}</div>
       </SidebarInset>
     </SidebarProvider>
   );

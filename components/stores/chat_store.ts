@@ -88,6 +88,28 @@ export async function deleteChat(id: string, userId: string): Promise<void> {
     throw new Error("Failed to delete chat");
   }
 }
+export async function renameChat(
+  id: string,
+  userId: string,
+  newTitle: string
+): Promise<void> {
+  try {
+    await connectToMongo();
+    const collection = getCollection();
+    const result = await collection.updateOne(
+      { _id: id, userId },
+      {
+        $set: {
+          title: newTitle,
+          updatedAt: new Date(),
+        },
+      }
+    );
+  } catch (error) {
+    console.error("Failed to rename chat:", error);
+    throw new Error("Failed to rename chat");
+  }
+}
 
 export async function generateId(): Promise<string> {
   return new ObjectId().toString();

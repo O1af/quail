@@ -6,7 +6,7 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 import { NavUser } from "@/components/sidebar/nav-user";
-import { NavChats } from "@/components/sidebar/nav-chats";
+import { NavChats } from "@/components/sidebar/dash-chats";
 import {
   Sidebar,
   SidebarContent,
