@@ -1,4 +1,4 @@
-import { appendResponseMessages, streamText } from "ai";
+import { appendResponseMessages, streamText, smoothStream } from "ai";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
 import { saveChat, deleteChat } from "@/components/stores/chat_store";
@@ -32,6 +32,7 @@ export async function POST(req: Request) {
     model: azure("gpt-4o"),
     system: "You are a helpful assistant.",
     messages,
+    experimental_transform: smoothStream({ chunking: "word" }),
     maxTokens: 300,
     async onFinish({ response }) {
       const allMessages = appendResponseMessages({

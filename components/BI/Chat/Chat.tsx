@@ -183,7 +183,7 @@ export default function Chat({ className, id }: ChatProps) {
         className
       )}
     >
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden">
         {showWelcome ? (
           <div className="flex-1 flex items-center justify-center text-center p-4">
             <div className="max-w-md space-y-2">
@@ -194,7 +194,9 @@ export default function Chat({ className, id }: ChatProps) {
             </div>
           </div>
         ) : (
-          <Messages messages={memoizedMessages} className="h-full px-4 py-4" />
+          <div className="h-full relative">
+            <Messages messages={memoizedMessages} isLoading={isChatLoading} />
+          </div>
         )}
       </div>
 
