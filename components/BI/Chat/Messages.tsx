@@ -7,6 +7,7 @@ import { memo } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Markdown } from "@/components/Dev/ChatBot/markdown";
+import { useScrollToBottom } from "@/components/Dev/ChatBot/use-scroll-to-bottom";
 
 interface MessagesProps {
   messages: Message[];
@@ -16,9 +17,14 @@ interface MessagesProps {
 function PureMessages({ messages, isLoading }: MessagesProps) {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const [messagesContainerRef, messagesEndRef] =
+    useScrollToBottom<HTMLDivElement>();
 
   return (
-    <div className="absolute inset-0 flex flex-col overflow-y-auto">
+    <div
+      ref={messagesContainerRef}
+      className="absolute inset-0 flex flex-col overflow-y-auto scroll-smooth"
+    >
       <div className="flex flex-col gap-6 px-4 py-4">
         {messages.map((message) => (
           <AnimatePresence key={message.id}>
@@ -67,6 +73,8 @@ function PureMessages({ messages, isLoading }: MessagesProps) {
 
         {isLoading && <ThinkingMessage />}
       </div>
+
+      <div ref={messagesEndRef} className="h-px w-full" />
     </div>
   );
 }
