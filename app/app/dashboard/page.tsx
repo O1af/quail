@@ -1,143 +1,212 @@
 "use client";
-import React, { useState } from "react";
-import GridLayout, { Responsive, WidthProvider } from "react-grid-layout";
-import "react-grid-layout/css/styles.css";
-import "react-resizable/css/styles.css";
-import { Line } from "react-chartjs-2";
+
 import {
-  Chart as ChartJS,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-} from "chart.js";
+  BarChart,
+  Clock,
+  Grid,
+  List,
+  LineChart,
+  MoreVertical,
+  PieChart,
+} from "lucide-react";
+import { useState } from "react";
+
 import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-ChartJS.register(
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  Title,
-  Tooltip,
-  Legend,
-);
-
-const ResponsiveGridLayout = WidthProvider(Responsive) as any;
-
-const initialLayouts = {
-  lg: [
-    { i: "newUsers", x: 0, y: 0, w: 3, h: 2 },
-    { i: "totalPaidUsers", x: 3, y: 0, w: 3, h: 2 },
-    { i: "subscriptionCancellation", x: 6, y: 0, w: 3, h: 2 },
-    { i: "totalRevenue", x: 0, y: 2, w: 3, h: 2 },
-    { i: "averageToken", x: 3, y: 2, w: 3, h: 2 },
-    { i: "mrrChart", x: 6, y: 2, w: 6, h: 4 },
-  ],
-};
-
-const mrrChartData = {
-  labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
-  datasets: [
-    {
-      label: "MRR ($)",
-      data: [5000, 7000, 8000, 12000, 15000, 17000],
-      borderColor: "#4CAF50",
-      backgroundColor: "rgba(76, 175, 80, 0.2)",
-      fill: true,
-    },
-  ],
-};
-
-const Dashboard = () => {
-  const [layouts, setLayouts] = useState(initialLayouts);
-  const [tempLayouts, setTempLayouts] = useState(initialLayouts);
-  const [isEditing, setIsEditing] = useState(false);
-  const [selectedItem, setSelectedItem] = useState<string | null>(null);
-
-  const handleLayoutChange = (_currentLayout: any, allLayouts: any) => {
-    if (isEditing) setTempLayouts(allLayouts);
-  };
-
-  const handleEdit = () => {
-    setIsEditing(true);
-    setTempLayouts(layouts);
-  };
-
-  const handleSave = () => {
-    setLayouts(tempLayouts);
-    setIsEditing(false);
-    setSelectedItem(null);
-  };
-
-  const handleCancel = () => {
-    setTempLayouts(layouts);
-    setIsEditing(false);
-    setSelectedItem(null);
-  };
-
-  const handleClick = (itemId: string) => {
-    if (isEditing) {
-      setSelectedItem((prev) => (prev === itemId ? null : itemId));
-    }
-  };
+export default function DashboardPage() {
+  const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
   return (
-    <div className="p-6 min-h-screen text-white">
-      <div className="flex justify-between items-center mb-4">
-        <h1 className="text-3xl font-bold">Dashboard</h1>
-        {!isEditing ? (
-          <Button onClick={handleEdit}>Edit</Button>
-        ) : (
-          <div className="space-x-2">
-            <Button variant="outline" onClick={handleCancel}>
-              Cancel
+    <div className="flex min-h-screen flex-col bg-background">
+      <div className="flex-1 space-y-4 p-4 pt-6">
+        <div className="flex items-center justify-between">
+          <Input
+            placeholder="Search dashboards, notebooks, charts"
+            className="max-w-[400px]"
+          />
+          <div className="flex items-center gap-2">
+            <Button variant="outline">
+              New <span className="sr-only">Create new item</span>
             </Button>
-            <Button onClick={handleSave}>Save</Button>
-          </div>
-        )}
-      </div>
-
-      <ResponsiveGridLayout
-        className="layout"
-        layouts={tempLayouts}
-        onLayoutChange={handleLayoutChange}
-        breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-        cols={{ lg: 12, md: 12, sm: 12, xs: 12 }}
-        rowHeight={30}
-        draggableHandle=".drag-handle"
-        isDraggable={isEditing}
-        isResizable={isEditing}
-      >
-        {layouts.lg.map((item) => (
-          <div
-            key={item.i}
-            onClick={() => handleClick(item.i)}
-            className={`bg-opacity-0 p-4 rounded-lg shadow-md drag-handle border 
-                 flex flex-col justify-center items-center overflow-hidden h-full cursor-pointer border-gray-700
-                 ${selectedItem === item.i ? "border-sky-500 border-2 border-double" : ""} ${isEditing ? "border-dashed border-blue-300" : ""}`}
-          >
-            <p className="text-sm font-medium text-gray-400 whitespace-nowrap text-ellipsis overflow-hidden">
-              {item.i.replace(/([A-Z])/g, " $1").trim()}
-            </p>
-            <div className="w-full h-full flex items-center justify-center overflow-hidden">
-              {item.i === "mrrChart" ? (
-                <Line
-                  data={mrrChartData}
-                  options={{ responsive: true, maintainAspectRatio: false }}
-                />
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={() =>
+                setViewMode((prev) => (prev === "grid" ? "list" : "grid"))
+              }
+            >
+              {viewMode === "grid" ? (
+                <List className="h-4 w-4" />
               ) : (
-                <h2 className="text-2xl font-bold mt-2 truncate">Data</h2>
+                <Grid className="h-4 w-4" />
               )}
-            </div>
+            </Button>
           </div>
-        ))}
-      </ResponsiveGridLayout>
+        </div>
+
+        <Tabs defaultValue="all" className="space-y-4">
+          <TabsList>
+            <TabsTrigger value="all">All Types</TabsTrigger>
+            <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
+            <TabsTrigger value="charts">Charts</TabsTrigger>
+          </TabsList>
+          <TabsContent value="all" className="space-y-4">
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-medium tracking-tight">
+                  Dashboards
+                </h2>
+                <p className="text-sm text-muted-foreground">1 dashboard</p>
+              </div>
+              <div
+                className={
+                  viewMode === "grid"
+                    ? "grid gap-4 md:grid-cols-2 lg:grid-cols-4"
+                    : "space-y-2"
+                }
+              >
+                <ChartCard
+                  title="Chatbot App Dashboard"
+                  type="Dashboard"
+                  icon={Grid}
+                  viewMode={viewMode}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-4">
+              <div>
+                <h2 className="text-lg font-medium tracking-tight">
+                  Your saved charts
+                </h2>
+                <p className="text-sm text-muted-foreground">11 charts</p>
+              </div>
+              <div
+                className={
+                  viewMode === "grid"
+                    ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+                    : "space-y-2"
+                }
+              >
+                <ChartCard
+                  title="Total Number of Users"
+                  type="Single Value"
+                  icon={LineChart}
+                  viewMode={viewMode}
+                />
+                <ChartCard
+                  title="Subscription Plans"
+                  type="Pie"
+                  icon={PieChart}
+                  viewMode={viewMode}
+                />
+                <ChartCard
+                  title="Monthly Recurring Revenue"
+                  type="Area"
+                  icon={BarChart}
+                  viewMode={viewMode}
+                />
+                <ChartCard
+                  title="Total Revenue Calculation"
+                  type="Single Value"
+                  icon={LineChart}
+                  viewMode={viewMode}
+                />
+                <ChartCard
+                  title="Retention Rate by User Signup"
+                  type="Line"
+                  icon={LineChart}
+                  viewMode={viewMode}
+                />
+                <ChartCard
+                  title="Percentage of Cancelled"
+                  type="Single Value"
+                  icon={LineChart}
+                  viewMode={viewMode}
+                />
+              </div>
+            </div>
+          </TabsContent>
+        </Tabs>
+      </div>
     </div>
   );
-};
+}
 
-export default Dashboard;
+function ChartCard({
+  title,
+  type,
+  icon: Icon,
+  viewMode,
+}: {
+  title: string;
+  type: string;
+  icon: React.ComponentType<{ className?: string }>;
+  viewMode: "grid" | "list";
+}) {
+  return viewMode === "grid" ? (
+    <Card>
+      <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+        <div className="flex items-center space-x-2">
+          <Icon className="h-4 w-4" />
+          <CardTitle className="text-sm font-medium">{title}</CardTitle>
+        </div>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon">
+              <MoreVertical className="h-4 w-4" />
+              <span className="sr-only">Open menu</span>
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem>Share</DropdownMenuItem>
+            <DropdownMenuItem>Delete</DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
+      </CardHeader>
+      <CardContent>
+        <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+          <div>{type}</div>
+          <div>•</div>
+          <div className="flex items-center space-x-1">
+            <Clock className="h-3 w-3" />
+            <span>Updated 1 minute ago</span>
+          </div>
+        </div>
+      </CardContent>
+    </Card>
+  ) : (
+    <div className="flex items-center justify-between p-3 border rounded-lg shadow-sm">
+      <div className="flex items-center space-x-3">
+        <Icon className="h-5 w-5" />
+        <div>
+          <h3 className="text-sm font-medium">{title}</h3>
+          <p className="text-xs text-muted-foreground">{type}</p>
+        </div>
+      </div>
+      <DropdownMenu>
+        <DropdownMenuTrigger asChild>
+          <Button variant="ghost" size="icon">
+            <MoreVertical className="h-4 w-4" />
+            <span className="sr-only">Open menu</span>
+          </Button>
+        </DropdownMenuTrigger>
+        <DropdownMenuContent align="end">
+          <DropdownMenuItem>Edit</DropdownMenuItem>
+          <DropdownMenuItem>Share</DropdownMenuItem>
+          <DropdownMenuItem>Delete</DropdownMenuItem>
+        </DropdownMenuContent>
+      </DropdownMenu>
+    </div>
+  );
+}
