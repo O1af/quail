@@ -2,13 +2,14 @@ import { useChat } from "ai/react";
 import { cn } from "@/lib/utils";
 import { Messages } from "./Messages";
 import { Input } from "./Input";
-import { useEffect, useState, useMemo } from "react";
-import { loadChat } from "@/components/stores/chat_store";
+import { useMemo } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
-import { Message } from "ai/react";
 import { ChatSkeleton } from "./ChatSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Welcome } from "./Welcome";
+import { useInitializeChat } from "@/hooks/useInitializeChat";
+import { loadChat } from "@/components/stores/chat_store";
 
 interface ChatProps {
   className?: string;
@@ -16,30 +17,9 @@ interface ChatProps {
 }
 
 export default function Chat({ className, id }: ChatProps) {
-  const [error, setError] = useState<string | null>(null);
   const router = useRouter();
-  const [localId, setLocalId] = useState<string>(id || "");
-  const [initialMessages, setInitialMessages] = useState<Message[]>([]);
-  const [isInitialLoad, setIsInitialLoad] = useState(true);
-  const [title, setTitle] = useState<string>("New Chat");
-
-  useEffect(() => {
-    async function initChat() {
-      if (!id && !localId) {
-        try {
-          const response = await fetch("/api/biChat/id");
-          const data = await response.json();
-          if (data.id) {
-            setLocalId(data.id);
-            router.push(`/chat/${data.id}`, { scroll: false });
-          }
-        } catch (err) {
-          setError("Failed to initialize chat");
-        }
-      }
-    }
-    initChat();
-  }, [id, localId, router]);
+  const { error, localId, initialMessages, isInitialLoad, title, setTitle } =
+    useInitializeChat(id);
 
   const {
     messages,
@@ -51,6 +31,8 @@ export default function Chat({ className, id }: ChatProps) {
     setInput,
     stop,
     append,
+    data,
+    setData,
   } = useChat({
     api: "/api/biChat",
     id: localId,
@@ -63,21 +45,23 @@ export default function Chat({ className, id }: ChatProps) {
         if (user.user) {
           const chat = await loadChat(localId, user.user.id);
           setTitle(chat.title);
-          // Trigger chat list refresh
           window.dispatchEvent(new Event("chatUpdated"));
         }
       }
     },
   });
 
+  const handleSubmit = (event?: { preventDefault?: () => void }) => {
+    setData(undefined);
+    originalHandleSubmit(event);
+  };
+
   const handleDelete = async () => {
     if (!localId || localId === "new") return;
-
     try {
       const response = await fetch(`/api/biChat?id=${localId}`, {
         method: "DELETE",
       });
-
       if (response.ok) {
         router.push("/chat", { scroll: false });
       }
@@ -85,38 +69,6 @@ export default function Chat({ className, id }: ChatProps) {
       console.error("Failed to delete chat:", err);
     }
   };
-
-  useEffect(() => {
-    async function fetchChat() {
-      if (!id || !isInitialLoad) return;
-
-      const supabase = await createClient();
-      const { data: user, error: err } = await supabase.auth.getUser();
-
-      if (err || !user) {
-        setError("Unauthorized");
-        return;
-      }
-
-      try {
-        const { messages: chatMessages, title: chatTitle } = await loadChat(
-          id,
-          user.user.id
-        );
-        setInitialMessages(chatMessages);
-        setMessages(chatMessages);
-        if (chatTitle !== "New Chat") {
-          setTitle(chatTitle);
-        }
-      } catch (err) {
-        console.error("Failed to load chat:", err);
-        // Don't set error for new chats
-      } finally {
-        setIsInitialLoad(false);
-      }
-    }
-    fetchChat();
-  }, [id, setMessages, isInitialLoad]);
 
   const memoizedMessages = useMemo(
     () => messages?.filter((m) => m.content?.trim()),
@@ -150,51 +102,24 @@ export default function Chat({ className, id }: ChatProps) {
     );
   }
 
-  if (!memoizedMessages?.length && !id && !localId) {
-    return (
-      <div className={cn("flex flex-col h-full", className)}>
-        <div className="flex-1 flex items-center justify-center text-center p-4">
-          <div className="max-w-md space-y-2">
-            <h2 className="text-2xl font-semibold">Welcome to Chat</h2>
-            <p className="text-muted-foreground">
-              Start typing below to begin a new conversation.
-            </p>
-          </div>
-        </div>
-        <Input
-          input={input}
-          setInput={setInput}
-          isLoading={isChatLoading}
-          stop={stop}
-          messages={messages}
-          setMessages={setMessages}
-          append={append}
-          handleSubmit={originalHandleSubmit}
-          className="px-4 py-2 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75"
-        />
-      </div>
-    );
-  }
-
   return (
     <div
       className={cn(
-        "flex flex-col h-full bg-gradient-to-b from-background to-muted/50",
+        "flex flex-col h-full", // removed bg-gradient-to-b from-background to-muted/50
         className
       )}
     >
-      <div className="flex-1 overflow-hidden relative">
+      <div className="flex-1 overflow-hidden">
         {showWelcome ? (
-          <div className="flex-1 flex items-center justify-center text-center p-4">
-            <div className="max-w-md space-y-2">
-              <h2 className="text-2xl font-semibold">Welcome to Chat</h2>
-              <p className="text-muted-foreground">
-                Start typing below to begin a new conversation.
-              </p>
-            </div>
-          </div>
+          <Welcome />
         ) : (
-          <Messages messages={memoizedMessages} className="h-full px-4 py-4" />
+          <div className="h-full relative">
+            <Messages
+              messages={memoizedMessages}
+              isLoading={isChatLoading}
+              data={data}
+            />
+          </div>
         )}
       </div>
 
@@ -206,7 +131,7 @@ export default function Chat({ className, id }: ChatProps) {
         messages={messages}
         setMessages={setMessages}
         append={append}
-        handleSubmit={originalHandleSubmit}
+        handleSubmit={handleSubmit}
         className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75"
       />
     </div>

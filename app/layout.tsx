@@ -4,6 +4,7 @@ import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
+import Script from "next/script";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",
@@ -39,15 +40,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head>
-        {process.env.NODE_ENV === "production" && (
-          <script
-            defer
-            src="/analytics.js"
-            data-website-id="b4e773e1-0632-4b83-b0d9-46548dc71a37"
-          ></script>
-        )}
-      </head>
+      <head />
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >
@@ -60,6 +53,13 @@ export default function RootLayout({
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
         <Toaster />
+        {process.env.NODE_ENV === "production" && (
+          <Script
+            src="/analytics.js"
+            data-website-id="b4e773e1-0632-4b83-b0d9-46548dc71a37"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );

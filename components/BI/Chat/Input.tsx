@@ -14,7 +14,7 @@ import {
 import { useToast } from "@/hooks/use-toast";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { sanitizeUIMessages } from "@/lib/utils";
-import { ArrowUpIcon } from "lucide-react";
+import { ArrowUpIcon, Database } from "lucide-react";
 import { StopIcon } from "@/components/Dev/ChatBot/icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -97,7 +97,7 @@ function PureInput({
           value={input}
           onChange={handleInput}
           className={cx(
-            "max-h-[140px] min-h-[80px] overflow-hidden resize-none rounded-2xl !text-base bg-muted pr-12 dark:border-zinc-700",
+            "max-h-[100px] min-h-[80px] overflow-y-auto resize-none rounded-2xl !text-base bg-muted pr-12 dark:border-zinc-700",
             className
           )}
           rows={3}
@@ -117,7 +117,18 @@ function PureInput({
             }
           }}
         />
-        <div className="absolute bottom-2 right-2 space-x-1 w-fit flex flex-row justify-end">
+        <div className="absolute bottom-2 right-2 space-y-1 flex flex-col items-end">
+          <Button
+            className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+            onClick={() => {
+              const event = new CustomEvent("openSettings", {
+                detail: { section: "database" },
+              });
+              window.dispatchEvent(event);
+            }}
+          >
+            <Database size={14} />
+          </Button>
           {isLoading ? (
             <Button
               className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
