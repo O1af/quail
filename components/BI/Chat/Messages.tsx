@@ -1,6 +1,6 @@
 "use client";
 
-import type { Message } from "ai";
+import type { JSONValue, Message } from "ai";
 import { AnimatePresence, motion } from "framer-motion";
 import { AvatarImage, Avatar } from "@/components/ui/avatar";
 import { memo } from "react";
@@ -12,13 +12,17 @@ import { useScrollToBottom } from "@/components/Dev/ChatBot/use-scroll-to-bottom
 interface MessagesProps {
   messages: Message[];
   isLoading?: boolean;
+  data?: JSONValue[];
 }
 
-function PureMessages({ messages, isLoading }: MessagesProps) {
+function PureMessages({ messages, isLoading, data }: MessagesProps) {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
+
+  // Keep track of the latest status
+  const currentStatus = data?.[data.length - 1]?.status;
 
   return (
     <div
@@ -30,7 +34,7 @@ function PureMessages({ messages, isLoading }: MessagesProps) {
           <AnimatePresence key={message.id}>
             <motion.div
               className={cn(
-                "w-full max-w-2xl mx-auto",
+                "w-full max-w-3xl mx-auto",
                 message.role === "user" ? "ml-auto" : "mr-auto"
               )}
               initial={{ y: 5, opacity: 0 }}
@@ -71,7 +75,12 @@ function PureMessages({ messages, isLoading }: MessagesProps) {
           </AnimatePresence>
         ))}
 
-        {isLoading && <ThinkingMessage />}
+        {isLoading && currentStatus && (
+          <StatusMessage
+            status={currentStatus}
+            key={`status-${currentStatus}`} // Force re-render on status change
+          />
+        )}
       </div>
 
       <div ref={messagesEndRef} className="h-px w-full" />
@@ -79,15 +88,18 @@ function PureMessages({ messages, isLoading }: MessagesProps) {
   );
 }
 
-const ThinkingMessage = () => {
+const StatusMessage = ({ status }: { status: JSONValue }) => {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
 
+  const displayStatus = String(status);
+
   return (
     <motion.div
-      className="w-full mx-auto max-w-3xl px-4"
+      className="w-full mx-auto px-4"
       initial={{ y: 5, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
+      key={String(status)} // Force animation on status change
       data-role="assistant"
     >
       <div className="flex gap-4">
@@ -97,7 +109,7 @@ const ThinkingMessage = () => {
           </Avatar>
         </div>
         <div className="flex flex-col gap-2 w-full">
-          <div className="text-muted-foreground">Thinking...</div>
+          <div className="text-muted-foreground">{displayStatus}</div>
         </div>
       </div>
     </motion.div>
