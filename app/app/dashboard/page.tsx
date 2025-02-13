@@ -14,6 +14,8 @@ import {
   PieChart,
   ChartScatter,
   CirclePlus,
+  Pin,
+  PinOff,
 } from "lucide-react";
 import { useState } from "react";
 import Link from "next/link";
@@ -29,54 +31,62 @@ import {
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
-const chartsData = [
+const initialChartsData = [
   {
     title: "Chatbot App Dashboard",
     type: "Dashboard",
     icon: LayoutDashboard,
     link: "/dashboard/mydashboard",
+    pinned: false,
   },
   {
     title: "Total Number of Users",
     type: "Bar",
     icon: BarChart,
     link: "/mychart",
+    pinned: false,
   },
   {
     title: "Subscription Plans",
     type: "Pie",
     icon: PieChart,
     link: "/mychart",
+    pinned: false,
   },
   {
     title: "Monthly Recurring Revenue",
     type: "Area",
     icon: ChartArea,
     link: "/mychart",
+    pinned: false,
   },
   {
     title: "Total Revenue Calculation",
     type: "Scatter",
     icon: ChartScatter,
     link: "/mychart",
+    pinned: false,
   },
   {
     title: "Retention Rate by User Signup",
     type: "Line",
     icon: LineChart,
     link: "/mychart",
+    pinned: false,
   },
   {
     title: "Percentage of Cancelled",
     type: "Single Value",
     icon: Gauge,
     link: "/mychart",
+    pinned: false,
   },
   {
     title: "User Data",
     type: "Table",
     icon: FileSpreadsheet,
     link: "/mychart",
+    pinned: false,
   },
 ];
 
@@ -92,25 +102,30 @@ export default function DashboardPage() {
   const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState<
-    "all" | "dashboards" | "charts"
+    "all" | "dashboards" | "charts" | "pinned"
   >("all");
+  const [chartsData, setChartsData] = useState(initialChartsData);
 
-  // Step 1: Filter Data Based on Selected Tab
+  const togglePin = (title: string) => {
+    setChartsData((prev) =>
+      prev.map((chart) =>
+        chart.title === title ? { ...chart, pinned: !chart.pinned } : chart,
+      ),
+    );
+  };
+
   const filteredByTab = chartsData.filter((chart) => {
     if (selectedTab === "dashboards") return chart.type === "Dashboard";
     if (selectedTab === "charts") return chart.type !== "Dashboard";
-    return true; // Show all for "all"
+    if (selectedTab === "pinned") return chart.pinned;
+    return true;
   });
 
-  // Step 2: Apply Search to Filtered Data
   const fuse = new Fuse(filteredByTab, fuseOptions);
   const finalFilteredCharts =
     searchQuery.trim() === ""
       ? filteredByTab
-      : fuse.search(searchQuery).map((result) => result.item);
-
-  console.log("Selected Tab:", selectedTab);
-  console.log("Filtered Data:", filteredByTab);
+      : fuse.search(searchQuery).map((res) => res.item);
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
@@ -145,14 +160,13 @@ export default function DashboardPage() {
         <Tabs
           defaultValue="all"
           className="space-y-4"
-          onValueChange={(val) =>
-            setSelectedTab(val as "all" | "dashboards" | "charts")
-          }
+          onValueChange={(val) => setSelectedTab(val as any)}
         >
           <TabsList>
             <TabsTrigger value="all">All Types</TabsTrigger>
             <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
             <TabsTrigger value="charts">Charts</TabsTrigger>
+            <TabsTrigger value="pinned">Pinned</TabsTrigger>
           </TabsList>
           <TabsContent value={selectedTab} className="space-y-4">
             <div
@@ -163,7 +177,12 @@ export default function DashboardPage() {
               }
             >
               {finalFilteredCharts.map((chart) => (
-                <ChartCard key={chart.title} {...chart} viewMode={viewMode} />
+                <ChartCard
+                  key={chart.title}
+                  {...chart}
+                  viewMode={viewMode}
+                  onPin={togglePin}
+                />
               ))}
             </div>
           </TabsContent>
@@ -179,12 +198,16 @@ function ChartCard({
   icon: Icon,
   link,
   viewMode,
+  pinned,
+  onPin,
 }: {
   title: string;
   type: string;
   icon: React.ComponentType<{ className?: string }>;
   link: string;
   viewMode: "grid" | "list";
+  pinned: boolean;
+  onPin: (title: string) => void;
 }) {
   return viewMode === "grid" ? (
     <Link href={link}>
@@ -194,18 +217,34 @@ function ChartCard({
             <Icon className="h-4 w-4" />
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
           </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem>Share</DropdownMenuItem>
-              <DropdownMenuItem>Delete</DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
+          <div className="flex items-center gap-2">
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={(e) => {
+                e.preventDefault();
+                onPin(title);
+              }}
+            >
+              {pinned ? (
+                <Pin className="h-4 w-4 text-yellow-500" />
+              ) : (
+                <PinOff className="h-4 w-4" />
+              )}
+            </Button>
+            <DropdownMenu>
+              <DropdownMenuTrigger asChild>
+                <Button variant="ghost" size="icon">
+                  <MoreVertical className="h-4 w-4" />
+                </Button>
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="end">
+                <DropdownMenuItem>Edit</DropdownMenuItem>
+                <DropdownMenuItem>Share</DropdownMenuItem>
+                <DropdownMenuItem>Delete</DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
+          </div>
         </CardHeader>
         <CardContent>
           <div className="flex items-center space-x-2 text-xs text-muted-foreground">
@@ -228,18 +267,13 @@ function ChartCard({
           <p className="text-xs text-muted-foreground">{type}</p>
         </div>
       </div>
-      <DropdownMenu>
-        <DropdownMenuTrigger asChild>
-          <Button variant="ghost" size="icon">
-            <MoreVertical className="h-4 w-4" />
-          </Button>
-        </DropdownMenuTrigger>
-        <DropdownMenuContent align="end">
-          <DropdownMenuItem>Edit</DropdownMenuItem>
-          <DropdownMenuItem>Share</DropdownMenuItem>
-          <DropdownMenuItem>Delete</DropdownMenuItem>
-        </DropdownMenuContent>
-      </DropdownMenu>
+      <Button variant="ghost" size="icon" onClick={() => onPin(title)}>
+        {pinned ? (
+          <Pin className="h-4 w-4 text-yellow-500" />
+        ) : (
+          <PinOff className="h-4 w-4" />
+        )}
+      </Button>
     </div>
   );
 }

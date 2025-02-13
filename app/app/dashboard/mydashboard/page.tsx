@@ -29,17 +29,6 @@ import { PencilRuler } from "lucide-react";
 
 const ResponsiveGridLayout = WidthProvider(Responsive) as any;
 
-const initialLayouts = {
-  lg: [
-    { i: "newUsers", x: 0, y: 0, w: 3, h: 2 },
-    { i: "totalPaidUsers", x: 3, y: 0, w: 3, h: 2 },
-    { i: "subscriptionCancellation", x: 6, y: 0, w: 3, h: 2 },
-    { i: "totalRevenue", x: 0, y: 2, w: 3, h: 2 },
-    { i: "averageToken", x: 3, y: 2, w: 3, h: 2 },
-    { i: "mrrChart", x: 6, y: 2, w: 6, h: 4 },
-  ],
-};
-
 const mrrChartData = {
   labels: ["Jan", "Feb", "Mar", "Apr", "May", "Jun"],
   datasets: [
@@ -53,6 +42,53 @@ const mrrChartData = {
   ],
 };
 
+const dashboardItems = [
+  {
+    id: "newUsers",
+    title: "New Users",
+    type: "text",
+    layout: { x: 0, y: 0, w: 3, h: 2 },
+  },
+  {
+    id: "totalPaidUsers",
+    title: "Total Paid Users",
+    type: "text",
+    layout: { x: 3, y: 0, w: 3, h: 2 },
+  },
+  {
+    id: "subscriptionCancellation",
+    title: "Subscription Cancellations",
+    type: "text",
+    layout: { x: 6, y: 0, w: 3, h: 2 },
+  },
+  {
+    id: "totalRevenue",
+    title: "Total Revenue",
+    type: "text",
+    layout: { x: 0, y: 2, w: 3, h: 2 },
+  },
+  {
+    id: "averageToken",
+    title: "Average Tokens Used",
+    type: "text",
+    layout: { x: 3, y: 2, w: 3, h: 2 },
+  },
+  {
+    id: "mrrChart",
+    title: "MRR Chart",
+    type: "chart",
+    data: mrrChartData,
+    layout: { x: 6, y: 2, w: 6, h: 4 },
+  },
+];
+
+const initialLayouts = {
+  lg: dashboardItems.map((item) => ({
+    i: item.id,
+    ...item.layout,
+  })),
+};
+
 const Dashboard = () => {
   const [layouts, setLayouts] = useState(initialLayouts);
   const [tempLayouts, setTempLayouts] = useState(initialLayouts);
@@ -60,7 +96,24 @@ const Dashboard = () => {
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
 
   const handleLayoutChange = (_currentLayout: any, allLayouts: any) => {
-    if (isEditing) setTempLayouts(allLayouts);
+    if (isEditing) {
+      setTempLayouts(allLayouts);
+
+      // Update dashboardItems layout dynamically
+      dashboardItems.forEach((item) => {
+        const updatedLayout = allLayouts.lg.find(
+          (layout: any) => layout.i === item.id,
+        );
+        if (updatedLayout) {
+          item.layout = {
+            x: updatedLayout.x,
+            y: updatedLayout.y,
+            w: updatedLayout.w,
+            h: updatedLayout.h,
+          };
+        }
+      });
+    }
   };
 
   const handleEdit = () => {
@@ -106,7 +159,7 @@ const Dashboard = () => {
 
       <ResponsiveGridLayout
         className="layout"
-        layouts={tempLayouts}
+        layouts={{ lg: layouts.lg }}
         onLayoutChange={handleLayoutChange}
         breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
         cols={{ lg: 12, md: 12, sm: 12, xs: 12 }}
@@ -115,21 +168,22 @@ const Dashboard = () => {
         isDraggable={isEditing}
         isResizable={isEditing}
       >
-        {layouts.lg.map((item) => (
+        {dashboardItems.map((item) => (
           <div
-            key={item.i}
-            onClick={() => handleClick(item.i)}
+            key={item.id}
+            onClick={() => handleClick(item.id)}
             className={`bg-opacity-0 p-4 rounded-lg shadow-md drag-handle border 
-                 flex flex-col justify-center items-center overflow-hidden h-full cursor-pointer border-gray-700
-                 ${selectedItem === item.i ? "border-sky-500 border-2 border-double" : ""} ${isEditing ? "border-dashed border-white" : ""}`}
+           flex flex-col justify-center items-center overflow-hidden h-full cursor-pointer border-gray-700
+           ${selectedItem === item.id ? "border-sky-500 border-2 border-double" : ""} 
+           ${isEditing ? "border-dashed border-white" : ""}`}
           >
             <p className="text-sm font-medium text-gray-400 whitespace-nowrap text-ellipsis overflow-hidden">
-              {item.i.replace(/([A-Z])/g, " $1").trim()}
+              {item.title}
             </p>
             <div className="w-full h-full flex items-center justify-center overflow-hidden">
-              {item.i === "mrrChart" ? (
+              {item.type === "chart" ? (
                 <Line
-                  data={mrrChartData}
+                  data={item.data}
                   options={{ responsive: true, maintainAspectRatio: false }}
                 />
               ) : (
