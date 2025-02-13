@@ -25,6 +25,7 @@ ChartJS.register(
   Tooltip,
   Legend,
 );
+import { PencilRuler } from "lucide-react";
 
 const ResponsiveGridLayout = WidthProvider(Responsive) as any;
 
@@ -90,7 +91,9 @@ const Dashboard = () => {
       <div className="flex justify-between items-center mb-4">
         <h1 className="text-3xl font-bold">Dashboard</h1>
         {!isEditing ? (
-          <Button onClick={handleEdit}>Edit</Button>
+          <Button variant="secondary" onClick={handleEdit}>
+            <PencilRuler /> Edit
+          </Button>
         ) : (
           <div className="space-x-2">
             <Button variant="outline" onClick={handleCancel}>
