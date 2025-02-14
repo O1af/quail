@@ -16,6 +16,7 @@ import {
   Legend,
 } from "chart.js";
 import { Button } from "@/components/ui/button";
+import { PencilRuler } from "lucide-react";
 
 ChartJS.register(
   CategoryScale,
@@ -26,7 +27,6 @@ ChartJS.register(
   Tooltip,
   Legend,
 );
-import { PencilRuler } from "lucide-react";
 
 const ResponsiveGridLayout = WidthProvider(Responsive) as any;
 
@@ -37,7 +37,7 @@ const mrrChartData = {
       label: "MRR ($)",
       data: [5000, 7000, 8000, 12000, 15000, 17000],
       borderColor: "#4CAF50",
-      backgroundColor: "rgba(76, 175, 80, 0.2)",
+      spanGaps: true,
       fill: true,
     },
   ],
@@ -47,9 +47,10 @@ const userTypeData = {
   labels: ["Free", "Basic", "Pro", "Enterprise"],
   datasets: [
     {
+      label: "User Types",
       data: [300, 150, 100, 50],
-      backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
-      hoverBackgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
+      spanGaps: true,
+      fill: true,
     },
   ],
 };
@@ -97,7 +98,7 @@ const dashboardItems = [
     id: "userTypeChart",
     title: "User Types",
     type: "chart",
-    chartType: "doughnut",
+    chartType: "pie",
     data: userTypeData,
     layout: { x: 0, y: 4, w: 6, h: 4 },
   },
@@ -115,12 +116,19 @@ const Dashboard = () => {
   const [tempLayouts, setTempLayouts] = useState(initialLayouts);
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
+  const [chartTypes, setChartTypes] = useState(
+    dashboardItems.reduce(
+      (acc, item) => {
+        if (item.type === "chart") acc[item.id] = item.chartType;
+        return acc;
+      },
+      {} as Record<string, string>,
+    ),
+  );
 
   const handleLayoutChange = (_currentLayout: any, allLayouts: any) => {
     if (isEditing) {
       setTempLayouts(allLayouts);
-
-      // Update dashboardItems layout dynamically
       dashboardItems.forEach((item) => {
         const updatedLayout = allLayouts.lg.find(
           (layout: any) => layout.i === item.id,
@@ -160,13 +168,89 @@ const Dashboard = () => {
     }
   };
 
+  const handleChartTypeChange = (chartId: string, newType: string) => {
+    setChartTypes((prev) => ({ ...prev, [chartId]: newType }));
+  };
+
+  const generateColors = (count: number) => {
+    const colors = [];
+
+    // Define base colors in the blue-green spectrum
+    const baseColors = [
+      "hsl(195, 85%, 45%)", // Bright cyan
+      "hsl(220, 85%, 55%)", // Royal blue
+      "hsl(170, 75%, 45%)", // Sea green
+      "hsl(200, 75%, 55%)", // Ocean blue
+      "hsl(185, 80%, 45%)", // Turquoise
+    ];
+
+    // If we need more colors than our base set, generate additional ones
+    if (count <= baseColors.length) {
+      return baseColors.slice(0, count);
+    }
+
+    // Add base colors first
+    colors.push(...baseColors);
+
+    // Generate additional colors using variations
+    for (let i = baseColors.length; i < count; i++) {
+      const hue = 170 + ((i * 25) % 50); // Keeps hue between 170-220 (blue-green range)
+      const saturation = 65 + ((i * 5) % 20); // Varies saturation between 65-85%
+      const lightness = 45 + ((i * 5) % 15); // Varies lightness between 45-60%
+      colors.push(`hsl(${hue}, ${saturation}%, ${lightness}%)`);
+    }
+
+    return colors;
+  };
+
   const renderChart = (item: any) => {
+    const chartType = chartTypes[item.id] || item.chartType;
+    const dataset = item.data.datasets[0];
+
+    const isPieOrDoughnut = chartType === "pie" || chartType === "doughnut";
+    const colors = isPieOrDoughnut ? generateColors(dataset.data.length) : [];
+
+    const colorMap: Record<
+      string,
+      { borderColor: string; backgroundColor: string | string[] }
+    > = {
+      line: {
+        borderColor: "#4CAF50",
+        backgroundColor: "rgba(76, 175, 80, 0.2)",
+      },
+      bar: {
+        borderColor: "#357A38",
+        backgroundColor: "rgba(76, 175, 80, 1)",
+      },
+      doughnut: {
+        borderColor: "#36A2EB",
+        backgroundColor: colors,
+      },
+      pie: {
+        borderColor: "#FFCE56",
+        backgroundColor: colors,
+      },
+    };
+
+    // Apply colors dynamically
+    const updatedData = {
+      ...item.data,
+      datasets: [
+        {
+          ...dataset,
+          borderColor: colorMap[chartType]?.borderColor || dataset.borderColor,
+          backgroundColor:
+            colorMap[chartType]?.backgroundColor || dataset.backgroundColor,
+        },
+      ],
+    };
+
     const chartProps = {
-      data: item.data,
+      data: updatedData,
       options: { responsive: true, maintainAspectRatio: false },
     };
 
-    switch (item.chartType) {
+    switch (chartType) {
       case "line":
         return <Line {...chartProps} />;
       case "bar":
@@ -214,16 +298,32 @@ const Dashboard = () => {
             key={item.id}
             onClick={() => handleClick(item.id)}
             className={`bg-opacity-0 p-4 rounded-lg shadow-md drag-handle border 
-           flex flex-col justify-center items-center overflow-hidden h-full cursor-pointer border-gray-700
-           ${selectedItem === item.id ? "border-sky-500 border-2 border-double" : ""} 
-           ${isEditing ? "border-dashed border-white" : ""}`}
+            flex flex-col justify-center items-center overflow-hidden h-full cursor-pointer border-gray-700
+            ${selectedItem === item.id ? "border-sky-500 border-2 border-double" : ""} 
+            ${isEditing ? "border-dashed border-white" : ""}`}
           >
             <p className="text-sm font-medium text-gray-400 whitespace-nowrap text-ellipsis overflow-hidden">
               {item.title}
             </p>
             <div className="w-full h-full flex items-center justify-center overflow-hidden">
               {item.type === "chart" ? (
-                renderChart(item)
+                <>
+                  {isEditing && (
+                    <select
+                      value={chartTypes[item.id] || item.chartType}
+                      onChange={(e) =>
+                        handleChartTypeChange(item.id, e.target.value)
+                      }
+                      className="text-black bg-gray-100 rounded-md p-1 mt-2"
+                    >
+                      <option value="line">Line</option>
+                      <option value="bar">Bar</option>
+                      <option value="doughnut">Doughnut</option>
+                      <option value="pie">Pie</option>
+                    </select>
+                  )}
+                  {renderChart(item)}
+                </>
               ) : (
                 <h2 className="text-2xl font-bold mt-2 truncate">Data</h2>
               )}
