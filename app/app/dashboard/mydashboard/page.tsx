@@ -3,7 +3,8 @@ import React, { useState } from "react";
 import GridLayout, { Responsive, WidthProvider } from "react-grid-layout";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { Line } from "react-chartjs-2";
+import "chart.js/auto";
+import { Line, Bar, Doughnut, Pie } from "react-chartjs-2";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -38,6 +39,17 @@ const mrrChartData = {
       borderColor: "#4CAF50",
       backgroundColor: "rgba(76, 175, 80, 0.2)",
       fill: true,
+    },
+  ],
+};
+
+const userTypeData = {
+  labels: ["Free", "Basic", "Pro", "Enterprise"],
+  datasets: [
+    {
+      data: [300, 150, 100, 50],
+      backgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
+      hoverBackgroundColor: ["#FF6384", "#36A2EB", "#FFCE56", "#4BC0C0"],
     },
   ],
 };
@@ -77,8 +89,17 @@ const dashboardItems = [
     id: "mrrChart",
     title: "MRR Chart",
     type: "chart",
+    chartType: "line",
     data: mrrChartData,
     layout: { x: 6, y: 2, w: 6, h: 4 },
+  },
+  {
+    id: "userTypeChart",
+    title: "User Types",
+    type: "chart",
+    chartType: "doughnut",
+    data: userTypeData,
+    layout: { x: 0, y: 4, w: 6, h: 4 },
   },
 ];
 
@@ -139,6 +160,26 @@ const Dashboard = () => {
     }
   };
 
+  const renderChart = (item: any) => {
+    const chartProps = {
+      data: item.data,
+      options: { responsive: true, maintainAspectRatio: false },
+    };
+
+    switch (item.chartType) {
+      case "line":
+        return <Line {...chartProps} />;
+      case "bar":
+        return <Bar {...chartProps} />;
+      case "doughnut":
+        return <Doughnut {...chartProps} />;
+      case "pie":
+        return <Pie {...chartProps} />;
+      default:
+        return <p>Unsupported chart type</p>;
+    }
+  };
+
   return (
     <div className="p-6 min-h-screen text-white">
       <div className="flex justify-between items-center mb-4">
@@ -182,10 +223,7 @@ const Dashboard = () => {
             </p>
             <div className="w-full h-full flex items-center justify-center overflow-hidden">
               {item.type === "chart" ? (
-                <Line
-                  data={item.data}
-                  options={{ responsive: true, maintainAspectRatio: false }}
-                />
+                renderChart(item)
               ) : (
                 <h2 className="text-2xl font-bold mt-2 truncate">Data</h2>
               )}
