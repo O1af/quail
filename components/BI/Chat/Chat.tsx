@@ -10,6 +10,8 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Welcome } from "./Welcome";
 import { useInitializeChat } from "@/hooks/useInitializeChat";
 import { loadChat } from "@/components/stores/chat_store";
+import { useDbStore } from "@/components/stores/db_store";
+import { useDatabaseStructure } from "@/components/stores/table_store";
 
 interface ChatProps {
   className?: string;
@@ -20,6 +22,10 @@ export default function Chat({ className, id }: ChatProps) {
   const router = useRouter();
   const { error, localId, initialMessages, isInitialLoad, title, setTitle } =
     useInitializeChat(id);
+
+  // Move hooks to component level
+  const currentDB = useDbStore().getCurrentDatabase();
+  const databaseStructure = useDatabaseStructure();
 
   const {
     messages,
@@ -38,6 +44,12 @@ export default function Chat({ className, id }: ChatProps) {
     id: localId,
     initialMessages,
     sendExtraMessageFields: true,
+    experimental_prepareRequestBody: (body) => ({
+      ...body,
+      dbType: currentDB?.type || "postgres",
+      connectionString: currentDB?.connectionString,
+      databaseStructure,
+    }),
     onFinish: async () => {
       if (localId) {
         const supabase = await createClient();
@@ -72,7 +84,7 @@ export default function Chat({ className, id }: ChatProps) {
 
   const memoizedMessages = useMemo(
     () => messages?.filter((m) => m.content?.trim()),
-    [messages]
+    [messages, data]
   );
 
   const showWelcome =

@@ -3,7 +3,7 @@
 import type { JSONValue, Message } from "ai";
 import { AnimatePresence, motion } from "framer-motion";
 import { AvatarImage, Avatar } from "@/components/ui/avatar";
-import { memo } from "react";
+import { memo, useEffect } from "react";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Markdown } from "@/components/Dev/ChatBot/markdown";
@@ -21,8 +21,8 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
 
-  // Keep track of the latest status
-  const currentStatus = data?.[data.length - 1]?.status;
+  // Get the latest status from data
+  const currentStatus = String(data?.[data.length - 1]);
 
   return (
     <div
@@ -88,18 +88,16 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
   );
 }
 
-const StatusMessage = ({ status }: { status: JSONValue }) => {
+const StatusMessage = ({ status }: { status: string }) => {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
-
-  const displayStatus = String(status);
 
   return (
     <motion.div
       className="w-full mx-auto px-4"
       initial={{ y: 5, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
-      key={String(status)} // Force animation on status change
+      key={status}
       data-role="assistant"
     >
       <div className="flex gap-4">
@@ -109,7 +107,7 @@ const StatusMessage = ({ status }: { status: JSONValue }) => {
           </Avatar>
         </div>
         <div className="flex flex-col gap-2 w-full">
-          <div className="text-muted-foreground">{displayStatus}</div>
+          <div className="text-muted-foreground">{status}</div>
         </div>
       </div>
     </motion.div>
@@ -119,6 +117,8 @@ const StatusMessage = ({ status }: { status: JSONValue }) => {
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
   if (prevProps.isLoading !== nextProps.isLoading) return false;
   if (prevProps.messages.length !== nextProps.messages.length) return false;
+  if (JSON.stringify(prevProps.data) !== JSON.stringify(nextProps.data))
+    return false;
   return prevProps.messages.every(
     (msg, i) =>
       msg.id === nextProps.messages[i].id &&
