@@ -2,8 +2,9 @@ import { Badge } from "@/components/ui/badge";
 import { Container } from "@/components/ui/container";
 import { Button } from "@/components/ui/button";
 import { APP_URL } from "@/lib/constants";
+import { memo } from "react";
 
-export function Hero() {
+export const Hero = memo(function Hero() {
   return (
     <section className="py-12 md:py-24">
       <Container className="space-y-16 text-center">
@@ -11,7 +12,10 @@ export function Hero() {
           <Badge variant="secondary" className="mx-auto">
             🚀 AI-Powered Business Insights
           </Badge>
-          <h1 className="font-heading text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl">
+          <h1
+            className="font-heading text-4xl font-bold tracking-tight sm:text-5xl md:text-6xl"
+            style={{ contentVisibility: "auto" }}
+          >
             <span className="bg-gradient-to-r from-green-600 to-green-300 bg-clip-text text-transparent">
               AI-Driven{" "}
             </span>
@@ -34,4 +38,4 @@ export function Hero() {
       </Container>
     </section>
   );
-}
+});

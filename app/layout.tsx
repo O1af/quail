@@ -40,7 +40,19 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en">
-      <head />
+      <head>
+        {/* Add preconnect hints */}
+        <link
+          rel="preconnect"
+          href="https://ds-cdn.prod-east.frontend.public.atl-paas.net"
+          crossOrigin="anonymous"
+        />
+        <link
+          rel="dns-prefetch"
+          href="https://ds-cdn.prod-east.frontend.public.atl-paas.net"
+        />
+        {/* ...existing head content... */}
+      </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
       >

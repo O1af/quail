@@ -1,6 +1,6 @@
 import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
-import { useState, useCallback, useEffect } from "react";
+import { useState, useCallback, useEffect, memo } from "react";
 import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
@@ -42,7 +42,7 @@ const frameworks = [
   },
 ];
 
-export default function FrameworksSection() {
+function FrameworksSection() {
   const [hoveredFramework, setHoveredFramework] = useState<string | null>(null);
   const [isAnimating, setIsAnimating] = useState(false);
 
@@ -127,3 +127,5 @@ export default function FrameworksSection() {
     </section>
   );
 }
+
+export default memo(FrameworksSection);
