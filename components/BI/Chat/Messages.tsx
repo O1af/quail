@@ -1,28 +1,66 @@
 "use client";
 
-import type { JSONValue, Message } from "ai";
-import { AnimatePresence, motion } from "framer-motion";
-import { AvatarImage, Avatar } from "@/components/ui/avatar";
-import { memo, useEffect } from "react";
-import { cn } from "@/lib/utils";
+import { JSONValue, type Message } from "ai";
+import { AnimatePresence } from "framer-motion";
+import { memo } from "react";
 import { useTheme } from "next-themes";
-import { Markdown } from "@/components/Dev/ChatBot/markdown";
+import { cn } from "@/lib/utils";
 import { useScrollToBottom } from "@/components/Dev/ChatBot/use-scroll-to-bottom";
+import { Message as MessageComponent, Message as MessageType } from "./Message";
+import { Avatar } from "@/components/ui/avatar";
+import { AvatarImage } from "@radix-ui/react-avatar";
+import { motion } from "framer-motion";
 
 interface MessagesProps {
   messages: Message[];
   isLoading?: boolean;
-  data?: JSONValue[];
+  data?: JSONValue[] | undefined;
 }
 
-function PureMessages({ messages, isLoading, data }: MessagesProps) {
+const statusMessages = {
+  processing: "Analyzing your request...",
+  generating_query: "Crafting SQL query...",
+  executing_query: "Fetching data...",
+  generating_visualization: "Creating visualization...",
+  completed: "Completed!",
+  error: "An error occurred",
+};
+
+const StatusMessage = ({ status }: { status: string }) => {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const message =
+    statusMessages[status as keyof typeof statusMessages] || status;
+
+  return (
+    <motion.div
+      className="w-full max-w-3xl mx-auto"
+      initial={{ y: 5, opacity: 0 }}
+      animate={{ y: 0, opacity: 1 }}
+      transition={{ duration: 0.3 }}
+      key={status}
+    >
+      <div className="flex gap-4 items-center">
+        <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
+          <Avatar className="w-6 h-6">
+            <AvatarImage src={avatarSrc} alt="AI" />
+          </Avatar>
+        </div>
+        <div className="flex items-center gap-2 text-muted-foreground">
+          <div className="h-1 w-1 rounded-full bg-current animate-pulse" />
+          {message}
+        </div>
+      </div>
+    </motion.div>
+  );
+};
+
+function PureMessages({ messages, isLoading, data }: MessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
 
-  // Get the latest status from data
-  const currentStatus = String(data?.[data.length - 1]);
+  const currentStatus = data?.[data.length - 1];
+  console.log("Messages:", messages);
 
   return (
     <div
@@ -31,54 +69,15 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
     >
       <div className="flex flex-col gap-6 px-4 py-4">
         {messages.map((message) => (
-          <AnimatePresence key={message.id}>
-            <motion.div
-              className={cn(
-                "w-full max-w-3xl mx-auto",
-                message.role === "user" ? "ml-auto" : "mr-auto"
-              )}
-              initial={{ y: 5, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              data-role={message.role}
-            >
-              <div
-                className={cn(
-                  "flex gap-4 w-full",
-                  message.role === "user" ? "flex-row-reverse" : "flex-row"
-                )}
-              >
-                {message.role === "assistant" && (
-                  <Avatar className="w-8 h-8">
-                    <AvatarImage src={avatarSrc} alt="AI" />
-                  </Avatar>
-                )}
-
-                <div
-                  className={cn(
-                    "flex flex-col gap-2",
-                    message.role === "user" ? "items-end" : "items-start"
-                  )}
-                >
-                  <div
-                    className={cn(
-                      "max-w-xl rounded-xl p-2",
-                      message.role === "user"
-                        ? "bg-primary text-primary-foreground ml-auto"
-                        : "bg-muted"
-                    )}
-                  >
-                    <Markdown>{message.content as string}</Markdown>
-                  </div>
-                </div>
-              </div>
-            </motion.div>
+          <AnimatePresence key={message.id} mode="wait">
+            <MessageComponent message={message} />
           </AnimatePresence>
         ))}
 
         {isLoading && currentStatus && (
           <StatusMessage
-            status={currentStatus}
-            key={`status-${currentStatus}`} // Force re-render on status change
+            status={JSON.stringify(currentStatus)}
+            key={`status-${JSON.stringify(currentStatus)}`}
           />
         )}
       </div>
@@ -87,32 +86,6 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
     </div>
   );
 }
-
-const StatusMessage = ({ status }: { status: string }) => {
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
-
-  return (
-    <motion.div
-      className="w-full mx-auto px-4"
-      initial={{ y: 5, opacity: 0 }}
-      animate={{ y: 0, opacity: 1 }}
-      key={status}
-      data-role="assistant"
-    >
-      <div className="flex gap-4">
-        <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-          <Avatar className="w-6 h-6">
-            <AvatarImage src={avatarSrc} alt="AI" />
-          </Avatar>
-        </div>
-        <div className="flex flex-col gap-2 w-full">
-          <div className="text-muted-foreground">{status}</div>
-        </div>
-      </div>
-    </motion.div>
-  );
-};
 
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
   if (prevProps.isLoading !== nextProps.isLoading) return false;

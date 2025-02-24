@@ -50,7 +50,11 @@ export default function Chat({ className, id }: ChatProps) {
       connectionString: currentDB?.connectionString,
       databaseStructure,
     }),
-    onFinish: async () => {
+    onResponse: (response) => {
+      console.log("Chat: Received response", response);
+    },
+    onFinish: async (message) => {
+      console.log("Chat: Finished message", message);
       if (localId) {
         const supabase = await createClient();
         const { data: user } = await supabase.auth.getUser();
@@ -82,10 +86,7 @@ export default function Chat({ className, id }: ChatProps) {
     }
   };
 
-  const memoizedMessages = useMemo(
-    () => messages?.filter((m) => m.content?.trim()),
-    [messages, data]
-  );
+  const memoizedMessages = useMemo(() => messages, [messages, data]);
 
   const showWelcome =
     (!memoizedMessages?.length && title === "New Chat") || (!id && !localId);

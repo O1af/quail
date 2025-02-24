@@ -7,7 +7,10 @@ import {
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
 import { saveChat, deleteChat } from "@/components/stores/chat_store";
-import { generateTitleFromUserMessage } from "./title";
+import { generateTitleFromUserMessage } from "./utils/title";
+import { DataAgentTool } from "./agent";
+import { tryCatch } from "@/lib/trycatch";
+import { createSystemPrompt } from "./utils/prompts";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -46,40 +49,84 @@ export async function DELETE(req: Request) {
 // Allow streaming responses up to 120 seconds
 export const maxDuration = 120;
 
-const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
-
 export async function POST(req: Request) {
-  const supabase = await createClient();
-  const { data: user, error } = await supabase.auth.getUser();
+  const { data: authData, error: authError } = await tryCatch(
+    createClient().then((sb) => sb.auth.getUser())
+  );
 
-  if (error || !user) {
+  if (authError || !authData.data?.user) {
     return new Response(JSON.stringify({ message: "Unauthorized" }), {
       status: 401,
     });
   }
 
+  const user = authData.data;
+
+  if (!user?.user) {
+    throw new Error("User not authenticated");
+  }
+  const {
+    messages,
+    databaseStructure,
+    dbType,
+    connectionString,
+    editorValue,
+    editorError,
+    userTier,
+    id,
+  } = await req.json();
+
   return createDataStreamResponse({
     async execute(dataStream) {
-      const { messages, id } = await req.json();
-      const title =
+      const { data: title, error: titleError } =
         messages.length === 1
-          ? await generateTitleFromUserMessage({ message: messages[0], azure })
-          : undefined;
+          ? await tryCatch(
+              generateTitleFromUserMessage({ message: messages[0], azure })
+            )
+          : { data: undefined, error: null };
 
       dataStream.writeData({ status: "processing" });
 
       const stream = streamText({
         model: azure("gpt-4o"),
-        system: "You are a helpful assistant.",
+        system: createSystemPrompt(dbType, messages),
         messages,
         experimental_transform: smoothStream({ chunking: "word" }),
-        maxTokens: 300,
-        async onFinish({ response }) {
-          const allMessages = appendResponseMessages({
+        maxTokens: 1000,
+        tools: {
+          dataAgent: DataAgentTool({
+            userTier,
+            supabase: await createClient(),
             messages,
-            responseMessages: response.messages,
-          });
-          await saveChat(id, allMessages, user.user.id, title);
+            dbType,
+            connectionString,
+            dbSchema: databaseStructure,
+            provider: azure,
+            stream: dataStream,
+          }),
+        },
+        async onFinish({ response }) {
+          const { error: saveError } = await tryCatch(
+            saveChat(
+              id,
+              appendResponseMessages({
+                messages,
+                responseMessages: response.messages,
+              }),
+              user.user.id,
+              title ?? undefined
+            )
+          );
+
+          if (saveError) {
+            dataStream.writeData({
+              status: "error",
+              message: "Failed to save chat",
+              error: true,
+            });
+            return;
+          }
+
           dataStream.writeData({ status: "completed" });
         },
       });
@@ -87,7 +134,9 @@ export async function POST(req: Request) {
       stream.mergeIntoDataStream(dataStream);
     },
     onError(error) {
-      return error instanceof Error ? error.message : String(error);
+      return error instanceof Error
+        ? error.message
+        : "An unexpected error occurred";
     },
   });
 }
