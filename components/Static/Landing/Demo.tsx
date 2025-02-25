@@ -5,14 +5,12 @@ export function Demo() {
         <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl bg-gradient-to-r from-primary/90 to-primary bg-clip-text text-transparent mb-8">
           See Quail in Action
         </h2>
-        <div className="w-full max-w-[1000px] aspect-video rounded-lg overflow-hidden shadow-xl">
+        <div className="relative w-full pt-[56.25%]">
           <iframe
-            src="https://demo.quailbi.com/embed/demo/ai-powered-sql-queryin-oudrxkj0xyz037rr"
-            className="w-full h-full"
-            style={{ border: 0 }}
+            src="https://www.loom.com/embed/100f3663c84c4329b9bb90233faee05c?sid=ce3c05d1-10a9-4392-94ea-b45ba54766ab"
+            className="absolute top-0 left-0 w-full h-full"
             allowFullScreen
-            allow="fullscreen"
-          />
+          ></iframe>
         </div>
       </div>
     </section>

@@ -1,5 +1,5 @@
 "use client";
-import { useState } from "react";
+import { useRef, useState } from "react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { z } from "zod";
@@ -16,9 +16,11 @@ import {
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { useToast } from "@/hooks/use-toast"; // Import the toast hook
+import { useTheme } from "next-themes";
 
 import { signup } from "@/lib/auth-actions";
 import Routes from "@/components/routes";
+import HCaptcha from "@hcaptcha/react-hcaptcha";
 
 // Zod schema for validation
 const formSchema = z.object({
@@ -33,6 +35,9 @@ const formSchema = z.object({
 export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast(); // Initialize the toast hook
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captcha = useRef<HCaptcha | null>(null);
+  const { theme } = useTheme();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -59,6 +64,7 @@ export function SignUpForm() {
       formData.append("last-name", data["last-name"]);
       formData.append("email", data.email);
       formData.append("password", data.password);
+      formData.append("captchaToken", captchaToken);
 
       await signup(formData);
       toast({
@@ -69,12 +75,15 @@ export function SignUpForm() {
         variant: "success",
       });
 
+      captcha.current?.resetCaptcha();
+
       form.reset();
     } catch (err) {
       // console.log(err);
       setError("There was an error creating your account. Please try again.");
     }
   };
+
   return (
     <Card className="mx-auto max-w-sm">
       <CardHeader className="text-center">
@@ -140,6 +149,15 @@ export function SignUpForm() {
                   {form.formState.errors.password?.message}
                 </div>
               )}
+            </div>
+            {/* HCaptcha Component */}
+            <div className="flex justify-center">
+              <HCaptcha
+                ref={captcha}
+                sitekey="9b8404d2-3b54-4eca-afc8-300cfd546c2a"
+                onVerify={setCaptchaToken}
+                theme={theme === "dark" ? "dark" : "light"}
+              />
             </div>
             <Button type="submit" className="w-full">
               Create an account
