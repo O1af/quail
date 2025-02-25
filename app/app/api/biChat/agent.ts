@@ -9,10 +9,15 @@ import {
 import { z } from "zod";
 import { executeQuery } from "@/components/stores/utils/query";
 import { ChartConfig } from "@/lib/types/BI/chart";
-import { createSqlPrompt, createChartPrompt } from "./utils/prompts";
+import {
+  createSqlPrompt,
+  createChartPrompt,
+  createQueryValidationPrompt,
+} from "./utils/prompts";
 import { getModelName } from "@/utils/metrics/AI";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { tryCatch } from "@/lib/trycatch";
+import { executeQueryWithErrorHandling } from "./utils/workflow";
 
 interface DataAgentParams {
   userTier: string;
@@ -41,6 +46,7 @@ export const DataAgentTool = (params: DataAgentParams) =>
       } = params;
 
       console.log("DataAgentTool: Starting execution");
+      const modelName = getModelName(userTier);
 
       // Step 1: Generate query
       await stream.writeData({
@@ -52,7 +58,7 @@ export const DataAgentTool = (params: DataAgentParams) =>
       console.log("DataAgentTool: Generating SQL query");
       const { data: queryData, error: queryError } = await tryCatch(
         generateText({
-          model: provider(getModelName(userTier)),
+          model: provider(modelName),
           prompt: createSqlPrompt({
             messages,
             dbType,
@@ -89,36 +95,46 @@ export const DataAgentTool = (params: DataAgentParams) =>
 
       console.log("DataAgentTool: Generated query:", queryData.text);
 
-      // Step 2: Execute query
+      // Step 1.5: Validate query before execution
       await stream.writeData({
-        status: "executing_query",
-        message: "Executing query to fetch your data...",
-        data: { step: 2, query: queryData.text },
+        status: "validating_query",
+        message: "Validating query syntax and structure...",
+        data: { step: 1.5, query: queryData.text },
       });
 
-      const { data: queryResult, error: execError } = await tryCatch(
-        executeQuery(queryData.text, connectionString, dbType)
-      );
+      // Execute query with error handling and potential reformulation
+      const { data: resultData, query: finalQuery } =
+        await executeQueryWithErrorHandling({
+          query: queryData.text,
+          connectionString,
+          dbType,
+          maxRetries: 1,
+          stream,
+          dbSchema,
+          provider,
+          modelName,
+          createQueryValidationPrompt,
+        });
 
-      if (execError || !queryResult?.rows?.length) {
-        console.error("DataAgentTool: Query execution error:", execError);
+      if (!resultData?.rows?.length) {
         await stream.writeData({
           status: "error",
-          message: "Failed to execute query or no results returned",
+          message:
+            "No results returned from query. Please refine your question.",
           error: true,
-          data: { step: 2, error: execError?.name ?? null },
+          data: { step: 2, query: finalQuery },
         });
         return {
-          error: "Query execution failed",
-          data: null,
+          error: "No data found",
+          data: [],
           visualization: null,
-          query: null,
+          query: finalQuery,
         };
       }
 
       console.log(
         "DataAgentTool: Query results:",
-        queryResult.rows.length,
+        resultData.rows.length,
         "rows"
       );
 
@@ -126,15 +142,16 @@ export const DataAgentTool = (params: DataAgentParams) =>
       await stream.writeData({
         status: "generating_visualization",
         message: "Creating visualization configuration...",
-        data: { step: 3, rowCount: queryResult.rows.length },
+        data: { step: 3, rowCount: resultData.rows.length },
       });
 
-      const { data: chartConfig, error: vizError } = await tryCatch(
+      let chartConfig;
+      const { data: initialChartConfig, error: vizError } = await tryCatch(
         generateObject({
-          model: provider(getModelName(userTier)),
+          model: provider(modelName),
           prompt: createChartPrompt({
-            data: queryResult.rows,
-            query: queryData.text,
+            data: resultData.rows,
+            query: finalQuery,
             messages,
           }),
           schema: ChartConfig,
@@ -143,32 +160,53 @@ export const DataAgentTool = (params: DataAgentParams) =>
         })
       );
 
+      chartConfig = initialChartConfig;
+
       if (vizError) {
         console.error(
           "DataAgentTool: Visualization generation error:",
           vizError
         );
-        await stream.writeData({
-          status: "error",
-          message: "Failed to generate visualization: " + vizError.message,
-          error: true,
-          data: { step: 3, error: vizError.name ?? null },
-        });
-        return {
-          error: "Visualization generation failed",
-          data: null,
-          visualization: null,
-          query: null,
-        };
+
+        // Try fallback chart generation with simplification
+        const { data: fallbackChartConfig, error: fallbackError } =
+          await tryCatch(
+            generateObject({
+              model: provider(modelName),
+              prompt: `Generate a simple bar or line chart for this data: ${JSON.stringify(
+                resultData.rows.slice(0, 3)
+              )}... (${resultData.rows.length} rows total)`,
+              schema: ChartConfig,
+            })
+          );
+
+        if (fallbackError || !fallbackChartConfig) {
+          await stream.writeData({
+            status: "warning",
+            message:
+              "Could not generate visualization, but query executed successfully.",
+            error: false,
+            data: { step: 3, error: vizError.name ?? null },
+          });
+
+          return {
+            data: resultData.rows,
+            visualization: null,
+            query: finalQuery,
+          };
+        }
+
+        console.log("DataAgentTool: Generated fallback chart config");
+        chartConfig = { object: fallbackChartConfig.object };
       }
 
-      console.log("DataAgentTool: Generated chart config:", chartConfig.object);
+      console.log("DataAgentTool: Generated chart config");
 
       // Step 4: Return results
       const result = {
-        data: queryResult.rows,
-        visualization: chartConfig.object,
-        query: queryData.text,
+        data: resultData.rows,
+        visualization: chartConfig?.object || null,
+        query: finalQuery,
       };
 
       console.log("DataAgentTool: Sending final result");

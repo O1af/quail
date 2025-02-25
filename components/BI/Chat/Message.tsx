@@ -6,7 +6,7 @@ import { AvatarImage, Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Markdown } from "@/components/Dev/ChatBot/markdown";
-import { DynamicChart } from "@/components/BI/Charts/dynamic-chartjs";
+import { DataAgentResult } from "../AgentResult/DataAgentResult";
 import { ChartConfiguration } from "@/lib/types/BI/chart";
 
 export interface MessageProps {
@@ -89,49 +89,24 @@ export function Message({ message }: MessageProps) {
             message.role === "user" ? "items-end" : "items-start"
           )}
         >
-          <div
-            className={cn(
-              "max-w-xl rounded-xl p-2",
-              message.role === "user"
-                ? "bg-primary text-primary-foreground ml-auto"
-                : "bg-muted"
-            )}
-          >
-            <Markdown>{textContent ?? ""}</Markdown>
-          </div>
-
-          {visualization && (
-            <div className="w-full max-w-2xl bg-card rounded-xl p-4 shadow-sm">
-              <DynamicChart
-                config={visualization}
-                className="w-full aspect-[16/9]"
-              />
-            </div>
+          {(visualization || dataAgentResult?.data || query) && (
+            <DataAgentResult
+              visualization={visualization}
+              data={dataAgentResult?.data}
+              query={query}
+            />
           )}
-
-          {query && (
-            <div className="w-full max-w-2xl">
-              <details className="text-sm text-muted-foreground">
-                <summary className="cursor-pointer hover:text-foreground">
-                  Show SQL Query
-                </summary>
-                <pre className="mt-2 p-2 rounded bg-muted/50 overflow-x-auto">
-                  <code>{query}</code>
-                </pre>
-              </details>
+          {textContent && (
+            <div
+              className={cn(
+                "max-w-xl rounded-xl p-2",
+                message.role === "user"
+                  ? "bg-primary text-primary-foreground ml-auto"
+                  : "bg-muted"
+              )}
+            >
+              <Markdown>{textContent ?? ""}</Markdown>
             </div>
-          )}
-
-          {toolInvocations?.map(
-            (tool) =>
-              tool.state === "call" && (
-                <div
-                  key={tool.toolCallId}
-                  className="text-sm text-muted-foreground italic"
-                >
-                  Processing {tool.toolName}...
-                </div>
-              )
           )}
         </div>
       </div>

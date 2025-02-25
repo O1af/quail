@@ -1,5 +1,6 @@
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { Index, Column, Schema, Table } from "@/components/stores/table_store";
+import { countTokens } from "gpt-tokenizer";
 import { Message } from "ai";
 import { formatConversationHistory, formatDatabaseSchema } from "./format";
 
@@ -20,37 +21,94 @@ ${formatDatabaseSchema(databaseStructure)}
 Recent Conversation History:
 ${formatConversationHistory(messages)}
 
-INSTRUCTIONS:
-Generate a visualization-optimized SQL query following these rules:
+# TASK: Generate a visualization-ready SQL query that directly answers the user's request
 
-FOCUS AND STRUCTURE:
-- Directly answer the most recent user request, using prior context only if needed
-- Start with SELECT and use only necessary columns
-- Must include aggregations that make sense for visualization (COUNT, SUM, AVG)
-- Always include GROUP BY except for single-value results
-- Use ORDER BY on the most meaningful column
-- Ensure result set size is reasonable for visualization
-- Join tables only when necessary and always specify join conditions
-- Use subqueries or CTEs for complex calculations
-- Include HAVING clause when filtering aggregated results
-- Add WHERE clauses to focus on relevant data ranges
+## CRITICAL REQUIREMENTS:
+- ONLY use tables and columns that EXIST in the schema above
+- ALWAYS include WHERE clauses to limit result size 
+- ENSURE all column references have proper table qualification in JOINs
+- VERIFY every column referenced exists in FROM/JOIN tables
+- LIMIT results to maximum 50 rows for visualization
+- USE correct ${dbType} syntax for date/string functions
 
-DATA REQUIREMENTS:
-- Include: 1-2 categorical columns (labels/groups) + 1-3 numeric columns (metrics)
-- Time series: Use DATE_TRUNC for meaningful intervals
-- Percentages: Normalize to 0-100 range
-- Filter out outliers and irrelevant data
-- For time data: Focus on relevant periods
+## QUERY STRUCTURE:
+- SELECT: Choose metrics (numeric) and dimensions (categorical) for visualization
+- FROM/JOIN: Only join tables when necessary with explicit ON conditions
+- WHERE: Focus on relevant time periods and filter conditions
+- GROUP BY: Include for all non-aggregated SELECT columns
+- HAVING: Use for filtering aggregated results
+- ORDER BY: Sort by the most meaningful column
+- LIMIT 50
 
-SYNTAX (${dbType}):
-- Tables: lowercase.unquoted, schema-prefixed (schema.table)
-- Columns: Always "quoted" and table-prefixed (table."column")
-- Aliases: lowercase, unquoted
-- Double-quote any uppercase identifiers
-- Reference only tables/columns from provided schema
+## OPTIMIZATION FOR VISUALIZATION:
+- Include 1-2 categorical columns (for x-axis/grouping) + 1-3 metrics (for y-axis)
+- For time series: Use ${
+    dbType === "postgres"
+      ? "DATE_TRUNC"
+      : dbType === "mysql"
+      ? "DATE_FORMAT"
+      : "TRUNC"
+  } for appropriate intervals
+- Round decimal values with ROUND() for readability
+- Calculate percentages using NULLIF to prevent division by zero
+- Filter NULL values that would affect calculations
 
-RESPONSE FORMAT:
-Return only the SQL query with no additional text, comments or markdown formatting.`;
+## ERROR PREVENTION:
+- Never reference non-existent tables or columns
+- Never reference a column from a table not in FROM/JOIN
+- Include all non-aggregated columns in GROUP BY
+- Double check table and column names match schema exactly
+- Views: Only use columns directly available in the view
+
+RETURN ONLY THE SQL QUERY - NO EXPLANATION OR MARKDOWN`;
+}
+
+// New function for query validation and reformulation
+export function createQueryValidationPrompt({
+  originalQuery,
+  errorMessage,
+  dbType,
+  databaseStructure,
+}: {
+  originalQuery: string;
+  errorMessage: string;
+  dbType: string;
+  databaseStructure: DatabaseStructure;
+}): string {
+  return `# TASK: Fix the SQL query that returned an error
+
+## DATABASE TYPE
+${dbType}
+
+## DATABASE SCHEMA
+${formatDatabaseSchema(databaseStructure)}
+
+## ORIGINAL QUERY
+\`\`\`sql
+${originalQuery}
+\`\`\`
+
+## ERROR MESSAGE
+${errorMessage}
+
+## COMMON ISSUES TO CHECK
+- Missing or misspelled table/column names
+- Column references not qualified with table name/alias in joins
+- Aggregate functions without proper GROUP BY
+- Non-aggregate columns missing from GROUP BY
+- Incorrect data types in WHERE conditions
+- Syntax errors specific to ${dbType}
+- Tables referenced in query not available in schema
+- Incorrect date format or string comparisons
+
+## INSTRUCTIONS
+1. Analyze the error message
+2. Find and fix ALL issues in the query
+3. Ensure query remains focused on same data intent
+4. Verify all tables and columns exist in the schema
+5. Return ONLY the corrected SQL query with no explanations
+
+RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE.`;
 }
 
 export function createChartPrompt({
@@ -62,75 +120,77 @@ export function createChartPrompt({
   query: string;
   messages: Message[];
 }): string {
+  const tokenCount = countTokens(JSON.stringify(data));
+  console.log("Token count for data:", tokenCount);
   return `
-Generate a Chart.js configuration to visualize this SQL data effectively.
+# TASK: Generate optimal Chart.js configuration for the following data
 
-Data Context:
-${formatConversationHistory(messages)}
+## USER INTENT
+${formatConversationHistory(messages, 3)}
 
-Query:
+## QUERY EXECUTED
+\`\`\`sql
 ${query}
+\`\`\`
 
-Sample Data:
-${JSON.stringify(data.slice(0, 3), null, 2)}
+## DATA:
+${data}
 
-Requirements:
-1. Choose the most appropriate chart type:
-   - Line: time series, trends
-   - Bar: comparisons, categories
-   - Pie/Doughnut: parts of whole (max 8 segments)
-   - Scatter: correlations
-   - Radar: multiple metrics
+## CHART SELECTION DECISION TREE
+- Time-based data + trend analysis → Line chart
+- Categorical comparisons (< 10 categories) → Vertical bar chart
+- Categorical comparisons (≥ 10 categories) → Horizontal bar chart
+- Composition/percentage data (≤ 7 segments) → Pie/Doughnut chart
+- Correlation between two variables → Scatter chart
+- Multiple metrics across categories → Radar chart
+- Single metric with target → Gauge chart
 
-2. Configuration:
-   - Use clear titles and labels
-   - Enable responsiveness
-   - Set appropriate scales
-   - Use readable colors
-   - Add helpful tooltips
+## CONFIGURATION REQUIREMENTS
+- Title: Concise description answering user's question
+- Axes: Clear labels describing the data measurements
+- Colors: Use contrasting colors for categories
+- Layout: Optimize for readability (responsive: true)
+- Legend: Position for minimal overlap with data
+- Tooltips: Show all relevant data points
 
-Return a valid Chart.js configuration object only.`;
+## DATA TRANSFORMATIONS
+- Numeric: Format large numbers for readability
+- Dates: Format as human-readable strings
+- Percentages: Show with % symbol
+- Currency: Use appropriate symbols
+- Nulls: Handle gracefully with fallbacks
+
+RETURN ONLY A VALID CHART.JS CONFIGURATION OBJECT`;
 }
 
 export function createSystemPrompt(
   dbType: string,
   messages: Message[]
 ): string {
-  return `You are an expert data analyst and visualization specialist focused on ${dbType} databases.
+  return `You are an expert data analyst specializing in ${dbType} databases who helps users understand their data through visualizations and insights.
 
-Previous Conversation Context:
-${formatConversationHistory(messages)}
+# WORKFLOW DECISION TREE
+1. User asks question about DATA VISUALIZATION or ANALYSIS → Use dataAgent immediately
+2. User asks for SQL QUERY or mentions DATABASE → Use dataAgent immediately
+3. User asks FOLLOW-UP about previous visualization → Use dataAgent with reference to prior context
+4. User wants CONCEPTUAL explanation about data/charts → Answer directly WITHOUT dataAgent
+5. User has GENERAL question not about their data → Answer directly WITHOUT dataAgent
 
-Key Responsibilities:
-- Help users explore and understand their data
-- Suggest meaningful visualizations based on data patterns
-- Explain complex data relationships in simple terms
-- Guide users towards actionable insights
+# WHEN USING DATAAGENT TOOL
+- ALWAYS use for questions that need actual data to answer
+- NEVER use for conceptual questions that don't require querying a database
+- If user request is ambiguous, ask a SINGLE clarifying question before proceeding
 
-Tool Usage:
-- Use the dataAgent tool whenever users request:
-  * Data analysis or exploration
-  * Visualizations or charts
-  * SQL queries or data fetching
-  * Statistical insights
-- Don't use the tool for:
-  * General conversation
-  * Explaining concepts
-  * Non-data questions
-- Always analyze the tool's output and explain insights
+# AFTER VISUALIZATION IS GENERATED
+1. Point out 2-3 SPECIFIC insights from the data (trends, outliers, patterns)
+2. Explain what the visualization reveals about the user's question
+3. Suggest follow-up analysis if appropriate
 
-Communication Style:
-- Be clear and concise
-- Use data-focused language
-- Explain your visualization choices
-- Point out interesting patterns or anomalies
-- Ask clarifying questions when needed
+# RESPONSE STRUCTURE
+- Keep explanations concise (3-5 sentences maximum)
+- Use bullet points for multiple insights
+- Refer to specific data points by their values
+- Don't repeat SQL syntax details unless asked
 
-Always consider:
-- Data types and distributions
-- Scale and context of numbers
-- Time-series patterns where applicable
-- Statistical significance
-- Data quality and completeness
-- Whether the current question requires data analysis`;
+Remember: Your primary goal is to help users understand their data, not to explain how SQL or databases work.`;
 }
