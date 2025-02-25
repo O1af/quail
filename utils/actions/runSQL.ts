@@ -27,13 +27,18 @@ async function executeWithUsageTracking<T>(
   request: T
 ): Promise<PostgresResponse> {
   if (!process.env.NEXT_PUBLIC_AZURE_FUNCTION_ENDPOINT) {
-    return { rows: [], rowCount: 0, error: "Function endpoint not configured" };
+    return {
+      rows: [],
+      rowCount: 0,
+      error: "Function endpoint not configured",
+      types: [],
+    };
   }
   const supabase = await createClient();
 
   const { data: user, error: authError } = await supabase.auth.getUser();
   if (authError || !user) {
-    return { rows: [], rowCount: 0, error: "Unauthorized" };
+    return { rows: [], rowCount: 0, error: "Unauthorized", types: [] };
   }
 
   // Start metrics update in background
@@ -71,6 +76,7 @@ async function executeWithUsageTracking<T>(
         rows: [],
         rowCount: 0,
         error: err || "Database error occurred",
+        types: [],
       };
     }
     const result = await response.json();
@@ -82,6 +88,7 @@ async function executeWithUsageTracking<T>(
       rows: [],
       rowCount: 0,
       error: error instanceof Error ? error.message : "Unknown error occurred",
+      types: [],
     };
   }
 }

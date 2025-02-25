@@ -102,13 +102,20 @@ function formatContent(content: string | Array<any>): string {
         case "tool-call":
           return `[Tool Call: ${part.toolName}(${JSON.stringify(part.args)})]`;
         case "tool-result":
-          const resultText =
-            typeof part.result === "string"
-              ? part.result
-              : JSON.stringify(part.result);
+          // Extract only query and visualization config from tool results
+          if (typeof part.result === "object" && part.result !== null) {
+            const { query, visualization } = part.result;
+            const formattedResult = {
+              ...(query && { query }),
+              ...(visualization && { visualization }),
+            };
+            return `[Tool Result${part.isError ? " (Error)" : ""}: ${
+              part.toolName
+            } → ${JSON.stringify(formattedResult, null, 2)}]`;
+          }
           return `[Tool Result${part.isError ? " (Error)" : ""}: ${
             part.toolName
-          } → ${resultText}]`;
+          } → ${String(part.result)}]`;
         default:
           return "";
       }

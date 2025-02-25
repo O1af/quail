@@ -7,7 +7,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Markdown } from "@/components/Dev/ChatBot/markdown";
 import { DataAgentResult } from "../AgentResult/DataAgentResult";
-import { ChartConfiguration } from "@/lib/types/BI/chart";
+import { ChartConfiguration } from "@/lib/types/BI/chartjsTypes";
 
 export interface MessageProps {
   message: AIMessage;

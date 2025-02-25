@@ -8,7 +8,7 @@ import {
 } from "ai";
 import { z } from "zod";
 import { executeQuery } from "@/components/stores/utils/query";
-import { ChartConfig } from "@/lib/types/BI/chart";
+import { ChartConfig } from "@/lib/types/BI/chartjsTypes";
 import {
   createSqlPrompt,
   createChartPrompt,
@@ -18,6 +18,8 @@ import { getModelName } from "@/utils/metrics/AI";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { tryCatch } from "@/lib/trycatch";
 import { executeQueryWithErrorHandling } from "./utils/workflow";
+import { hydrateChartConfig } from "@/lib/utils/chartHydration";
+import { ChartColumnMapping } from "@/lib/types/BI/chartjsTypes";
 
 interface DataAgentParams {
   userTier: string;
@@ -137,6 +139,10 @@ export const DataAgentTool = (params: DataAgentParams) =>
         resultData.rows.length,
         "rows"
       );
+      console.log(
+        "DataAgentTool: Query Types",
+        JSON.stringify(resultData.types)
+      );
 
       // Step 3: Generate visualization
       await stream.writeData({
@@ -145,67 +151,48 @@ export const DataAgentTool = (params: DataAgentParams) =>
         data: { step: 3, rowCount: resultData.rows.length },
       });
 
-      let chartConfig;
-      const { data: initialChartConfig, error: vizError } = await tryCatch(
+      const { data: columnMapping, error: vizError } = await tryCatch(
         generateObject({
           model: provider(modelName),
           prompt: createChartPrompt({
-            data: resultData.rows,
+            data: resultData,
             query: finalQuery,
             messages,
           }),
-          schema: ChartConfig,
+          schema: ChartColumnMapping,
           system:
-            "Generate appropriate Chart.js configurations based on data structure and user intent.",
+            "Select appropriate columns for data visualization based on query results and user intent.",
         })
       );
 
-      chartConfig = initialChartConfig;
+      if (vizError || !columnMapping) {
+        console.error("DataAgentTool: Visualization mapping error:", vizError);
+        await stream.writeData({
+          status: "warning",
+          message:
+            "Could not generate visualization, but query executed successfully.",
+          error: false,
+          data: { step: 3, error: vizError?.name ?? null },
+        });
 
-      if (vizError) {
-        console.error(
-          "DataAgentTool: Visualization generation error:",
-          vizError
-        );
-
-        // Try fallback chart generation with simplification
-        const { data: fallbackChartConfig, error: fallbackError } =
-          await tryCatch(
-            generateObject({
-              model: provider(modelName),
-              prompt: `Generate a simple bar or line chart for this data: ${JSON.stringify(
-                resultData.rows.slice(0, 3)
-              )}... (${resultData.rows.length} rows total)`,
-              schema: ChartConfig,
-            })
-          );
-
-        if (fallbackError || !fallbackChartConfig) {
-          await stream.writeData({
-            status: "warning",
-            message:
-              "Could not generate visualization, but query executed successfully.",
-            error: false,
-            data: { step: 3, error: vizError.name ?? null },
-          });
-
-          return {
-            data: resultData.rows,
-            visualization: null,
-            query: finalQuery,
-          };
-        }
-
-        console.log("DataAgentTool: Generated fallback chart config");
-        chartConfig = { object: fallbackChartConfig.object };
+        return {
+          data: resultData.rows,
+          visualization: null,
+          query: finalQuery,
+        };
       }
+
+      const chartConfig = hydrateChartConfig(
+        columnMapping.object,
+        resultData.rows
+      );
 
       console.log("DataAgentTool: Generated chart config");
 
       // Step 4: Return results
       const result = {
         data: resultData.rows,
-        visualization: chartConfig?.object || null,
+        visualization: chartConfig || null,
         query: finalQuery,
       };
 

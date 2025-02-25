@@ -70,3 +70,34 @@ export const ChartConfig = z.object({
 });
 
 export type ChartConfiguration = z.infer<typeof ChartConfig>;
+
+export const ChartColumnMapping = z.object({
+  type: ChartType,
+  columns: z.object({
+    labels: z.string(),
+    values: z.array(
+      z.object({
+        column: z.string(),
+        label: z.string(),
+        color: z.string().optional(),
+      })
+    ),
+  }),
+  title: z.string(),
+  axes: z
+    .object({
+      x: z
+        .object({
+          title: z.string().optional(),
+        })
+        .optional(),
+      y: z
+        .object({
+          title: z.string().optional(),
+        })
+        .optional(),
+    })
+    .optional(),
+});
+
+export type ChartColumnMappingType = z.infer<typeof ChartColumnMapping>;

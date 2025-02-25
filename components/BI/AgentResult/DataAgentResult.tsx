@@ -1,6 +1,6 @@
 "use client";
 
-import { ChartConfiguration } from "@/lib/types/BI/chart";
+import { ChartConfiguration } from "@/lib/types/BI/chartjsTypes";
 import { DynamicChart } from "./dynamic-chartjs";
 import { Card, CardContent } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";

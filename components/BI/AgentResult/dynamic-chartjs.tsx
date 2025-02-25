@@ -1,5 +1,5 @@
 "use client";
-import { ChartConfiguration } from "@/lib/types/BI/chart";
+import { ChartConfiguration } from "@/lib/types/BI/chartjsTypes";
 import {
   Chart as ChartJS,
   CategoryScale,

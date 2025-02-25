@@ -3,6 +3,7 @@ import { Index, Column, Schema, Table } from "@/components/stores/table_store";
 import { countTokens } from "gpt-tokenizer";
 import { Message } from "ai";
 import { formatConversationHistory, formatDatabaseSchema } from "./format";
+import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 
 export function createSqlPrompt({
   messages,
@@ -108,7 +109,8 @@ ${errorMessage}
 4. Verify all tables and columns exist in the schema
 5. Return ONLY the corrected SQL query with no explanations
 
-RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE.`;
+RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE.
+DO NOT INCLUDE EXPLANATIONS OR MARKDOWN.`;
 }
 
 export function createChartPrompt({
@@ -116,7 +118,7 @@ export function createChartPrompt({
   query,
   messages,
 }: {
-  data: any[];
+  data: PostgresResponse;
   query: string;
   messages: Message[];
 }): string {
@@ -133,8 +135,15 @@ ${formatConversationHistory(messages, 3)}
 ${query}
 \`\`\`
 
-## DATA:
-${data}
+## RESULT
+${data.rows.length} rows
+
+## COLUMN DETAILS
+${data.types.map((type) => `- ${type.colName}: ${type.jsType}`).join("\n")}
+
+## LABEL GENERATION
+- Choose a column with categorical data for labels
+- If no categorical column, use the first column as labels
 
 ## CHART SELECTION DECISION TREE
 - Time-based data + trend analysis → Line chart
