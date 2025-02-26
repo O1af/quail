@@ -13,9 +13,8 @@ import {
   PieChart,
 } from "lucide-react";
 
-import { NavProjects } from "@/components/sidebar/nav-projects";
 import { NavUser } from "@/components/sidebar/nav-user";
-import { TeamSwitcher } from "@/components/sidebar/team-switcher";
+import { TeamSwitcher } from "@/components/sidebar/dev/db-switcher";
 import {
   Sidebar,
   SidebarContent,
@@ -23,7 +22,7 @@ import {
   SidebarHeader,
   SidebarRail,
 } from "@/components/ui/sidebar";
-import { NavSchema } from "./nav-schema";
+import { NavSchema } from "./dev/nav-schema";
 
 // This is sample data.
 const data = {

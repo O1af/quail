@@ -32,11 +32,11 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { useDatabaseStructure } from "../stores/table_store";
-import { queryMetadata, handleQuery } from "../stores/utils/query";
+import { useDatabaseStructure } from "../../stores/table_store";
+import { queryMetadata, handleQuery } from "../../stores/utils/query";
 import { useState } from "react";
-import { useDbStore } from "../stores/db_store";
-import { useEditorStore } from "../stores/editor_store";
+import { useDbStore } from "../../stores/db_store";
+import { useEditorStore } from "../../stores/editor_store";
 import { match } from "assert";
 export function NavSchema() {
   const { toast } = useToast();

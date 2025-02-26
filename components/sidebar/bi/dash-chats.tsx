@@ -38,7 +38,7 @@ import {
   useSidebar,
 } from "@/components/ui/sidebar";
 import { ChatListResponse } from "@/lib/types/chat";
-import { listChats, deleteChat, renameChat } from "../stores/chat_store";
+import { listChats, deleteChat, renameChat } from "../../stores/chat_store";
 import { createClient } from "@/utils/supabase/client";
 import {
   Tooltip,

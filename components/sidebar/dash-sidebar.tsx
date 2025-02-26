@@ -6,7 +6,9 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 import { NavUser } from "@/components/sidebar/nav-user";
-import { NavChats } from "@/components/sidebar/dash-chats";
+import { NavChats } from "@/components/sidebar/bi/dash-chats";
+import { DashNav } from "@/components/sidebar/bi/dash-nav";
+import { DashSidebarHeader } from "@/components/sidebar/bi/dash-header";
 import {
   Sidebar,
   SidebarContent,
@@ -45,8 +47,9 @@ export function DashSidebar({
 
   return (
     <Sidebar collapsible="icon" {...props}>
-      <SidebarHeader></SidebarHeader>
+      <DashSidebarHeader />
       <SidebarContent>
+        <DashNav />
         <NavChats />
       </SidebarContent>
       <SidebarFooter>
