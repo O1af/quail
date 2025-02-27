@@ -20,7 +20,8 @@ import { useTheme } from "next-themes";
 
 import { signup } from "@/lib/auth-actions";
 import Routes from "@/components/routes";
-import HCaptcha from "@hcaptcha/react-hcaptcha";
+// import HCaptcha from "@hcaptcha/react-hcaptcha";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 // Zod schema for validation
 const formSchema = z.object({
@@ -36,7 +37,7 @@ export function SignUpForm() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast(); // Initialize the toast hook
   const [captchaToken, setCaptchaToken] = useState("");
-  const captcha = useRef<HCaptcha | null>(null);
+  // const captcha = useRef<HCaptcha | null>(null);
   const { theme } = useTheme();
 
   const form = useForm({
@@ -75,7 +76,7 @@ export function SignUpForm() {
         variant: "success",
       });
 
-      captcha.current?.resetCaptcha();
+      // captcha.current?.resetCaptcha();
 
       form.reset();
     } catch (err) {
@@ -152,11 +153,12 @@ export function SignUpForm() {
             </div>
             {/* HCaptcha Component */}
             <div className="flex justify-center">
-              <HCaptcha
-                ref={captcha}
-                sitekey="9b8404d2-3b54-4eca-afc8-300cfd546c2a"
-                onVerify={setCaptchaToken}
-                theme={theme === "dark" ? "dark" : "light"}
+              <Turnstile
+                siteKey="0x4AAAAAAA-4oeMkEXIOQGB8"
+                data-theme={theme === "dark" ? "dark" : "light"}
+                onSuccess={(token) => {
+                  setCaptchaToken(token);
+                }}
               />
             </div>
             <Button type="submit" className="w-full">
