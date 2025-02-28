@@ -159,7 +159,7 @@ export function LoginForm({
                   <div className="flex justify-center">
                     <Turnstile
                       siteKey="0x4AAAAAAA-4oeMkEXIOQGB8"
-                      //siteKey="1x00000000000000000000AA"
+                      /*                       siteKey="1x00000000000000000000AA" */
                       data-theme={theme === "dark" ? "dark" : "light"}
                       onSuccess={(token) => {
                         setCaptchaToken(token);
