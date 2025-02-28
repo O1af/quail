@@ -111,7 +111,7 @@ export async function forgotPassword(formData: FormData) {
   const supabase = await createClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}`,
     captchaToken,
   });
 
@@ -127,6 +127,7 @@ export async function resetPassword(
   searchParams: { code?: string }
 ) {
   const password = formData.get("password") as string;
+
   const supabase = await createClient();
 
   if (searchParams.code) {

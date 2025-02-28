@@ -19,6 +19,7 @@ import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import { createClient } from "@/utils/supabase/client";
 import { Camera } from "lucide-react";
 import { useToast } from "@/hooks/use-toast";
+import { Label } from "@/components/ui/label";
 
 const profileFormSchema = z.object({
   fullname: z.string().max(30, {
@@ -74,6 +75,7 @@ export function ProfileForm() {
         form.setValue("fullname", user.user_metadata.full_name || "");
         form.setValue("email", user.email || "");
         form.setValue("avatarUrl", user.user_metadata.avatar_url || "");
+        console.log(user);
       }
     };
     fetchUser();
@@ -117,7 +119,7 @@ export function ProfileForm() {
             name="avatarUrl"
             render={({ field }) => (
               <FormItem className="space-y-3">
-                <FormLabel>Profile Image</FormLabel>
+                <FormLabel>Avatar</FormLabel>
                 <div className="flex items-center gap-3">
                   <Avatar className="h-12 w-12">
                     <AvatarImage src={field.value || ""} />
@@ -274,6 +276,23 @@ export function ProfileForm() {
           </Button>
         </form>
       </Form>
+      {user?.app_metadata?.provider === "email" && (
+        <div className="mt-4">
+          <Label className="">Password</Label>
+          <div className="mt-2">
+            <Button
+              variant="outline"
+              onClick={() => (window.location.href = "/reset-password")}
+              type="button"
+            >
+              Change Password
+            </Button>
+            <p className="mt-2 text-xs text-muted-foreground">
+              Reset your password by clicking the button above
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }

@@ -76,7 +76,7 @@ export function LoginForm({
       console.error("Login error:", err);
       setError(
         err instanceof Error
-          ? err.message
+          ? "Invalid email or password. Please try again."
           : "Invalid email or password. Please try again."
       );
     } finally {
