@@ -70,7 +70,7 @@ export function LoginForm({
       setError(null);
 
       if (result.success) {
-        router.push("/"); // Perform client-side navigation
+        window.location.href = "/";
       }
     } catch (err) {
       console.error("Login error:", err);
