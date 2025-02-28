@@ -21,12 +21,25 @@ export async function login(formData: FormData) {
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    // console.log("Error: ", error);
-    throw new Error("Invalid email or password.");
-  }
+    console.error("Login error:", error);
 
+    // Provide more specific error messages based on error type
+    if (error.message.includes("captcha")) {
+      throw new Error("Captcha verification failed. Please try again.");
+    } else if (error.message.includes("password")) {
+      throw new Error(
+        "Invalid password. Please check your password and try again."
+      );
+    } else if (error.message.includes("user")) {
+      throw new Error("User not found. Please check your email or sign up.");
+    } else {
+      throw new Error(error.message || "Invalid email or password.");
+    }
+  }
+  /* 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect("/"); */
+  return { success: true };
 }
 
 export async function signup(formData: FormData) {
