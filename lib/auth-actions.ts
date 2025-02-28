@@ -13,6 +13,9 @@ export async function login(formData: FormData) {
   const data = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
+    options: {
+      captchaToken: formData.get("captchaToken") as string,
+    },
   };
 
   const { error } = await supabase.auth.signInWithPassword(data);
@@ -90,34 +93,37 @@ export async function signInWithGoogle() {
 
 export async function forgotPassword(formData: FormData) {
   const email = formData.get("email") as string;
+  const captchaToken = formData.get("captchaToken") as string;
+
   const supabase = await createClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
     redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+    captchaToken,
   });
 
   if (error) {
     throw new Error(
-      "An error occurred while attempting to reset your password.",
+      "An error occurred while attempting to reset your password."
     );
   }
 }
 
 export async function resetPassword(
   formData: FormData,
-  searchParams: { code?: string },
+  searchParams: { code?: string }
 ) {
   const password = formData.get("password") as string;
   const supabase = await createClient();
 
   if (searchParams.code) {
     const { error } = await supabase.auth.exchangeCodeForSession(
-      searchParams.code,
+      searchParams.code
     );
 
     if (error) {
       return redirect(
-        `/reset-password?message=Unable to reset Password. Link expired!`,
+        `/reset-password?message=Unable to reset Password. Link expired!`
       );
     }
   }
@@ -129,7 +135,7 @@ export async function resetPassword(
   if (error) {
     // console.log(error);
     return redirect(
-      `/reset-password?message=Unable to reset Password. Try again!`,
+      `/reset-password?message=Unable to reset Password. Try again!`
     );
   }
 }

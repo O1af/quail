@@ -24,6 +24,8 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useTheme } from "next-themes";
+import { Turnstile } from "@marsidev/react-turnstile";
 
 const formSchema = z.object({
   email: z.string().nonempty({ message: "Email is required." }),
@@ -35,6 +37,8 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [error, setError] = useState<string | null>(null);
+  const { theme } = useTheme();
+  const [captchaToken, setCaptchaToken] = useState("");
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -51,6 +55,7 @@ export function LoginForm({
       const formData = new FormData();
       formData.append("email", data.email);
       formData.append("password", data.password);
+      formData.append("captchaToken", captchaToken);
       await login(formData);
     } catch (err) {
       // console.log(err);
@@ -130,6 +135,16 @@ export function LoginForm({
                       </FormItem>
                     )}
                   />
+                  <div className="flex justify-center">
+                    <Turnstile
+                      siteKey="0x4AAAAAAA-4oeMkEXIOQGB8"
+                      data-theme={theme === "dark" ? "dark" : "light"}
+                      onSuccess={(token) => {
+                        setCaptchaToken(token);
+                      }}
+                    />
+                  </div>
+
                   <Button type="submit" className="w-full">
                     Login
                   </Button>

@@ -78,6 +78,8 @@ export function SignUpForm() {
 
       // captcha.current?.resetCaptcha();
 
+      setCaptchaToken("");
+
       form.reset();
     } catch (err) {
       // console.log(err);

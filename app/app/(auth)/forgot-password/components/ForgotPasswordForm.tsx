@@ -19,6 +19,8 @@ import { forgotPassword } from "@/lib/auth-actions"; // Import the correct funct
 import Routes from "@/components/routes";
 import { useToast } from "@/hooks/use-toast"; // Import the toast hook
 import { ToastAction } from "@/components/ui/toast"; // Import the ToastAction component
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useTheme } from "next-themes";
 
 // Zod schema for validation
 const formSchema = z.object({
@@ -28,6 +30,8 @@ const formSchema = z.object({
 export function ForgotPasswordForm() {
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast(); // Initialize the toast hook
+  const [captchaToken, setCaptchaToken] = useState("");
+  const { theme } = useTheme();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -41,11 +45,13 @@ export function ForgotPasswordForm() {
 
     try {
       const formData = new FormData();
+      formData.append("captchaToken", captchaToken);
       formData.append("email", data.email);
 
       await forgotPassword(formData); // Call forgotPassword instead of signup
 
       // Reset the form after submission
+      setCaptchaToken("");
       form.reset();
 
       // Show success toast notification
@@ -87,6 +93,15 @@ export function ForgotPasswordForm() {
                   {form.formState.errors.email?.message}
                 </div>
               )}
+            </div>
+            <div className="flex justify-center">
+              <Turnstile
+                siteKey="0x4AAAAAAA-4oeMkEXIOQGB8"
+                data-theme={theme === "dark" ? "dark" : "light"}
+                onSuccess={(token) => {
+                  setCaptchaToken(token);
+                }}
+              />
             </div>
             <Button type="submit" className="w-full">
               Reset Password
