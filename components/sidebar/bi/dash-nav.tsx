@@ -37,7 +37,7 @@ export function DashNav() {
     {
       icon: LayoutDashboard,
       label: "Dashboards",
-      path: "/dashboards",
+      path: "/insights",
       description: "View and manage dashboards",
     },
     {
