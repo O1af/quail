@@ -87,3 +87,85 @@ export async function loadChart(
     throw new Error("Failed to load chart");
   }
 }
+
+/**
+ * Update a chart title
+ *
+ * @param chartId - The ID of the chart to update
+ * @param userId - The user ID for security validation
+ * @param newTitle - The new title to set
+ * @returns A promise that resolves to true if the update was successful
+ */
+export async function updateChartTitle(
+  chartId: string,
+  userId: string,
+  newTitle: string
+): Promise<boolean> {
+  try {
+    await connectToMongo();
+    const collection = getChartsCollection();
+
+    // Ensure title is not empty
+    const title = newTitle.trim() || "Untitled Chart";
+
+    const result = await collection.updateOne(
+      { _id: chartId, userId: userId },
+      {
+        $set: {
+          title: title,
+          updatedAt: new Date(),
+        },
+      }
+    );
+
+    return result.modifiedCount > 0;
+  } catch (error) {
+    console.error("Failed to update chart title:", error);
+    throw new Error("Failed to update chart title");
+  }
+}
+
+/**
+ * Duplicate a chart
+ *
+ * @param chartId - The ID of the chart to duplicate
+ * @param userId - The user ID for security validation
+ * @returns A promise that resolves to the new duplicated chart
+ */
+export async function duplicateChart(
+  chartId: string,
+  userId: string
+): Promise<Chart | null> {
+  try {
+    await connectToMongo();
+    const collection = getChartsCollection();
+
+    // Find the original chart
+    const originalChart = await collection.findOne({
+      _id: chartId,
+      userId: userId,
+    });
+
+    if (!originalChart) {
+      throw new Error("Chart not found or you don't have access");
+    }
+
+    // Create a new chart based on the original one
+    const now = new Date();
+    const newChart: Chart = {
+      ...originalChart,
+      _id: new ObjectId().toString(),
+      title: `${originalChart.title} (Copy)`,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    // Insert the new chart
+    await collection.insertOne(newChart);
+
+    return newChart;
+  } catch (error) {
+    console.error("Failed to duplicate chart:", error);
+    throw new Error("Failed to duplicate chart");
+  }
+}

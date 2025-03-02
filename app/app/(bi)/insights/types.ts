@@ -25,6 +25,7 @@ export interface DashboardCardProps {
 }
 
 export interface ChartCardProps {
+  id: string;
   title: string;
   type: string;
   icon: LucideIcon;
