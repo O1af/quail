@@ -49,7 +49,7 @@ export function ChartCard({
                 <Button
                   variant="ghost"
                   size="icon"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
+                  className="opacity-100 transition-opacity"
                 >
                   <MoreVertical className="h-4 w-4" />
                 </Button>
@@ -106,6 +106,21 @@ export function ChartCard({
             <PinOff className="h-4 w-4" />
           )}
         </Button>
+        <DropdownMenu>
+          <DropdownMenuTrigger asChild>
+            <Button variant="ghost" size="icon" className="opacity-100">
+              <MoreVertical className="h-4 w-4" />
+            </Button>
+          </DropdownMenuTrigger>
+          <DropdownMenuContent align="end">
+            <DropdownMenuItem>Edit</DropdownMenuItem>
+            <DropdownMenuItem>Duplicate</DropdownMenuItem>
+            <DropdownMenuItem>Share</DropdownMenuItem>
+            <DropdownMenuItem className="text-destructive">
+              Delete
+            </DropdownMenuItem>
+          </DropdownMenuContent>
+        </DropdownMenu>
       </div>
     </div>
   );
