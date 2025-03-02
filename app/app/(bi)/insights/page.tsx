@@ -1,7 +1,6 @@
 "use client";
 
 import { useState, useEffect } from "react";
-import Link from "next/link";
 import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
 import {
@@ -11,94 +10,25 @@ import {
 
 // UI Components
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Icons
 import {
   BarChart,
-  ChartArea,
-  Clock,
-  FileSpreadsheet,
-  Gauge,
   Grid,
   LayoutDashboard,
   List,
-  LineChart,
-  MoreVertical,
-  PieChart,
-  ChartScatter,
-  CirclePlus,
   Pin,
-  PinOff,
-  Plus,
   Search,
-  X,
 } from "lucide-react";
+
+// Local components
+import { EmptyState } from "./components/EmptyState";
+import { DashboardCard } from "@/app/app/(bi)/insights/components/DashboardCard";
+import { ChartCard } from "@/app/app/(bi)/insights/components/ChartCard";
+import { ViewMode, TabValue } from "./types";
+import { initialChartsData } from "./data";
 import { CreateDashboard } from "@/components/header/create-dashboard";
-
-// Types
-type ViewMode = "grid" | "list";
-type TabValue = "dashboards" | "charts" | "pinned";
-
-// Sample chart data for demo purposes
-const initialChartsData = [
-  {
-    title: "Total Number of Users",
-    type: "Bar",
-    icon: BarChart,
-    link: "/mychart",
-    pinned: false,
-  },
-  {
-    title: "Subscription Plans",
-    type: "Pie",
-    icon: PieChart,
-    link: "/mychart",
-    pinned: false,
-  },
-  {
-    title: "Monthly Recurring Revenue",
-    type: "Area",
-    icon: ChartArea,
-    link: "/mychart",
-    pinned: false,
-  },
-  {
-    title: "Total Revenue Calculation",
-    type: "Scatter",
-    icon: ChartScatter,
-    link: "/mychart",
-    pinned: false,
-  },
-  {
-    title: "Retention Rate by User Signup",
-    type: "Line",
-    icon: LineChart,
-    link: "/mychart",
-    pinned: false,
-  },
-  {
-    title: "Percentage of Cancelled",
-    type: "Single Value",
-    icon: Gauge,
-    link: "/mychart",
-    pinned: false,
-  },
-  {
-    title: "User Data",
-    type: "Table",
-    icon: FileSpreadsheet,
-    link: "/mychart",
-    pinned: false,
-  },
-];
 
 // Search config for Fuse.js
 const fuseOptions = {
@@ -379,265 +309,6 @@ export default function DashboardPage({
             {renderContent()}
           </TabsContent>
         </Tabs>
-      </div>
-    </div>
-  );
-}
-
-// Empty state component for when no items are found
-function EmptyState({
-  title,
-  description,
-  actionText,
-  icon,
-  onAction,
-}: {
-  title: string;
-  description: string;
-  actionText: string;
-  icon: React.ReactNode;
-  onAction?: () => void;
-}) {
-  return (
-    <div className="text-center py-12 px-4 border-2 border-dashed rounded-lg col-span-full flex flex-col items-center justify-center">
-      {icon}
-      <h3 className="text-lg font-medium mt-2">{title}</h3>
-      <p className="text-sm text-muted-foreground mt-1 max-w-md">
-        {description}
-      </p>
-      <Button variant="outline" className="mt-6" onClick={onAction}>
-        {actionText.includes("Clear") ? (
-          <X className="mr-2 h-4 w-4" />
-        ) : (
-          <CreateDashboard />
-        )}
-        {actionText}
-      </Button>
-    </div>
-  );
-}
-
-// Dashboard card component
-function DashboardCard({
-  dashboard,
-  viewMode,
-}: {
-  dashboard: any;
-  viewMode: ViewMode;
-}) {
-  // Format date to relative time (e.g., "2 days ago")
-  const formatDate = (dateValue: string | Date) => {
-    const date = dateValue instanceof Date ? dateValue : new Date(dateValue);
-    const now = new Date();
-    const diffTime = Math.abs(now.getTime() - date.getTime());
-    const diffDays = Math.floor(diffTime / (1000 * 60 * 60 * 24));
-
-    if (diffDays === 0) {
-      // Calculate hours and minutes for same-day updates
-      const diffHours = Math.floor(diffTime / (1000 * 60 * 60));
-      const diffMinutes = Math.floor(diffTime / (1000 * 60));
-
-      if (diffMinutes < 1) {
-        return "just now";
-      } else if (diffMinutes < 60) {
-        return `${diffMinutes} ${diffMinutes === 1 ? "minute" : "minutes"} ago`;
-      } else {
-        return `${diffHours} ${diffHours === 1 ? "hour" : "hours"} ago`;
-      }
-    } else if (diffDays === 1) {
-      return "Yesterday";
-    } else if (diffDays < 30) {
-      return `${diffDays} days ago`;
-    } else {
-      return date.toLocaleDateString();
-    }
-  };
-
-  return viewMode === "grid" ? (
-    <Link href={`/dashboard/${dashboard._id}`} className="group">
-      <Card className="transition-all hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="flex items-center space-x-2">
-            <LayoutDashboard className="h-4 w-4" />
-            <CardTitle className="text-sm font-medium">
-              {dashboard.title}
-            </CardTitle>
-          </div>
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button
-                variant="ghost"
-                size="icon"
-                className="opacity-0 group-hover:opacity-100 transition-opacity"
-              >
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem>Edit</DropdownMenuItem>
-              <DropdownMenuItem>Duplicate</DropdownMenuItem>
-              <DropdownMenuItem>Share</DropdownMenuItem>
-              <DropdownMenuItem className="text-destructive">
-                Delete
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <div>
-              {dashboard.charts?.length || 0} chart
-              {dashboard.charts?.length !== 1 ? "s" : ""}
-            </div>
-            <div>•</div>
-            <div className="flex items-center space-x-1">
-              <Clock className="h-3 w-3" />
-              <span>Updated {formatDate(dashboard.updatedAt)}</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  ) : (
-    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 transition-colors">
-      <Link href={`/dashboard/${dashboard._id}`} className="flex-1">
-        <div className="flex items-center space-x-3">
-          <LayoutDashboard className="h-5 w-5" />
-          <div>
-            <h3 className="text-sm font-medium">{dashboard.title}</h3>
-            <p className="text-xs text-muted-foreground">
-              {dashboard.charts?.length || 0} chart
-              {dashboard.charts?.length !== 1 ? "s" : ""} • Updated{" "}
-              {formatDate(dashboard.updatedAt)}
-            </p>
-          </div>
-        </div>
-      </Link>
-      <div className="flex items-center">
-        <DropdownMenu>
-          <DropdownMenuTrigger asChild>
-            <Button variant="ghost" size="icon">
-              <MoreVertical className="h-4 w-4" />
-            </Button>
-          </DropdownMenuTrigger>
-          <DropdownMenuContent align="end">
-            <DropdownMenuItem>Edit</DropdownMenuItem>
-            <DropdownMenuItem>Duplicate</DropdownMenuItem>
-            <DropdownMenuItem>Share</DropdownMenuItem>
-            <DropdownMenuItem className="text-destructive">
-              Delete
-            </DropdownMenuItem>
-          </DropdownMenuContent>
-        </DropdownMenu>
-      </div>
-    </div>
-  );
-}
-
-function ChartCard({
-  title,
-  type,
-  icon: Icon,
-  link,
-  viewMode,
-  pinned,
-  onPin,
-}: {
-  title: string;
-  type: string;
-  icon: React.ComponentType<{ className?: string }>;
-  link: string;
-  viewMode: ViewMode;
-  pinned: boolean;
-  onPin: (title: string) => void;
-}) {
-  return viewMode === "grid" ? (
-    <Link href={link} className="group">
-      <Card className="transition-all hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="flex items-center space-x-2">
-            <Icon className="h-4 w-4" />
-            <CardTitle className="text-sm font-medium">{title}</CardTitle>
-          </div>
-          <div className="flex items-center gap-2">
-            <Button
-              variant="ghost"
-              size="icon"
-              className="opacity-0 group-hover:opacity-100 transition-opacity"
-              onClick={(e) => {
-                e.preventDefault();
-                onPin(title);
-              }}
-              title={pinned ? "Unpin" : "Pin"}
-            >
-              {pinned ? (
-                <Pin className="h-4 w-4 text-yellow-500" />
-              ) : (
-                <PinOff className="h-4 w-4" />
-              )}
-            </Button>
-            <DropdownMenu>
-              <DropdownMenuTrigger asChild>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  className="opacity-0 group-hover:opacity-100 transition-opacity"
-                >
-                  <MoreVertical className="h-4 w-4" />
-                </Button>
-              </DropdownMenuTrigger>
-              <DropdownMenuContent align="end">
-                <DropdownMenuItem>Edit</DropdownMenuItem>
-                <DropdownMenuItem>Duplicate</DropdownMenuItem>
-                <DropdownMenuItem>Share</DropdownMenuItem>
-                <DropdownMenuItem className="text-destructive">
-                  Delete
-                </DropdownMenuItem>
-              </DropdownMenuContent>
-            </DropdownMenu>
-          </div>
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <div>{type}</div>
-            <div>•</div>
-            <div className="flex items-center space-x-1">
-              <Clock className="h-3 w-3" />
-              <span>Updated recently</span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
-    </Link>
-  ) : (
-    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 transition-colors">
-      <Link href={link} className="flex-1">
-        <div className="flex items-center space-x-3">
-          <Icon className="h-5 w-5" />
-          <div>
-            <h3 className="text-sm font-medium">{title}</h3>
-            <p className="text-xs text-muted-foreground">
-              {type} • Updated recently
-            </p>
-          </div>
-        </div>
-      </Link>
-      <div className="flex items-center gap-2">
-        <Button
-          variant="ghost"
-          size="icon"
-          onClick={(e) => {
-            e.preventDefault();
-            onPin(title);
-          }}
-          title={pinned ? "Unpin" : "Pin"}
-        >
-          {pinned ? (
-            <Pin className="h-4 w-4 text-yellow-500" />
-          ) : (
-            <PinOff className="h-4 w-4" />
-          )}
-        </Button>
       </div>
     </div>
   );
