@@ -6,6 +6,8 @@ import { createClient } from "@/utils/supabase/client";
 import {
   loadUserDashboards,
   Dashboard,
+  loadUserCharts,
+  Chart,
 } from "@/components/stores/dashboard_store";
 
 // UI Components
@@ -44,10 +46,11 @@ export default function DashboardPage({
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState(externalSearchQuery);
   const [selectedTab, setSelectedTab] = useState<TabValue>("dashboards");
-  const [chartsData, setChartsData] = useState<any[]>([]);
-  const [dashboards, setDashboards] = useState<any[]>([]);
+  const [charts, setCharts] = useState<Chart[]>([]); // Changed to use Chart type
+  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
+  const [pinnedCharts, setPinnedCharts] = useState<Set<string>>(new Set());
 
   const supabase = createClient();
 
@@ -88,66 +91,103 @@ export default function DashboardPage({
     fetchUser();
   }, [supabase]);
 
-  // Fetch dashboards when user is loaded
+  // Fetch dashboards and charts when user is loaded
   useEffect(() => {
     if (user?.id) {
-      const fetchDashboards = async () => {
+      const fetchData = async () => {
         setIsLoading(true);
         try {
-          const fetchedDashboards = await loadUserDashboards(
-            user.id.toString()
-          );
+          // Load both dashboards and charts in parallel
+          const [fetchedDashboards, fetchedCharts] = await Promise.all([
+            loadUserDashboards(user.id),
+            loadUserCharts(user.id),
+          ]);
+
           setDashboards(fetchedDashboards);
+          setCharts(fetchedCharts);
+
+          // Load pinned state from localStorage
+          try {
+            const savedPinned = localStorage.getItem(
+              `pinned-charts-${user.id}`
+            );
+            if (savedPinned) {
+              setPinnedCharts(new Set(JSON.parse(savedPinned)));
+            }
+          } catch (e) {
+            console.error("Failed to load pinned charts from localStorage", e);
+          }
         } catch (error) {
-          console.error("Error loading dashboards:", error);
+          console.error("Error loading data:", error);
         } finally {
           setIsLoading(false);
         }
       };
 
-      fetchDashboards();
+      fetchData();
     }
   }, [user]);
 
   // Toggle pin status for a chart
-  const togglePin = (title: string) => {
-    setChartsData((prev) =>
-      prev.map((chart) =>
-        chart.title === title ? { ...chart, pinned: !chart.pinned } : chart
-      )
-    );
+  const togglePin = (id: string) => {
+    setPinnedCharts((prev) => {
+      // Create new Set to maintain immutability
+      const newSet = new Set(prev);
+
+      // Toggle the presence of this ID
+      if (newSet.has(id)) {
+        newSet.delete(id);
+      } else {
+        newSet.add(id);
+      }
+
+      // Save to localStorage
+      if (user?.id) {
+        try {
+          localStorage.setItem(
+            `pinned-charts-${user.id}`,
+            JSON.stringify([...newSet])
+          );
+        } catch (e) {
+          console.error("Failed to save pinned charts to localStorage", e);
+        }
+      }
+
+      return newSet;
+    });
   };
 
   // Filter content based on selected tab and search query
   const getFilteredContent = () => {
     if (selectedTab === "dashboards") {
-      // For dashboards tab, show dashboards from MongoDB
-      // Apply search filter if query exists
+      // For dashboards tab
       if (searchQuery.trim() !== "") {
         const fuse = new Fuse(dashboards, {
-          keys: ["title"],
+          keys: ["title", "description"],
           threshold: 0.5,
         });
         return fuse.search(searchQuery).map((res) => res.item);
       }
       return dashboards;
-    } else {
-      // For other tabs, filter the charts data
-      let filtered = chartsData;
-
-      if (selectedTab === "charts") {
-        filtered = chartsData.filter((chart) => chart.type !== "Dashboard");
-      } else if (selectedTab === "pinned") {
-        filtered = chartsData.filter((chart) => chart.pinned);
-      }
-
-      // Apply search filter if query exists
+    } else if (selectedTab === "charts") {
+      // For charts tab
       if (searchQuery.trim() !== "") {
-        const fuse = new Fuse(filtered, fuseOptions);
+        const fuse = new Fuse(charts, {
+          keys: ["title", "type"],
+          threshold: 0.5,
+        });
         return fuse.search(searchQuery).map((res) => res.item);
       }
+      return charts;
+    } else {
+      // For pinned tab
+      const pinnedItems = charts.filter((chart) => pinnedCharts.has(chart._id));
 
-      return filtered;
+      if (searchQuery.trim() !== "") {
+        const fuse = new Fuse(pinnedItems, fuseOptions);
+        return fuse.search(searchQuery).map((res) => res.item);
+      }
+      return pinnedItems;
     }
   };
 
@@ -179,6 +219,7 @@ export default function DashboardPage({
       );
     }
 
+    // Dashboards tab
     if (selectedTab === "dashboards") {
       return dashboards.length > 0 && filteredContent.length > 0 ? (
         <div
@@ -210,6 +251,7 @@ export default function DashboardPage({
       );
     }
 
+    // Charts or Pinned tabs
     return (
       <div
         className={
@@ -220,26 +262,21 @@ export default function DashboardPage({
       >
         {filteredContent.length > 0 ? (
           filteredContent.map((item) => {
-            if ("_id" in item) {
-              // This is a dashboard
-              return (
-                <DashboardCard
-                  key={item._id.toString()}
-                  dashboard={item as Dashboard}
-                  viewMode={viewMode}
-                />
-              );
-            } else {
-              // This is a chart
-              return (
-                <ChartCard
-                  key={item.title}
-                  {...item}
-                  viewMode={viewMode}
-                  onPin={togglePin}
-                />
-              );
-            }
+            // Adapt Chart from API to ChartCard props
+            console.log(item);
+            return (
+              <ChartCard
+                key={item._id}
+                id={item._id}
+                title={item.title || "Untitled"}
+                type={item?.visualization?.type || item.type}
+                link={`/chart/${item._id}`}
+                updatedAt={item.updatedAt || new Date()}
+                viewMode={viewMode}
+                pinned={pinnedCharts.has(item._id)}
+                onPin={() => togglePin(item._id)}
+              />
+            );
           })
         ) : (
           <EmptyState
@@ -252,7 +289,7 @@ export default function DashboardPage({
                 : "Create charts to visualize your data."
             }
             actionText={`Create ${
-              selectedTab === "pinned" ? "Dashboard" : "Dashboard"
+              selectedTab === "pinned" ? "Dashboard" : "Chart"
             }`}
             icon={
               selectedTab === "pinned" ? (
@@ -298,9 +335,15 @@ export default function DashboardPage({
           onValueChange={(val) => setSelectedTab(val as TabValue)}
         >
           <TabsList>
-            <TabsTrigger value="dashboards">Dashboards</TabsTrigger>
-            <TabsTrigger value="charts">Charts</TabsTrigger>
-            <TabsTrigger value="pinned">Pinned</TabsTrigger>
+            <TabsTrigger value="dashboards">
+              Dashboards {dashboards.length > 0 && `(${dashboards.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="charts">
+              Charts {charts.length > 0 && `(${charts.length})`}
+            </TabsTrigger>
+            <TabsTrigger value="pinned">
+              Pinned {pinnedCharts.size > 0 && `(${pinnedCharts.size})`}
+            </TabsTrigger>
           </TabsList>
 
           <TabsContent value={selectedTab} className="space-y-4">

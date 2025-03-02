@@ -7,24 +7,44 @@ import {
   DropdownMenuItem,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
-import { Clock, MoreVertical, Pin, PinOff } from "lucide-react";
+import {
+  BarChart,
+  Asterisk,
+  Clock,
+  LineChart,
+  MoreVertical,
+  PieChart,
+  Pin,
+  PinOff,
+} from "lucide-react";
 import { ChartCardProps } from "../types";
 
 export function ChartCard({
   title,
   type,
-  icon: Icon,
   link,
   viewMode,
   pinned,
   onPin,
 }: ChartCardProps) {
+  console.log(type);
   return viewMode === "grid" ? (
     <Link href={link} className="group">
       <Card className="transition-all hover:shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="flex items-center space-x-2">
-            <Icon className="h-4 w-4" />
+            {(() => {
+              switch (type) {
+                case "bar":
+                  return <BarChart className="h-4 w-4" />;
+                case "line":
+                  return <LineChart className="h-4 w-4" />;
+                case "pie":
+                  return <PieChart className="h-4 w-4" />;
+                default:
+                  return <Asterisk className="h-4 w-4" />;
+              }
+            })()}
             <CardTitle className="text-sm font-medium">{title}</CardTitle>
           </div>
           <div className="flex items-center gap-2">
@@ -81,7 +101,18 @@ export function ChartCard({
     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 transition-colors">
       <Link href={link} className="flex-1">
         <div className="flex items-center space-x-3">
-          <Icon className="h-5 w-5" />
+          {(() => {
+            switch (type) {
+              case "bar":
+                return <BarChart className="h-4 w-4" />;
+              case "line":
+                return <LineChart className="h-4 w-4" />;
+              case "pie":
+                return <PieChart className="h-4 w-4" />;
+              default:
+                return <Asterisk className="h-4 w-4" />;
+            }
+          })()}{" "}
           <div>
             <h3 className="text-sm font-medium">{title}</h3>
             <p className="text-xs text-muted-foreground">
