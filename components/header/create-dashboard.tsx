@@ -79,7 +79,7 @@ export function CreateDashboard() {
   }, [user, open]);
 
   return (
-    <Dialog open={open}>
+    <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <TooltipProvider>
           <Tooltip>
@@ -99,7 +99,10 @@ export function CreateDashboard() {
           </Tooltip>
         </TooltipProvider>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-[425px]">
+      <DialogContent
+        className="sm:max-w-[425px]"
+        onEscapeKeyDown={() => setOpen(false)}
+      >
         <DialogHeader>
           <DialogTitle>Create New Dashboard</DialogTitle>
         </DialogHeader>
