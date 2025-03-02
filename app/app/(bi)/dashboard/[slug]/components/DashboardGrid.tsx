@@ -1,9 +1,10 @@
 import React, { memo, useRef } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { Dashboard } from "@/components/stores/dashboard_store";
-import { ChartItem } from "./ChartItem";
+import { ChartItem } from "@/app/app/(bi)/dashboard/[slug]/components/ChartItem";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
+import { Expand } from "lucide-react";
 
 interface DashboardGridProps {
   dashboard: Dashboard;
@@ -37,6 +38,12 @@ export const DashboardGrid = memo(
           useCSSTransforms={true}
           verticalCompact={true}
           resizeHandles={isEditing ? ["se"] : []}
+          //add bottom right icon expand lucide
+          resizeHandle={
+            <span className="absolute right-2 bottom-2 cursor-pointer">
+              <Expand className="w-4 h-4" />
+            </span>
+          }
           margin={[10, 10]}
           containerPadding={[5, 5]}
         >
