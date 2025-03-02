@@ -151,12 +151,12 @@ export async function createDashboard(
 }
 
 /**
- * Update an existing dashboard
+ * Update an existing dashboard with partial data
  *
- * @param id - The ID of the dashboard to update
- * @param userId - The ID of the user
+ * @param id - The dashboard ID
+ * @param userId - The user ID
  * @param updates - The updates to apply to the dashboard
- * @returns A promise that resolves to the updated dashboard
+ * @returns A promise that resolves to the updated dashboard or null
  */
 export async function updateDashboard(
   id: string,
@@ -169,14 +169,14 @@ export async function updateDashboard(
     await connectToMongo();
     const collection = getDashboardsCollection();
 
+    const updateData = {
+      ...updates,
+      updatedAt: new Date(),
+    };
+
     const result = await collection.findOneAndUpdate(
       { _id: id, userId },
-      {
-        $set: {
-          ...updates,
-          updatedAt: new Date(),
-        },
-      },
+      { $set: updateData },
       { returnDocument: "after" }
     );
 
@@ -235,41 +235,5 @@ export async function loadUserCharts(
   } catch (error) {
     console.error("Failed to load dashboard:", error);
     throw new Error("Failed to load dashboard");
-  }
-}
-
-//function to update layout
-// /**
-//  * Update the layout of a dashboard
-//  *
-//  * @param id - The ID of the dashboard
-//  * @param userId - The ID of the user
-//  * @param layout - The new layout to set
-//  * @returns A promise that resolves to the updated dashboard
-//  */
-export async function updateDashboardLayout(
-  id: string,
-  userId: string,
-  layout: LayoutItem[]
-): Promise<Dashboard | null> {
-  try {
-    await connectToMongo();
-    const collection = getDashboardsCollection();
-
-    const result = await collection.findOneAndUpdate(
-      { _id: id, userId },
-      {
-        $set: {
-          layout,
-          updatedAt: new Date(),
-        },
-      },
-      { returnDocument: "after" }
-    );
-
-    return result;
-  } catch (error) {
-    console.error("Failed to update dashboard:", error);
-    throw new Error("Failed to update dashboard");
   }
 }
