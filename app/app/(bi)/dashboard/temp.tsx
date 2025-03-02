@@ -25,7 +25,7 @@ ChartJS.register(
   LineElement,
   Title,
   Tooltip,
-  Legend,
+  Legend
 );
 
 const ResponsiveGridLayout = WidthProvider(Responsive) as any;
@@ -117,13 +117,10 @@ const Dashboard = () => {
   const [isEditing, setIsEditing] = useState(false);
   const [selectedItem, setSelectedItem] = useState<string | null>(null);
   const [chartTypes, setChartTypes] = useState(
-    dashboardItems.reduce(
-      (acc, item) => {
-        if (item.type === "chart") acc[item.id] = item.chartType;
-        return acc;
-      },
-      {} as Record<string, string>,
-    ),
+    dashboardItems.reduce((acc, item) => {
+      if (item.type === "chart") acc[item.id] = item.chartType;
+      return acc;
+    }, {} as Record<string, string>)
   );
 
   const handleLayoutChange = (_currentLayout: any, allLayouts: any) => {
@@ -131,7 +128,7 @@ const Dashboard = () => {
       setTempLayouts(allLayouts);
       dashboardItems.forEach((item) => {
         const updatedLayout = allLayouts.lg.find(
-          (layout: any) => layout.i === item.id,
+          (layout: any) => layout.i === item.id
         );
         if (updatedLayout) {
           item.layout = {
@@ -299,7 +296,11 @@ const Dashboard = () => {
             onClick={() => handleClick(item.id)}
             className={`bg-opacity-0 p-4 rounded-lg shadow-md drag-handle border 
             flex flex-col justify-center items-center overflow-hidden h-full cursor-pointer border-gray-700
-            ${selectedItem === item.id ? "border-sky-500 border-2 border-double" : ""} 
+            ${
+              selectedItem === item.id
+                ? "border-sky-500 border-2 border-double"
+                : ""
+            } 
             ${isEditing ? "border-dashed border-white" : ""}`}
           >
             <p className="text-sm font-medium text-gray-400 whitespace-nowrap text-ellipsis overflow-hidden">

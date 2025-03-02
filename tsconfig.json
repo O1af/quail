@@ -34,7 +34,7 @@
     ".next/types/**/*.ts",
     "next-env.d.ts",
     "build/types/**/*.ts"
-  ],
+, "app/app/(bi)/dashboard/[slug]/page.tsx"  ],
   "exclude": [
     "node_modules"
   ]

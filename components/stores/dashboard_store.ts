@@ -22,7 +22,7 @@ export interface Chart {
   type: "bar" | "line" | "pie" | "area" | "scatter";
   title: string;
   query: string;
-  config: any;
+  visualization: any;
   description?: string;
   createdAt: Date;
   updatedAt: Date;
@@ -235,5 +235,41 @@ export async function loadUserCharts(
   } catch (error) {
     console.error("Failed to load dashboard:", error);
     throw new Error("Failed to load dashboard");
+  }
+}
+
+//function to update layout
+// /**
+//  * Update the layout of a dashboard
+//  *
+//  * @param id - The ID of the dashboard
+//  * @param userId - The ID of the user
+//  * @param layout - The new layout to set
+//  * @returns A promise that resolves to the updated dashboard
+//  */
+export async function updateDashboardLayout(
+  id: string,
+  userId: string,
+  layout: LayoutItem[]
+): Promise<Dashboard | null> {
+  try {
+    await connectToMongo();
+    const collection = getDashboardsCollection();
+
+    const result = await collection.findOneAndUpdate(
+      { _id: id, userId },
+      {
+        $set: {
+          layout,
+          updatedAt: new Date(),
+        },
+      },
+      { returnDocument: "after" }
+    );
+
+    return result;
+  } catch (error) {
+    console.error("Failed to update dashboard:", error);
+    throw new Error("Failed to update dashboard");
   }
 }

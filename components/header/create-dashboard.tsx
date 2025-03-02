@@ -117,12 +117,25 @@ export function CreateDashboard() {
                 form.elements.namedItem("name") as HTMLInputElement
               )?.value;
 
+              const columns = 2; // Reduce to 2 per row for better spacing
+              const rowHeight = 4; // Increase height for better legibility
+
+              const layout = selectedCharts.map((chartId, index) => ({
+                i: chartId,
+                x: (index % columns) * 6, // Increase width spacing
+                y: Math.floor(index / columns) * rowHeight, // Staggered vertically
+                w: 6, // Wider for more readable charts
+                h: rowHeight + 2, // Increased height for better proportions
+              }));
+
               const newDashboard = await createDashboard({
                 charts: selectedCharts,
                 title,
                 userId: user.id,
-                layout: [],
+                layout,
               });
+
+              console.log(newDashboard);
               setOpen(false);
             }}
           >

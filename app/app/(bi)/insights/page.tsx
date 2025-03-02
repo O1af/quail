@@ -454,7 +454,7 @@ function DashboardCard({
   };
 
   return viewMode === "grid" ? (
-    <Link href={`/insights/${dashboard._id}`} className="group">
+    <Link href={`/dashboard/${dashboard._id}`} className="group">
       <Card className="transition-all hover:shadow-md">
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <div className="flex items-center space-x-2">
@@ -500,7 +500,7 @@ function DashboardCard({
     </Link>
   ) : (
     <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 transition-colors">
-      <Link href={`/insights/${dashboard._id}`} className="flex-1">
+      <Link href={`/dashboard/${dashboard._id}`} className="flex-1">
         <div className="flex items-center space-x-3">
           <LayoutDashboard className="h-5 w-5" />
           <div>
