@@ -27,8 +27,6 @@ import { EmptyState } from "./components/EmptyState";
 import { DashboardCard } from "@/app/app/(bi)/insights/components/DashboardCard";
 import { ChartCard } from "@/app/app/(bi)/insights/components/ChartCard";
 import { ViewMode, TabValue } from "./types";
-import { initialChartsData } from "./data";
-import { CreateDashboard } from "@/components/header/create-dashboard";
 
 // Search config for Fuse.js
 const fuseOptions = {
@@ -46,8 +44,8 @@ export default function DashboardPage({
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
   const [searchQuery, setSearchQuery] = useState(externalSearchQuery);
   const [selectedTab, setSelectedTab] = useState<TabValue>("dashboards");
-  const [chartsData, setChartsData] = useState(initialChartsData);
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
+  const [chartsData, setChartsData] = useState<any[]>([]);
+  const [dashboards, setDashboards] = useState<any[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
 
