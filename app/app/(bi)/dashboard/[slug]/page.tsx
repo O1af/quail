@@ -1,152 +1,17 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef, memo } from "react";
+import React, { useState, useEffect, useCallback, useRef } from "react";
 import { createClient } from "@/utils/supabase/client";
 import {
   loadDashboard,
   Dashboard,
-  LayoutItem,
   updateDashboard,
 } from "@/components/stores/dashboard_store";
 import { Loader2, PencilRuler } from "lucide-react";
-import { DynamicChart } from "@/components/BI/AgentResult/dynamic-chartjs";
 import { loadChart } from "@/lib/actions/chartActions";
-import { Responsive, WidthProvider } from "react-grid-layout";
-import "react-grid-layout/css/styles.css";
-import "react-resizable/css/styles.css";
 import { Button } from "@/components/ui/button";
-import { Expand, Grip } from "lucide-react";
-import { Input } from "@/components/ui/input";
 
-// Create a memoized grid component to prevent re-renders when title changes
-const MemoizedGridLayout = memo(
-  ({
-    dashboard,
-    chartData,
-    isEditing,
-    tempLayoutsRef,
-    handleLayoutChange,
-  }: {
-    dashboard: Dashboard;
-    chartData: Map<string, any>;
-    isEditing: boolean;
-    tempLayoutsRef: React.MutableRefObject<LayoutItem[]>;
-    handleLayoutChange: (layout: any) => void;
-  }) => {
-    const ResponsiveGridLayout = WidthProvider(Responsive);
-    console.log("Grid layout rendering");
-
-    return (
-      <div className="relative">
-        <ResponsiveGridLayout
-          className="layout"
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-          cols={{ lg: 12, md: 12, sm: 12, xs: 12 }}
-          rowHeight={30}
-          draggableHandle=".drag-handle"
-          isDraggable={isEditing}
-          isResizable={isEditing}
-          onLayoutChange={handleLayoutChange}
-          layouts={{
-            lg: isEditing ? tempLayoutsRef.current : dashboard.layout,
-          }}
-          compactType="vertical"
-          preventCollision={false}
-          allowOverlap={false}
-          useCSSTransforms={true}
-          verticalCompact={true}
-          resizeHandles={isEditing ? ["se"] : []}
-          margin={[10, 10]}
-          containerPadding={[5, 5]}
-        >
-          {dashboard.charts.map((chartId) => {
-            const chart = chartData.get(chartId);
-            return (
-              <div
-                key={chartId}
-                className={`border rounded-lg ${
-                  isEditing ? "border-primary/50 shadow-md" : ""
-                }`}
-              >
-                {isEditing && (
-                  <div className="drag-handle bg-primary/10 text-xs p-1 text-center cursor-move">
-                    <Grip className="inline-block mr-1" /> Drag to move
-                  </div>
-                )}
-                <div className="p-4 h-[calc(100%-24px)]">
-                  {chart?.visualization ? (
-                    <DynamicChart
-                      config={chart.visualization}
-                      className="w-full h-full"
-                    />
-                  ) : (
-                    <div className="text-center py-12 bg-muted/50 rounded-lg">
-                      <p className="text-lg text-muted-foreground">
-                        {chart?.type === "chart"
-                          ? "No visualization available"
-                          : "This is a placeholder for value type chart"}
-                      </p>
-                    </div>
-                  )}
-                </div>
-              </div>
-            );
-          })}
-        </ResponsiveGridLayout>
-      </div>
-    );
-  },
-  // Custom equality function to prevent unnecessary rerenders
-  (prevProps, nextProps) => {
-    // Only rerender if these props change
-    return (
-      prevProps.isEditing === nextProps.isEditing &&
-      prevProps.dashboard === nextProps.dashboard &&
-      prevProps.chartData === nextProps.chartData
-    );
-  }
-);
-
-MemoizedGridLayout.displayName = "MemoizedGridLayout";
-
-// Memoize title component to prevent re-renders when layout changes
-const TitleEditor = memo(
-  ({
-    isEditing,
-    title,
-    tempTitle,
-    onTitleChange,
-  }: {
-    isEditing: boolean;
-    title: string;
-    tempTitle: string;
-    onTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
-  }) => {
-    const titleInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-      if (isEditing && titleInputRef.current) {
-        titleInputRef.current.focus();
-      }
-    }, [isEditing]);
-
-    console.log("Title editor rendering");
-
-    return isEditing ? (
-      <Input
-        ref={titleInputRef}
-        type="text"
-        value={tempTitle}
-        onChange={onTitleChange}
-        className="text-2xl font-bold h-auto py-1"
-        placeholder="Dashboard Title"
-      />
-    ) : (
-      <h1 className="text-2xl font-bold">{title || "Dashboard"}</h1>
-    );
-  }
-);
-
-TitleEditor.displayName = "TitleEditor";
+import { DashboardGrid } from "@/app/app/(bi)/dashboard/[slug]/components/DashboardGrid";
+import { TitleEditor } from "./components/TitleEditor";
 
 export default function Page({
   params,
@@ -168,21 +33,9 @@ export default function Page({
   const [tempTitle, setTempTitle] = useState("");
 
   // Use ref for layouts to prevent re-rendering
-  const tempLayoutsRef = useRef<LayoutItem[]>([]);
+  const tempLayoutsRef = useRef<any[]>([]);
 
   const supabase = createClient();
-  console.log("Main component rendering");
-
-  // Memoize the layout change handler to prevent unnecessary re-renders
-  const handleLayoutChange = useCallback(
-    (_currentLayout: any) => {
-      // Only update the ref, not state, to avoid re-render
-      if (isEditing) {
-        tempLayoutsRef.current = _currentLayout;
-      }
-    },
-    [isEditing]
-  );
 
   // Title change handler that doesn't cause grid re-render
   const handleTitleChange = useCallback(
@@ -298,6 +151,16 @@ export default function Page({
     }
   }, [slug, user]);
 
+  // Update layouts ref when dashboard changes
+  const handleLayoutChange = useCallback(
+    (layout: any) => {
+      if (isEditing) {
+        tempLayoutsRef.current = layout;
+      }
+    },
+    [isEditing]
+  );
+
   // Show loading state
   if (isLoading) {
     return (
@@ -355,12 +218,11 @@ export default function Page({
       </div>
 
       {dashboard?.charts && dashboard.charts.length > 0 ? (
-        <MemoizedGridLayout
+        <DashboardGrid
           dashboard={dashboard}
           chartData={chartData}
           isEditing={isEditing}
-          tempLayoutsRef={tempLayoutsRef}
-          handleLayoutChange={handleLayoutChange}
+          onLayoutChange={handleLayoutChange}
         />
       ) : (
         <div className="text-center py-12 bg-muted/50 rounded-lg">
