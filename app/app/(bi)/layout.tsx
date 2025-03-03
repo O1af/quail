@@ -8,6 +8,7 @@ import { CreateChat } from "@/components/header/create-chat";
 import { usePathname } from "next/navigation";
 import { SearchBar } from "@/components/header/dashboard-search-bar";
 import { CreateDashboard } from "@/components/header/create-dashboard";
+import { StickyNoteIcon } from "lucide-react";
 
 /**
  * BI Layout component used for all business intelligence pages
@@ -23,6 +24,15 @@ export default function BILayout({ children }: { children: React.ReactNode }) {
     setSearchQuery(query);
     window.dispatchEvent(new CustomEvent("app:search", { detail: { query } }));
   };
+
+  const nav = [
+    // ...existing nav items...
+    {
+      title: "Notes",
+      href: "/notes",
+      icon: StickyNoteIcon,
+    },
+  ];
 
   return (
     <SidebarProvider>
