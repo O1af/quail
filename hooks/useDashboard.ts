@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { loadDashboard, Dashboard } from "@/components/stores/dashboard_store";
-import { loadChart } from "@/lib/actions/chartActions";
+import { loadChart } from "@/components/stores/chartActions";
 
 export function useDashboard(slug: string, userId: string) {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);

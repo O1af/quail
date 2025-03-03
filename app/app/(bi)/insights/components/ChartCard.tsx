@@ -23,7 +23,7 @@ import {
   Loader2,
 } from "lucide-react";
 import { ChartCardProps } from "../types";
-import { updateChartTitle, loadChart } from "@/lib/actions/chartActions";
+import { updateChartTitle, loadChart } from "@/components/stores/chartActions";
 import { createChart } from "@/components/stores/dashboard_store";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";

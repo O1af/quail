@@ -7,7 +7,7 @@ import {
   updateDashboard,
 } from "@/components/stores/dashboard_store";
 import { Loader2, PencilRuler, LayoutGrid } from "lucide-react";
-import { loadChart } from "@/lib/actions/chartActions";
+import { loadChart } from "@/components/stores/chartActions";
 import { Button } from "@/components/ui/button";
 
 import { DashboardGrid } from "@/app/app/(bi)/dashboard/[slug]/components/DashboardGrid";
