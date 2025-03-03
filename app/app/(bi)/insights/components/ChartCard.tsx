@@ -18,17 +18,21 @@ import {
   PieChart,
   Pin,
   PinOff,
-  Pencil,
   Check,
   X,
-  Copy,
   Loader2,
 } from "lucide-react";
 import { ChartCardProps } from "../types";
-import { updateChartTitle, duplicateChart } from "@/lib/actions/chartActions";
+import { updateChartTitle, loadChart } from "@/lib/actions/chartActions";
+import { createChart } from "@/components/stores/dashboard_store";
 import { createClient } from "@/utils/supabase/client";
 import { toast } from "sonner";
-import { useRouter } from "next/navigation";
+
+// Import event emitter for communication without props
+import mitt from "next/dist/shared/lib/mitt";
+
+// Create a global event emitter
+const emitter = mitt();
 
 export function ChartCard({
   id,
@@ -39,13 +43,18 @@ export function ChartCard({
   pinned,
   onPin,
 }: ChartCardProps) {
-  // Add state for editing mode
   const [isEditing, setIsEditing] = useState(false);
   const [editedTitle, setEditedTitle] = useState(title);
   const [isDuplicating, setIsDuplicating] = useState(false);
+  const [displayTitle, setDisplayTitle] = useState(title); // Local state to store the displayed title
   const inputRef = useRef<HTMLInputElement>(null);
   const supabase = createClient();
-  const router = useRouter();
+
+  // Update local title when prop title changes
+  useEffect(() => {
+    setDisplayTitle(title);
+    setEditedTitle(title);
+  }, [title]);
 
   // Focus input when editing starts
   useEffect(() => {
@@ -71,17 +80,37 @@ export function ChartCard({
         return;
       }
 
-      const newChart = await duplicateChart(id, user.id);
+      try {
+        // Load the original chart using our server action directly
+        const originalChart = await loadChart(user.id, id);
 
-      if (newChart) {
-        toast.success("Chart duplicated successfully");
-        router.refresh(); // Refresh the page to show the new chart
-      } else {
+        if (!originalChart) {
+          toast.error("Failed to find chart to duplicate");
+          return;
+        }
+
+        // Create new chart with the original data
+        const newChart = await createChart({
+          userId: user.id,
+          title: `${displayTitle} (Copy)`,
+          type: originalChart.type,
+          query: originalChart.query,
+          visualization: originalChart.visualization,
+          description: originalChart.description,
+        });
+
+        if (newChart) {
+          toast.success("Chart duplicated successfully");
+
+          // Emit event for parent components
+          emitter.emit("chart-duplicated", newChart);
+        } else {
+          toast.error("Failed to duplicate chart");
+        }
+      } catch (error) {
+        console.error("Error in chart duplication:", error);
         toast.error("Failed to duplicate chart");
       }
-    } catch (error) {
-      console.error("Failed to duplicate chart:", error);
-      toast.error("Failed to duplicate chart");
     } finally {
       setIsDuplicating(false);
     }
@@ -91,12 +120,14 @@ export function ChartCard({
   const handleEditClick = (e: React.MouseEvent) => {
     e.preventDefault();
     e.stopPropagation();
-    setEditedTitle(title);
+    setEditedTitle(displayTitle);
     setIsEditing(true);
   };
 
   // Save the edited title
   const handleSave = async () => {
+    const finalTitle = editedTitle.trim() || "Untitled Chart";
+
     try {
       const {
         data: { user },
@@ -107,17 +138,24 @@ export function ChartCard({
         return;
       }
 
-      const success = await updateChartTitle(id, user.id, editedTitle);
+      const success = await updateChartTitle(id, user.id, finalTitle);
       if (success) {
+        // Update local state immediately for a responsive feel
+        setDisplayTitle(finalTitle);
+
+        // Emit an event to notify parent components
+        emitter.emit("chart-title-changed", { id, title: finalTitle });
+
         toast.success("Chart title updated");
       } else {
         toast.error("Failed to update chart title");
-        setEditedTitle(title);
+        // Reset to the original title on failure
+        setEditedTitle(displayTitle);
       }
     } catch (error) {
       console.error("Failed to update chart title:", error);
       toast.error("Failed to update chart title");
-      setEditedTitle(title);
+      setEditedTitle(displayTitle);
     } finally {
       setIsEditing(false);
     }
@@ -125,7 +163,7 @@ export function ChartCard({
 
   // Cancel editing
   const handleCancel = () => {
-    setEditedTitle(title);
+    setEditedTitle(displayTitle);
     setIsEditing(false);
   };
 
@@ -144,7 +182,7 @@ export function ChartCard({
 
   if (viewMode === "grid") {
     return (
-      <Link href={link} className="group" onClick={handleCardClick}>
+      <Link href={`/chart/${id}`} className="group" onClick={handleCardClick}>
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="flex items-center space-x-2">
@@ -173,7 +211,9 @@ export function ChartCard({
                   }}
                 />
               ) : (
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                <CardTitle className="text-sm font-medium">
+                  {displayTitle}
+                </CardTitle>
               )}
             </div>
             <div className="flex items-center gap-2">
@@ -234,7 +274,6 @@ export function ChartCard({
                     </DropdownMenuTrigger>
                     <DropdownMenuContent align="end">
                       <DropdownMenuItem onClick={handleEditClick}>
-                        <Pencil className="mr-2 h-4 w-4" />
                         Edit Name
                       </DropdownMenuItem>
                       <DropdownMenuItem
@@ -247,10 +286,7 @@ export function ChartCard({
                             Duplicating...
                           </>
                         ) : (
-                          <>
-                            <Copy className="mr-2 h-4 w-4" />
-                            Duplicate
-                          </>
+                          <>Duplicate</>
                         )}
                       </DropdownMenuItem>
                       <DropdownMenuItem className="text-destructive">
@@ -311,8 +347,12 @@ export function ChartCard({
             </p>
           </div>
         ) : (
-          <Link href={link} className="flex-1" onClick={handleCardClick}>
-            <h3 className="text-sm font-medium">{title}</h3>
+          <Link
+            href={`/chart/${id}`}
+            className="flex-1"
+            onClick={handleCardClick}
+          >
+            <h3 className="text-sm font-medium">{displayTitle}</h3>
             <p className="text-xs text-muted-foreground">
               {type} • Updated recently
             </p>
@@ -364,7 +404,6 @@ export function ChartCard({
             </DropdownMenuTrigger>
             <DropdownMenuContent align="end">
               <DropdownMenuItem onClick={handleEditClick}>
-                <Pencil className="mr-2 h-4 w-4" />
                 Edit Name
               </DropdownMenuItem>
               <DropdownMenuItem
@@ -377,10 +416,7 @@ export function ChartCard({
                     Duplicating...
                   </>
                 ) : (
-                  <>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Duplicate
-                  </>
+                  <>Duplicate</>
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive">
@@ -393,3 +429,6 @@ export function ChartCard({
     </div>
   );
 }
+
+// Export event emitter to allow parent components to listen for events
+export const chartEvents = emitter;

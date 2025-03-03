@@ -26,8 +26,14 @@ import {
 
 // Local components
 import { EmptyState } from "./components/EmptyState";
-import { DashboardCard } from "@/app/app/(bi)/insights/components/DashboardCard";
-import { ChartCard } from "@/app/app/(bi)/insights/components/ChartCard";
+import {
+  DashboardCard,
+  dashboardEvents,
+} from "@/app/app/(bi)/insights/components/DashboardCard";
+import {
+  ChartCard,
+  chartEvents,
+} from "@/app/app/(bi)/insights/components/ChartCard";
 import { ViewMode, TabValue } from "./types";
 
 // Search config for Fuse.js
@@ -128,6 +134,27 @@ export default function DashboardPage({
     }
   }, [user]);
 
+  // Add a function to refresh data when needed
+  const refreshData = async () => {
+    if (!user?.id) return;
+
+    setIsLoading(true);
+    try {
+      // Load both dashboards and charts in parallel
+      const [fetchedDashboards, fetchedCharts] = await Promise.all([
+        loadUserDashboards(user.id),
+        loadUserCharts(user.id),
+      ]);
+
+      setDashboards(fetchedDashboards);
+      setCharts(fetchedCharts);
+    } catch (error) {
+      console.error("Error refreshing data:", error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
   // Toggle pin status for a chart
   const togglePin = (id: string) => {
     setPinnedCharts((prev) => {
@@ -155,6 +182,34 @@ export default function DashboardPage({
 
       return newSet;
     });
+  };
+
+  // Add a function to handle chart title updates
+  const handleChartTitleChange = (chartId: string, newTitle: string) => {
+    setCharts((prevCharts) =>
+      prevCharts.map((chart) =>
+        chart._id === chartId ? { ...chart, title: newTitle } : chart
+      )
+    );
+  };
+
+  // Pass the refreshData function to child components
+  const handleDashboardCreatedOrDuplicated = () => {
+    refreshData();
+  };
+
+  const handleChartCreatedOrDuplicated = (newChart?: Chart) => {
+    if (newChart) {
+      // If we have the new chart data, add it directly to state
+      setCharts((prevCharts) => [...prevCharts, newChart]);
+    } else {
+      // Otherwise refresh all charts
+      if (user?.id) {
+        loadUserCharts(user.id).then((fetchedCharts) => {
+          setCharts(fetchedCharts);
+        });
+      }
+    }
   };
 
   // Filter content based on selected tab and search query
@@ -192,6 +247,46 @@ export default function DashboardPage({
   };
 
   const filteredContent = getFilteredContent();
+
+  // Set up event listeners for changes from child components
+  useEffect(() => {
+    // Listen for chart title changes
+    const handleChartTitleChanged = ({
+      id,
+      title,
+    }: {
+      id: string;
+      title: string;
+    }) => {
+      setCharts((prevCharts) =>
+        prevCharts.map((chart) =>
+          chart._id === id ? { ...chart, title } : chart
+        )
+      );
+    };
+
+    // Listen for chart duplication
+    const handleChartDuplicated = (newChart: Chart) => {
+      setCharts((prevCharts) => [...prevCharts, newChart]);
+    };
+
+    // Listen for dashboard duplication
+    const handleDashboardDuplicated = (newDashboard: Dashboard) => {
+      setDashboards((prevDashboards) => [...prevDashboards, newDashboard]);
+    };
+
+    // Subscribe to events
+    chartEvents.on("chart-title-changed", handleChartTitleChanged);
+    chartEvents.on("chart-duplicated", handleChartDuplicated);
+    dashboardEvents.on("dashboard-duplicated", handleDashboardDuplicated);
+
+    // Cleanup function
+    return () => {
+      chartEvents.off("chart-title-changed", handleChartTitleChanged);
+      chartEvents.off("chart-duplicated", handleChartDuplicated);
+      dashboardEvents.off("dashboard-duplicated", handleDashboardDuplicated);
+    };
+  }, []);
 
   // Render the main content based on the selected tab and loading state
   const renderContent = () => {
@@ -269,7 +364,7 @@ export default function DashboardPage({
                 key={item._id}
                 id={item._id}
                 title={item.title || "Untitled"}
-                type={item?.visualization?.type || item.type}
+                type={item?.visualization?.type || item?.type}
                 link={`/chart/${item._id}`}
                 updatedAt={item.updatedAt || new Date()}
                 viewMode={viewMode}

@@ -22,15 +22,19 @@ export interface EmptyStateProps {
 export interface DashboardCardProps {
   dashboard: any;
   viewMode: ViewMode;
+  pinned?: boolean;
+  onPin?: (id: string) => void;
+  // No need for explicit onDuplicate
 }
 
 export interface ChartCardProps {
   id: string;
   title: string;
   type: string;
-  icon: LucideIcon;
-  link: string;
+  link?: string;
+  updatedAt: Date;
   viewMode: ViewMode;
   pinned: boolean;
-  onPin: (title: string) => void;
+  onPin: (id: string) => void;
+  // No need for explicit onTitleChange or onDuplicate
 }

@@ -17,18 +17,31 @@ import {
   Check,
   X,
   Loader2,
-  Copy,
 } from "lucide-react";
 import { DashboardCardProps } from "../types";
 import { formatDate } from "../data";
 import {
-  updateDashboardTitle,
-  duplicateDashboard,
-} from "@/lib/actions/dashboardActions";
+  updateDashboard,
+  createDashboard,
+} from "@/components/stores/dashboard_store";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 
-export function DashboardCard({ dashboard, viewMode }: DashboardCardProps) {
+// Import event emitter for communication without props
+import mitt from "next/dist/shared/lib/mitt";
+
+// Create a global event emitter
+const emitter = mitt();
+
+interface ExtendedDashboardCardProps extends DashboardCardProps {
+  onDuplicate?: () => void;
+}
+
+export function DashboardCard({
+  dashboard,
+  viewMode,
+  onDuplicate,
+}: ExtendedDashboardCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(dashboard.title);
   const [isSaving, setIsSaving] = useState(false);
@@ -68,16 +81,25 @@ export function DashboardCard({ dashboard, viewMode }: DashboardCardProps) {
 
     setIsDuplicating(true);
     try {
-      // Call the server action to duplicate the dashboard
-      const newDashboard = await duplicateDashboard(
-        dashboard._id,
-        currentUser.id
-      );
+      // Use createDashboard to create a new dashboard with copied properties
+      const newDashboard = await createDashboard({
+        userId: currentUser.id,
+        title: `${dashboard.title} (Copy)`,
+        charts: dashboard.charts || [],
+        layout: dashboard.layout || [],
+        description: dashboard.description,
+      });
 
       if (newDashboard) {
         toast.success("Dashboard duplicated successfully");
-        // Refresh the page or navigate to the new dashboard
-        router.refresh();
+
+        // Emit an event for parent components to listen to
+        emitter.emit("dashboard-duplicated", newDashboard);
+
+        // Call the onDuplicate callback instead of refreshing the page
+        if (onDuplicate) {
+          onDuplicate();
+        }
       } else {
         toast.error("Failed to duplicate dashboard");
       }
@@ -98,8 +120,10 @@ export function DashboardCard({ dashboard, viewMode }: DashboardCardProps) {
     setIsSaving(true);
 
     try {
-      // Call server action to update title in database
-      await updateDashboardTitle(dashboard._id, currentUser.id, title);
+      // Use updateDashboard from dashboard_store with only title update
+      await updateDashboard(dashboard._id, currentUser.id, {
+        title: title.trim() || "Dashboard",
+      });
 
       toast.success("Dashboard title updated");
       setIsEditing(false);
@@ -200,10 +224,7 @@ export function DashboardCard({ dashboard, viewMode }: DashboardCardProps) {
                       Duplicating...
                     </>
                   ) : (
-                    <>
-                      <Copy className="mr-2 h-4 w-4" />
-                      Duplicate
-                    </>
+                    <>Duplicate</>
                   )}
                 </DropdownMenuItem>
                 <DropdownMenuItem className="text-destructive">
@@ -314,10 +335,7 @@ export function DashboardCard({ dashboard, viewMode }: DashboardCardProps) {
                     Duplicating...
                   </>
                 ) : (
-                  <>
-                    <Copy className="mr-2 h-4 w-4" />
-                    Duplicate
-                  </>
+                  <>Duplicate</>
                 )}
               </DropdownMenuItem>
               <DropdownMenuItem className="text-destructive">
@@ -330,3 +348,6 @@ export function DashboardCard({ dashboard, viewMode }: DashboardCardProps) {
     </div>
   );
 }
+
+// Export event emitter to allow parent components to listen for events
+export const dashboardEvents = emitter;

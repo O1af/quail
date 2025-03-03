@@ -19,6 +19,7 @@ export interface Dashboard {
 // Chart and LayoutItem interfaces
 export interface Chart {
   _id: string;
+  userId: string;
   type: "bar" | "line" | "pie" | "area" | "scatter";
   title: string;
   query: string;
@@ -235,5 +236,34 @@ export async function loadUserCharts(
   } catch (error) {
     console.error("Failed to load dashboard:", error);
     throw new Error("Failed to load dashboard");
+  }
+}
+
+/**
+ * Create a new chart
+ *
+ * @param chart - The chart data to create
+ * @returns A promise that resolves to the created chart
+ */
+export async function createChart(
+  chart: Omit<Chart, "_id" | "createdAt" | "updatedAt">
+): Promise<Chart> {
+  try {
+    await connectToMongo();
+    const collection = getChartsCollection();
+
+    const now = new Date();
+    const newChart: Chart = {
+      _id: new ObjectId().toString(),
+      ...chart,
+      createdAt: now,
+      updatedAt: now,
+    };
+
+    const result = await collection.insertOne(newChart);
+    return newChart;
+  } catch (error) {
+    console.error("Failed to create chart:", error);
+    throw new Error("Failed to create chart");
   }
 }
