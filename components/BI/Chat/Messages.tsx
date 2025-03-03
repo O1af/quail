@@ -17,20 +17,10 @@ interface MessagesProps {
   data?: JSONValue[] | undefined;
 }
 
-const statusMessages = {
-  processing: "Analyzing your request...",
-  generating_query: "Crafting SQL query...",
-  executing_query: "Fetching data...",
-  generating_visualization: "Creating visualization...",
-  completed: "Completed!",
-  error: "An error occurred",
-};
-
-const StatusMessage = ({ status }: { status: string }) => {
+const StatusMessage = ({ status }: { status: any }) => {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
-  const message =
-    statusMessages[status as keyof typeof statusMessages] || status;
+  console.log("Status:", status);
 
   return (
     <motion.div
@@ -38,7 +28,6 @@ const StatusMessage = ({ status }: { status: string }) => {
       initial={{ y: 5, opacity: 0 }}
       animate={{ y: 0, opacity: 1 }}
       transition={{ duration: 0.3 }}
-      key={status}
     >
       <div className="flex gap-4 items-center">
         <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
@@ -48,7 +37,7 @@ const StatusMessage = ({ status }: { status: string }) => {
         </div>
         <div className="flex items-center gap-2 text-muted-foreground">
           <div className="h-1 w-1 rounded-full bg-current animate-pulse" />
-          {message}
+          {String(status.status)}
         </div>
       </div>
     </motion.div>
@@ -60,7 +49,6 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
     useScrollToBottom<HTMLDivElement>();
 
   const currentStatus = data?.[data.length - 1];
-  console.log("Messages:", messages);
 
   return (
     <div
@@ -76,7 +64,7 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
 
         {isLoading && currentStatus && (
           <StatusMessage
-            status={JSON.stringify(currentStatus)}
+            status={currentStatus}
             key={`status-${JSON.stringify(currentStatus)}`}
           />
         )}

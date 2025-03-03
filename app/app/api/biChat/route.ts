@@ -11,7 +11,7 @@ import { generateTitleFromUserMessage } from "./utils/title";
 import { DataAgentTool } from "./agent";
 import { tryCatch } from "@/lib/trycatch";
 import { createSystemPrompt } from "./utils/prompts";
-import { updateWorkflowStage, WorkflowStage } from "./utils/workflow";
+import { updateStatus } from "./utils/workflow";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -80,12 +80,9 @@ export async function POST(req: Request) {
   return createDataStreamResponse({
     async execute(dataStream) {
       // First, update with understanding status
-      await updateWorkflowStage(
-        dataStream,
-        WorkflowStage.UNDERSTANDING_REQUEST,
-        "Understanding your request...",
-        { messageCount: messages.length }
-      );
+      await updateStatus(dataStream, "Understanding your request...", {
+        messageCount: messages.length,
+      });
 
       const { data: title, error: titleError } =
         messages.length === 1
@@ -129,19 +126,12 @@ export async function POST(req: Request) {
 
           if (saveError) {
             dataStream.writeData({
-              status: WorkflowStage.ERROR,
-              message: "Failed to save chat",
-              error: true,
+              status: "Failed to save chat",
             });
             return;
           }
 
-          await updateWorkflowStage(
-            dataStream,
-            WorkflowStage.COMPLETED,
-            "Response completed successfully.",
-            {}
-          );
+          await updateStatus(dataStream, "Response completed successfully.");
         },
       });
 

@@ -14,10 +14,11 @@ export function createSqlPrompt({
   dbType: string;
   databaseStructure: DatabaseStructure;
 }): string {
+  // Use concise format (verbose=false) to reduce tokens
   return `Database Type: ${dbType}
 
 Schema:
-${formatDatabaseSchema(databaseStructure)}
+${formatDatabaseSchema(databaseStructure, false)}
 
 Recent Conversation History:
 ${formatConversationHistory(messages)}
@@ -25,41 +26,36 @@ ${formatConversationHistory(messages)}
 # TASK: Generate a visualization-ready SQL query that directly answers the user's request
 
 ## CRITICAL REQUIREMENTS:
-- ONLY use tables and columns that EXIST in the schema above
-- ALWAYS include WHERE clauses to limit result size 
-- ENSURE all column references have proper table qualification in JOINs
-- VERIFY every column referenced exists in FROM/JOIN tables
-- LIMIT results to maximum 50 rows for visualization
+- ONLY use tables/columns that EXIST in the schema above
+- Use proper table qualification for all column references in JOINs
+- Apply filters ONLY based on user's explicit requirements
+- DO NOT add arbitrary time filters unless user specifically asks for a time period
+- Prefer recent data when time filtering is necessary, but avoid overly restrictive conditions
 - USE correct ${dbType} syntax for date/string functions
 
 ## QUERY STRUCTURE:
-- SELECT: Choose metrics (numeric) and dimensions (categorical) for visualization
-- FROM/JOIN: Only join tables when necessary with explicit ON conditions
-- WHERE: Focus on relevant time periods and filter conditions
-- GROUP BY: Include for all non-aggregated SELECT columns
-- HAVING: Use for filtering aggregated results
-- ORDER BY: Sort by the most meaningful column
-- LIMIT 50
+- SELECT: Choose meaningful metrics (numeric) and dimensions (categorical) for visualization
+- JOIN: Use only when necessary with explicit ON conditions
+- WHERE: Only include filters directly related to user's request
+- GROUP BY: Include for all non-aggregated columns
+- LIMIT: Include appropriate limit based on visualization needs (typically 10-20 rows)
 
 ## OPTIMIZATION FOR VISUALIZATION:
-- Include 1-2 categorical columns (for x-axis/grouping) + 1-3 metrics (for y-axis)
-- For time series: Use ${
+- Balance 1-2 categorical columns (x-axis/grouping) with 1-3 metrics (y-axis)
+- For time series: Use appropriate date functions (${
     dbType === "postgres"
       ? "DATE_TRUNC"
       : dbType === "mysql"
       ? "DATE_FORMAT"
       : "TRUNC"
-  } for appropriate intervals
-- Round decimal values with ROUND() for readability
-- Calculate percentages using NULLIF to prevent division by zero
-- Filter NULL values that would affect calculations
+  })
+- Prefer relative date ranges over absolute ones when appropriate
+- Round decimal values for readability
 
 ## ERROR PREVENTION:
-- Never reference non-existent tables or columns
-- Never reference a column from a table not in FROM/JOIN
-- Include all non-aggregated columns in GROUP BY
-- Double check table and column names match schema exactly
-- Views: Only use columns directly available in the view
+- Verify all column references are from tables in FROM/JOIN clauses
+- Avoid overly specific filters that might return no data
+- Double check table/column names against the schema
 
 RETURN ONLY THE SQL QUERY - NO EXPLANATION OR MARKDOWN`;
 }
@@ -76,13 +72,13 @@ export function createQueryValidationPrompt({
   dbType: string;
   databaseStructure: DatabaseStructure;
 }): string {
-  return `# TASK: Fix the SQL query that returned an error
+  return `# TASK: Fix the SQL query that returned an error or no results
 
 ## DATABASE TYPE
 ${dbType}
 
 ## DATABASE SCHEMA
-${formatDatabaseSchema(databaseStructure)}
+${formatDatabaseSchema(databaseStructure, true)}
 
 ## ORIGINAL QUERY
 \`\`\`sql
@@ -93,24 +89,28 @@ ${originalQuery}
 ${errorMessage}
 
 ## COMMON ISSUES TO CHECK
-- Missing or misspelled table/column names
-- Column references not qualified with table name/alias in joins
-- Aggregate functions without proper GROUP BY
-- Non-aggregate columns missing from GROUP BY
-- Incorrect data types in WHERE conditions
-- Syntax errors specific to ${dbType}
-- Tables referenced in query not available in schema
-- Incorrect date format or string comparisons
+- Table/column names (misspelled or missing)
+- Unqualified column references in joins
+- Missing GROUP BY for non-aggregate columns
+- Incorrect data types in conditions
+- Tables referenced not in schema
+- UNNECESSARY TIME FILTERS when user didn't specify a time period
+- OVERLY RESTRICTIVE conditions returning no data
+
+## FIX PRIORITY
+1. REMOVE unnecessary time filters if not requested by user
+2. BROADEN date ranges if present
+3. RELAX strict conditions (= to LIKE/BETWEEN/IN)
+4. REMOVE secondary filter conditions
+5. SIMPLIFY the query while maintaining intent
 
 ## INSTRUCTIONS
-1. Analyze the error message
-2. Find and fix ALL issues in the query
-3. Ensure query remains focused on same data intent
-4. Verify all tables and columns exist in the schema
-5. Return ONLY the corrected SQL query with no explanations
+1. For syntax errors: Fix technical issues
+2. For empty results: Focus on broadening filters
+3. Ensure query still addresses the original intent
+4. Return ONLY the fixed SQL with no explanations
 
-RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE.
-DO NOT INCLUDE EXPLANATIONS OR MARKDOWN.`;
+RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE.`;
 }
 
 export function createChartPrompt({

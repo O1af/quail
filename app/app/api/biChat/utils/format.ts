@@ -3,9 +3,12 @@ import { Index, Column, Schema, Table } from "@/components/stores/table_store";
 import { Message } from "ai";
 
 export function formatDatabaseSchema(
-  databaseStructure: DatabaseStructure
+  databaseStructure: DatabaseStructure,
+  verbose = false
 ): string {
-  const schemaContext = `
+  // Concise version of schema header when not in verbose mode
+  const schemaContext = verbose
+    ? `
 DATABASE OVERVIEW
 ================
 This schema documentation is optimized for SQL query generation.
@@ -25,7 +28,8 @@ int: Whole numbers
 varchar/text: Text data
 timestamp: Date and time
 boolean: True/false values
-numeric: Decimal numbers\n\n`;
+numeric: Decimal numbers\n\n`
+    : `DATABASE SCHEMA\n==============\n\n`;
 
   const formattedSchema =
     schemaContext +
@@ -33,43 +37,67 @@ numeric: Decimal numbers\n\n`;
       .map((schema: Schema) => {
         const tableSummaries = schema.tables
           .map((table: Table) => {
-            // Track foreign key relationships
-            const relationships = table.columns
-              .filter((col) => col.isForeignKey)
-              .map(
-                (col) =>
-                  `RELATIONSHIP: ${table.name}.${col.name} -> ${col.referencedTable}.${col.referencedColumn}`
-              )
-              .join("\n");
+            // In concise mode, skip tracking relationships separately
+            const relationships = verbose
+              ? table.columns
+                  .filter((col) => col.isForeignKey)
+                  .map(
+                    (col) =>
+                      `RELATIONSHIP: ${table.name}.${col.name} -> ${col.referencedTable}.${col.referencedColumn}`
+                  )
+                  .join("\n")
+              : "";
 
+            // More concise column formatting
             const columns = table.columns
               .map((col: Column) => {
+                // Simplify constraints formatting
                 const constraints = [
                   col.isPrimary ? "PK" : "",
-                  col.isUnique ? "UQ" : "",
-                  col.isNullable === "NO" ? "NOT NULL" : "NULLABLE",
+                  col.isUnique && verbose ? "UQ" : "",
+                  col.isNullable === "NO"
+                    ? "NOT NULL"
+                    : verbose
+                    ? "NULLABLE"
+                    : "",
                   col.isForeignKey
                     ? `FK->${col.referencedTable}.${col.referencedColumn}`
                     : "",
-                  col.columnDefault ? `DEFAULT=${col.columnDefault}` : "",
+                  col.columnDefault && verbose
+                    ? `DEFAULT=${col.columnDefault}`
+                    : "",
                 ]
                   .filter(Boolean)
                   .join(", ");
 
-                return `- ${col.name}:\n  Type: ${col.dataType}\n  Constraints: ${constraints}`;
+                return verbose
+                  ? `- ${col.name}:\n  Type: ${col.dataType}\n  Constraints: ${constraints}`
+                  : `- ${col.name} (${col.dataType})${
+                      constraints ? ` [${constraints}]` : ""
+                    }`;
               })
               .join("\n");
 
-            const indexes = table.indexes
-              ?.filter((idx) => !idx.isPrimary)
-              .map(
-                (idx: Index) =>
-                  `- ${idx.isUnique ? "UNIQUE " : ""}${
-                    idx.name
-                  } ON (${idx.columns.join(",")})`
-              )
-              .join("\n");
+            // Simplify index information in concise mode
+            const indexes =
+              verbose && table.indexes?.length
+                ? table.indexes
+                    ?.filter((idx) => !idx.isPrimary)
+                    .map(
+                      (idx: Index) =>
+                        `- ${idx.isUnique ? "UNIQUE " : ""}${
+                          idx.name
+                        } ON (${idx.columns.join(",")})`
+                    )
+                    .join("\n")
+                : "";
 
+            // Create a more concise table representation when not in verbose mode
+            if (!verbose) {
+              return `TABLE: ${table.name}\n${columns}\n`;
+            }
+
+            // Use original verbose format
             return (
               `TABLE: ${table.name}\n` +
               `=`.repeat(table.name.length + 7) +
@@ -81,9 +109,13 @@ numeric: Decimal numbers\n\n`;
             );
           })
           .join("\n");
-        return `SCHEMA: ${schema.name}\n${"=".repeat(
-          schema.name.length + 8
-        )}\n\n${tableSummaries}`;
+
+        // Simpler schema header in concise mode
+        return verbose
+          ? `SCHEMA: ${schema.name}\n${"=".repeat(
+              schema.name.length + 8
+            )}\n\n${tableSummaries}`
+          : `SCHEMA: ${schema.name}\n${tableSummaries}`;
       })
       .join("\n\n");
   return formattedSchema;

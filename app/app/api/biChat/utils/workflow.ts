@@ -4,58 +4,17 @@ import { tryCatch } from "@/lib/trycatch";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { generateText } from "ai";
 
-/**
- * Workflow stages for the BI Chat agent
- */
-export enum WorkflowStage {
-  UNDERSTANDING_REQUEST = "understanding_request",
-  GENERATING_QUERY = "generating_query",
-  VALIDATING_QUERY = "validating_query",
-  EXECUTING_QUERY = "executing_query",
-  REFORMULATING_QUERY = "reformulating_query",
-  GENERATING_VISUALIZATION = "generating_visualization",
-  ANALYZING_RESULTS = "analyzing_results",
-  COMPLETED = "completed",
-  ERROR = "error",
-}
-
-/**
- * Update the data stream with the current workflow stage
- */
-export async function updateWorkflowStage(
+export async function updateStatus(
   stream: DataStreamWriter,
-  stage: WorkflowStage,
-  message: string,
+  status: string,
   data?: any
 ) {
   await stream.writeData({
-    status: stage,
-    message,
-    data: { step: getStepNumber(stage), ...data },
+    status,
+    data,
   });
 }
 
-/**
- * Map workflow stage to numeric step for progress tracking
- */
-function getStepNumber(stage: WorkflowStage): number {
-  const stepMap: Record<WorkflowStage, number> = {
-    [WorkflowStage.UNDERSTANDING_REQUEST]: 0,
-    [WorkflowStage.GENERATING_QUERY]: 1,
-    [WorkflowStage.VALIDATING_QUERY]: 1.5,
-    [WorkflowStage.EXECUTING_QUERY]: 2,
-    [WorkflowStage.REFORMULATING_QUERY]: 2.5,
-    [WorkflowStage.GENERATING_VISUALIZATION]: 3,
-    [WorkflowStage.ANALYZING_RESULTS]: 4,
-    [WorkflowStage.COMPLETED]: 5,
-    [WorkflowStage.ERROR]: -1,
-  };
-  return stepMap[stage];
-}
-
-/**
- * Execute query with error handling and possible reformulation
- */
 export async function executeQueryWithErrorHandling({
   query,
   connectionString,
@@ -79,11 +38,11 @@ export async function executeQueryWithErrorHandling({
 }) {
   let currentQuery = query;
   let attempts = 0;
+  let validationPromptUsed = null;
 
   while (attempts <= maxRetries) {
-    await updateWorkflowStage(
+    await updateStatus(
       stream,
-      WorkflowStage.EXECUTING_QUERY,
       attempts === 0
         ? "Executing database query..."
         : "Executing reformulated query...",
@@ -95,7 +54,7 @@ export async function executeQueryWithErrorHandling({
     );
 
     if (!error && data?.rows?.length > 0) {
-      return { data, query: currentQuery, success: true };
+      return { data, query: currentQuery, success: true, validationPromptUsed };
     }
 
     if (
@@ -105,18 +64,16 @@ export async function executeQueryWithErrorHandling({
       createQueryValidationPrompt &&
       dbSchema
     ) {
-      await updateWorkflowStage(
-        stream,
-        WorkflowStage.REFORMULATING_QUERY,
-        "Query failed. Attempting to fix issues...",
-        { error: error?.message || "No results returned" }
-      );
-
       const errorMessage = error
         ? `Error executing query: ${error.message}`
         : "Query executed but returned no results.";
 
       // Generate improved query based on error
+
+      await updateStatus(stream, "Query failed. Attempting to fix issues...", {
+        error: error?.message || "No results returned",
+      });
+
       const { data: improvedQueryData, error: reformError } = await tryCatch(
         generateText({
           model: provider(modelName),
@@ -139,7 +96,12 @@ export async function executeQueryWithErrorHandling({
     attempts++;
   }
 
-  return { data: null, query: currentQuery, success: false };
+  return {
+    data: null,
+    query: currentQuery,
+    success: false,
+    validationPromptUsed,
+  };
 }
 
 /**

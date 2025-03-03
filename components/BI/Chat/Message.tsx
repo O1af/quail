@@ -55,12 +55,6 @@ export function Message({ message }: MessageProps) {
     | undefined;
   const query = dataAgentResult?.query as string | undefined;
 
-  // Debug logging
-  if (parts) console.log("Message parts:", parts);
-  if (toolInvocations) console.log("Tool invocations:", toolInvocations);
-  if (dataAgentResult) console.log("Data agent result:", dataAgentResult);
-  if (visualization) console.log("Visualization config:", visualization);
-
   return (
     <motion.div
       className={cn(
