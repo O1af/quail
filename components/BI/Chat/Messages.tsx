@@ -20,7 +20,6 @@ interface MessagesProps {
 const StatusMessage = ({ status }: { status: any }) => {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
-  console.log("Status:", status);
 
   return (
     <motion.div

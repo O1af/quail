@@ -14,18 +14,27 @@ export function createSqlPrompt({
   dbType: string;
   databaseStructure: DatabaseStructure;
 }): string {
+  // Get only the most recent user message for clear focus
+  const latestUserMessage =
+    messages.filter((m) => m.role === "user").pop()?.content || "";
+
   // Use concise format (verbose=false) to reduce tokens
   return `Database Type: ${dbType}
 
 Schema:
 ${formatDatabaseSchema(databaseStructure, false)}
 
-Recent Conversation History:
-${formatConversationHistory(messages)}
+# CURRENT USER REQUEST
+"${latestUserMessage}"
 
-# TASK: Generate a visualization-ready SQL query that directly answers the user's request
+# CONTEXT (only reference if directly relevant to current request)
+${formatConversationHistory(messages, 3)} // Limit to last 3 exchanges
+
+# TASK: Generate a visualization-ready SQL query that directly answers ONLY the user's MOST RECENT request
 
 ## CRITICAL REQUIREMENTS:
+- PRIORITIZE the MOST RECENT user request above all else
+- IGNORE previous queries/context unless explicitly referenced in the latest request
 - ONLY use tables/columns that EXIST in the schema above
 - Use proper table qualification for all column references in JOINs
 - Apply filters ONLY based on user's explicit requirements
@@ -36,7 +45,7 @@ ${formatConversationHistory(messages)}
 ## QUERY STRUCTURE:
 - SELECT: Choose meaningful metrics (numeric) and dimensions (categorical) for visualization
 - JOIN: Use only when necessary with explicit ON conditions
-- WHERE: Only include filters directly related to user's request
+- WHERE: Only include filters directly related to user's CURRENT request
 - GROUP BY: Include for all non-aggregated columns
 - LIMIT: Include appropriate limit based on visualization needs (typically 10-20 rows)
 
@@ -56,8 +65,10 @@ ${formatConversationHistory(messages)}
 - Verify all column references are from tables in FROM/JOIN clauses
 - Avoid overly specific filters that might return no data
 - Double check table/column names against the schema
+- ENSURE your query relates ONLY to the CURRENT request
 
-RETURN ONLY THE SQL QUERY - NO EXPLANATION OR MARKDOWN`;
+IMPORTANT: DO NOT FORMAT YOUR RESPONSE AS MARKDOWN. DO NOT USE BACKTICKS, CODE BLOCKS OR ANY MARKDOWN SYNTAX.
+RETURN ONLY THE RAW SQL QUERY WITHOUT ANY FORMATTING OR EXPLANATIONS.`;
 }
 
 // New function for query validation and reformulation
@@ -110,7 +121,7 @@ ${errorMessage}
 3. Ensure query still addresses the original intent
 4. Return ONLY the fixed SQL with no explanations
 
-RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE.`;
+RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE,NO MARKDOWN.`;
 }
 
 export function createChartPrompt({
@@ -141,9 +152,31 @@ ${data.rows.length} rows
 ## COLUMN DETAILS
 ${data.types.map((type) => `- ${type.colName}: ${type.jsType}`).join("\n")}
 
-## LABEL GENERATION
-- Choose a column with categorical data for labels
-- If no categorical column, use the first column as labels
+## COLUMN MAPPING REQUIREMENTS
+- Label column: Identify the most appropriate column for axis labels
+  - Specify labelType based on SQL data type:
+    - "numeric" for INT, FLOAT, DECIMAL, etc.
+    - "string" for VARCHAR, TEXT, CHAR, etc.
+    - "date" for DATE columns
+    - "datetime" for TIMESTAMP columns
+    - "boolean" for BOOLEAN columns
+    - "categorical" for values representing distinct categories
+    - "other" for other data types
+    
+- Value columns: For each metric to display:
+  - Specify column name exactly as it appears in query results
+  - Provide a descriptive display label
+  - Indicate column type using the same mapping above
+  - Optionally provide a specific color
+  - Specify format based on the data:
+    - "percentage" for decimal values representing percentages
+    - "currency" for monetary values
+    - "integer" for whole numbers
+    - "decimal" for numbers with decimal places
+    - "date" for date formatting
+    - "datetime" for timestamp formatting
+    - "string" for text values
+    - "default" if no special formatting needed
 
 ## CHART SELECTION DECISION TREE
 - Time-based data + trend analysis → Line chart
@@ -152,24 +185,20 @@ ${data.types.map((type) => `- ${type.colName}: ${type.jsType}`).join("\n")}
 - Composition/percentage data (≤ 7 segments) → Pie/Doughnut chart
 - Correlation between two variables → Scatter chart
 - Multiple metrics across categories → Radar chart
-- Single metric with target → Gauge chart
+
+## PIE/DOUGHNUT CHART SPECIAL REQUIREMENTS
+- For pie/doughnut charts, select ONE numeric value column only
+- Choose categorical column for labels
+- Ensure data is suitable for part-to-whole visualization
+- Don't use pie charts for time series or data with negative values
 
 ## CONFIGURATION REQUIREMENTS
 - Title: Concise description answering user's question
-- Axes: Clear labels describing the data measurements
-- Colors: Use contrasting colors for categories
+- Axes: Clear labels describing the data measurements (not for pie/doughnut)
 - Layout: Optimize for readability (responsive: true)
 - Legend: Position for minimal overlap with data
-- Tooltips: Show all relevant data points
 
-## DATA TRANSFORMATIONS
-- Numeric: Format large numbers for readability
-- Dates: Format as human-readable strings
-- Percentages: Show with % symbol
-- Currency: Use appropriate symbols
-- Nulls: Handle gracefully with fallbacks
-
-RETURN ONLY A VALID CHART.JS CONFIGURATION OBJECT`;
+RETURN ONLY A VALID CHART.JS CONFIGURATION OBJECT MATCHING THE ENHANCED SCHEMA`;
 }
 
 export function createSystemPrompt(

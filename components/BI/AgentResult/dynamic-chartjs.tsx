@@ -12,6 +12,7 @@ import {
   Title,
   Tooltip,
   Legend,
+  Colors,
 } from "chart.js";
 import {
   Line,
@@ -34,7 +35,8 @@ ChartJS.register(
   RadialLinearScale,
   Title,
   Tooltip,
-  Legend
+  Legend,
+  Colors // Register the Colors plugin
 );
 
 // Map chart types to their components
