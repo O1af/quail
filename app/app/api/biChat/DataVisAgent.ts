@@ -11,7 +11,7 @@ import { tryCatch } from "@/lib/trycatch";
 import { executeQueryWithErrorHandling, updateStatus } from "./utils/workflow";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 
-interface DataAgentParams {
+interface DataVisAgentParams {
   userTier: string;
   supabase: any;
   messages: Message[];
@@ -22,7 +22,7 @@ interface DataAgentParams {
   stream: DataStreamWriter;
 }
 
-export const DataAgentTool = (params: DataAgentParams) =>
+export const DataVisAgentTool = (params: DataVisAgentParams) =>
   tool({
     description: "A data agent tool that can query and visualize data.",
     parameters: z.object({}),
@@ -141,7 +141,7 @@ export const DataAgentTool = (params: DataAgentParams) =>
 
       if (vizError || !chartJsxData) {
         console.error(
-          "DataAgentTool: Visualization JSX generation error:",
+          "DataVisAgentTool: Visualization JSX generation error:",
           vizError
         );
         await updateStatus(

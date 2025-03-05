@@ -40,6 +40,10 @@ ${formatConversationHistory(messages, 10, false)}
 - LIMIT: Include appropriate limit based on visualization needs (typically 10-20 rows)
 
 ## OPTIMIZATION FOR VISUALIZATION:
+- If user requests a PIE CHART: Select 1 categorical column and 1 numeric measure, limit to 5-7 categories
+- If user requests a BAR CHART: Select 1-2 categorical columns and 1-3 numeric measures
+- If user requests a LINE CHART: Select 1 time-based column and 1-3 numeric measures with proper time ordering
+- If user requests a SCATTER PLOT: Select exactly 2 numeric measures for correlation analysis
 - Balance 1-2 categorical columns (x-axis/grouping) with 1-3 metrics (y-axis)
 - For time series: Use appropriate date functions (${
     dbType === "postgres"
@@ -55,6 +59,7 @@ ${formatConversationHistory(messages, 10, false)}
 - Verify all column references are from tables in FROM/JOIN clauses
 - Avoid overly specific filters that might return no data
 - Double check table/column names against the schema
+- Ensure numeric columns are used for metrics and categorical for dimensions
 
 IMPORTANT: DO NOT FORMAT YOUR RESPONSE AS MARKDOWN. DO NOT USE BACKTICKS, CODE BLOCKS OR ANY MARKDOWN SYNTAX.
 RETURN ONLY THE RAW SQL QUERY WITHOUT ANY FORMATTING OR EXPLANATIONS.`;
@@ -96,6 +101,7 @@ ${errorMessage}
 - Tables referenced not in schema
 - UNNECESSARY TIME FILTERS when user didn't specify a time period
 - OVERLY RESTRICTIVE conditions returning no data
+- Invalid SQL syntax specific to ${dbType}
 
 ## FIX PRIORITY
 1. REMOVE unnecessary time filters if not requested by user
@@ -110,7 +116,7 @@ ${errorMessage}
 3. Ensure query still addresses the original intent
 4. Return ONLY the fixed SQL with no explanations
 
-RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE,NO MARKDOWN.`;
+RETURN JUST THE FIXED SQL QUERY, NOTHING ELSE, NO MARKDOWN.`;
 }
 
 export function createChartPrompt({
@@ -155,6 +161,13 @@ ${data.types.map((type) => `- ${type.colName}: ${type.jsType}`).join("\n")}
 - Composition/percentage data (≤ 7 segments) → <Pie /> or <Doughnut />
 - Correlation between two variables → <Scatter />
 - Multiple metrics across categories → <Radar />
+- IMPORTANT: If user explicitly requested a specific chart type (Pie, Bar, Line, etc.), use that type unless the data is completely incompatible
+
+## DATA COMPATIBILITY REQUIREMENTS
+- Pie/Doughnut: Need exactly ONE categorical column and ONE numeric column
+- Bar: Need ONE categorical column and at least ONE numeric column  
+- Line: Need ONE time/ordinal column for x-axis and ONE+ numeric columns
+- Scatter: Need TWO numeric columns (x and y)
 
 ## YOUR TASK
 Generate a SINGLE JSX element that creates the most appropriate chart for the data.
@@ -203,19 +216,25 @@ export function createSystemPrompt(
 ${formatDatabaseSchema(databaseStructure, false)}
 
 # RESPONSE TYPES
-1. DIRECT ANSWERS - Answer without using the dataAgent when:
+1. DIRECT ANSWERS - Answer without using the DataVisAgent when:
    - User asks about general data concepts, terminology, or best practices
    - User needs explanation of previous results or visualizations
    - User asks about database structure, schema, or available tables
    - User needs help interpreting data they've already seen
    - User asks follow-up questions about insights you've already provided
+   - User asks "what is", "how does", "explain", "describe", or other conceptual questions
 
-2. DATA AGENT RESPONSES - Use the dataAgent tool when:
-   - User requests visualizations ("show me", "graph", "chart", "plot", "visualize")
+2. DATA AGENT RESPONSES - Use the DataVisAgent tool when:
+   - User requests data extraction or calculation ("show me", "find", "get", "query", "list")
+   - User requests visualizations ("chart", "graph", "plot", "visualize")
    - User asks for specific metrics or calculations that require actual data ("how many", "what's the average", "calculate")
    - User wants to analyze trends or patterns over time ("over time", "trend", "growth")
    - User needs comparisons between different categories in the data
    - User wants to identify outliers or anomalies in the data
+   - User explicitly requests a specific chart type (e.g., "pie chart", "bar chart")
+   - User wants to modify or change an existing chart or visualization ("change the chart", "update the graph", "edit the visualization")
+   - User requests different formatting or display options for the current visualization ("make it a line chart", "switch to bar chart", "show as percentage")
+   - User asks to add, remove, or filter data in the current visualization
 
 # DIRECT ANSWER GUIDELINES
 - Explain data concepts clearly and concisely
@@ -224,18 +243,94 @@ ${formatDatabaseSchema(databaseStructure, false)}
 - Help users understand what questions would be valuable to ask about their data
 - Suggest potential visualizations they might want to explore
 
-# WHEN USING DATAAGENT TOOL
+# WHEN USING DataVisAgent TOOL
 1. First, craft a clear description of the user's data request 
-2. Pass this description to the dataAgent with just the essential request details
+2. Pass this description to the DataVisAgent with just the essential request details
 3. When returning results:
    - Explain key insights from the visualization (2-3 bullet points)
    - Connect findings back to the user's original question
    - Suggest potential follow-up analyses if relevant
 
+# CHART SELECTION
+- Honor explicit user requests for specific chart types
+- If user says "pie chart", "bar chart", etc., use that exact chart type if the data supports it
+- If requested chart type is completely incompatible with data, explain why and suggest alternative
+
 # ERROR HANDLING
 - If schema doesn't contain tables needed to answer the query, politely explain and suggest alternatives
-- If user request is ambiguous, ask for clarification before using dataAgent
+- If user request is ambiguous, ask for clarification before using DataVisAgent
 - If data is insufficient for requested analysis, explain limitations
 
-Remember: Only use the dataAgent tool when the user's request specifically requires data visualization or quantitative analysis. Answer all conceptual, explanatory, and interpretative questions directly.`;
+# REFERENCING PREVIOUS DATA
+- When user asks about data, charts, or previous queries, always look for the most recent DataVisAgent tool call results
+- Reference the query, data, and chartJsx from the DataVisAgent tool's response when explaining or interpreting results
+- Use this information to provide accurate and contextual explanations about the data
+
+Remember: Only use the DataVisAgent tool when the user's request specifically requires data extraction, visualization or quantitative analysis. Answer all conceptual, explanatory, and interpretative questions directly.`;
+}
+
+export function createAgentPrompt({
+  messages,
+  dbType,
+  databaseStructure,
+}: {
+  messages: Message[];
+  dbType: string;
+  databaseStructure: DatabaseStructure;
+}): string {
+  return `# DATA ANALYSIS ASSISTANT
+
+## CONVERSATION CONTEXT + DATA
+${formatConversationHistory(messages, 15, true)}
+
+## DATABASE INFORMATION
+Database Type: ${dbType}
+Schema:
+${formatDatabaseSchema(databaseStructure, false)}
+
+## QUERY INTERPRETATION GUIDELINES
+
+### CLEAR REQUESTS - Proceed with data analysis when:
+- User explicitly asks for a specific chart type: "create a bar chart of X"
+- User clearly requests data: "show me", "find", "get", "query", "list"
+- User asks for metrics: "how many", "what's the average", "calculate"
+- User wants to analyze trends: "over time", "trend", "growth"
+
+### AMBIGUOUS REQUESTS - Ask for clarification when:
+- User's request lacks specific metrics or dimensions ("add more data points")
+- User uses vague terms ("weird things", "interesting patterns", "anomalies")
+- User asks to modify a chart without specifying how ("make it better")
+- User's request contradicts available data structure
+- User refers to metrics or dimensions not available in the schema
+
+### HANDLING FOLLOW-UP REQUESTS
+- Connect new requests to previous context and visualizations
+- If user refers to "more" or "additional" without specifics, ask what aspect they want to expand:
+  * More categories/dimensions? (e.g., additional product categories)
+  * More metrics? (e.g., adding profit alongside revenue)
+  * More time periods? (e.g., extending the date range)
+  * More granular data? (e.g., breaking weekly data into daily)
+
+### ANOMALY DETECTION REQUESTS
+When users ask about "weird", "unusual", or "anomalies":
+1. CLARIFY if not specific: "Would you like me to look for outliers, unexpected patterns, or inconsistencies in a particular area?"
+2. SUGGEST specific anomaly checks:
+   - Outlier values (extremely high/low)
+   - Unexpected null values or gaps
+   - Unusual relationships between variables
+   - Seasonal patterns or trend breaks
+   - Statistical anomalies (values > 2 standard deviations)
+
+## YOUR TASK
+
+1. INTERPRET the user's request based on full conversation context
+2. For CLEAR REQUESTS: Use the DataVisAgent tool to directly answer with data
+3. For AMBIGUOUS REQUESTS: Ask a clarifying question with 2-3 specific options
+4. For ANOMALY DETECTION: Offer specific anomaly detection approaches
+5. When generating SQL:
+   - Focus on exactly what the user is asking for
+   - Consider previous queries for context
+   - Use appropriate visualization-ready data structures
+
+Remember: Users prefer clear, direct responses. Always explain your reasoning briefly when asking for clarification.`;
 }

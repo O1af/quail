@@ -15,7 +15,7 @@ import { BarChart3, Database, Code } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 import { useEffect, useState } from "react";
-interface DataAgentResultProps {
+interface DataVisAgentResultProps {
   chartJsx?: string;
   data?: PostgresResponse;
   query?: string;
@@ -29,11 +29,11 @@ function EmptyState({ message }: { message: string }) {
   );
 }
 
-export function DataAgentResult({
+export function DataVisAgentResult({
   chartJsx,
   data,
   query,
-}: DataAgentResultProps) {
+}: DataVisAgentResultProps) {
   if (!chartJsx && !data && !query) return null;
   const postgresData = data as PostgresResponse;
 

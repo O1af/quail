@@ -8,10 +8,11 @@ import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
 import { saveChat, deleteChat } from "@/components/stores/chat_store";
 import { generateTitleFromUserMessage } from "./utils/title";
-import { DataAgentTool } from "./agent";
+import { DataVisAgentTool } from "./DataVisAgent";
 import { tryCatch } from "@/lib/trycatch";
-import { createSystemPrompt } from "./utils/prompts";
+import { createSystemPrompt, createAgentPrompt } from "./utils/prompts";
 import { updateStatus } from "./utils/workflow";
+import { optimizeMessages } from "./utils/format";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -81,6 +82,8 @@ export async function POST(req: Request) {
       await updateStatus(dataStream, "Understanding your request...", {
         messageCount: messages.length,
       });
+      console.log("Messages:", messages);
+      console.log("optimizeMessages:", optimizeMessages(messages));
 
       const { data: title, error: titleError } =
         messages.length === 1
@@ -91,12 +94,19 @@ export async function POST(req: Request) {
 
       const stream = streamText({
         model: azure("gpt-4o"),
-        system: createSystemPrompt(dbType, databaseStructure),
-        messages,
+        // Use agent prompt instead of system message for more contextual guidance
+        prompt: createAgentPrompt({
+          messages: optimizeMessages(messages),
+          dbType,
+          databaseStructure,
+        }),
+        // System message now provides identity and general behavior
+        system:
+          "You are an expert data analyst AI assistant. Answer questions concisely and accurately. For data requests, use the DataVisAgent tool.",
         experimental_transform: smoothStream({ chunking: "word" }),
         maxTokens: 1000,
         tools: {
-          dataAgent: DataAgentTool({
+          DataVisAgent: DataVisAgentTool({
             userTier,
             supabase: await createClient(),
             messages,

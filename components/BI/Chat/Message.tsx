@@ -6,7 +6,7 @@ import { AvatarImage, Avatar } from "@/components/ui/avatar";
 import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Markdown } from "@/components/Dev/ChatBot/markdown";
-import { DataAgentResult } from "../AgentResult/DataAgentResult";
+import { DataVisAgentResult } from "../AgentResult/DataVisAgentResult";
 
 export interface MessageProps {
   message: AIMessage;
@@ -35,14 +35,14 @@ export function Message({ message }: MessageProps) {
     )
     .map((part) => part.toolInvocation);
 
-  // Find completed dataAgent result with proper typing
-  const dataAgentResult = toolInvocations?.find(
+  // Find completed DataVisAgent result with proper typing
+  const LastResult = toolInvocations?.find(
     (tool): tool is ToolInvocation & { state: "result"; result: any } =>
-      tool.state === "result" && tool.toolName === "dataAgent"
+      tool.state === "result" && tool.toolName === "DataVisAgent"
   )?.result;
 
-  const chartJsx = dataAgentResult?.chartJsx as string;
-  const query = dataAgentResult?.query as string | undefined;
+  const chartJsx = LastResult?.chartJsx as string;
+  const query = LastResult?.query as string | undefined;
 
   return (
     <motion.div
@@ -72,10 +72,10 @@ export function Message({ message }: MessageProps) {
             message.role === "user" ? "items-end" : "items-start"
           )}
         >
-          {(chartJsx || dataAgentResult?.data || query) && (
-            <DataAgentResult
+          {(chartJsx || LastResult?.data || query) && (
+            <DataVisAgentResult
               chartJsx={chartJsx}
-              data={dataAgentResult?.data}
+              data={LastResult?.data}
               query={query}
             />
           )}

@@ -129,7 +129,7 @@ function formatMessage(message: Message): string {
       .map((part) => {
         if (
           part.type === "tool-invocation" &&
-          part.toolInvocation?.toolName === "dataAgent"
+          part.toolInvocation?.toolName === "DataVisAgent"
         ) {
           // Create a copy to avoid modifying the original
           const processedPart = JSON.parse(JSON.stringify(part));
@@ -160,9 +160,8 @@ export function formatConversationHistory(
   const recentMessages = optimizeMessages(messages.slice(-num), includeRecent);
 
   const formattedMessages = recentMessages.map((msg) => {
-    const role = msg.role.toUpperCase();
     const formattedContent = formatMessage(msg);
-    return `${role}: ${formattedContent}`;
+    return formattedContent;
   });
 
   return formattedMessages.join("\n\n");
@@ -172,7 +171,7 @@ export function optimizeMessages(
   messages: Message[],
   includeRecent = true
 ): Message[] {
-  // Find the index of the most recent message with a dataAgent tool part
+  // Find the index of the most recent message with a DataVisAgent tool part
   const lastToolCallIndex = messages
     .slice()
     .reverse()
@@ -183,7 +182,7 @@ export function optimizeMessages(
         message.parts.some(
           (part) =>
             part.type === "tool-invocation" &&
-            part.toolInvocation?.toolName === "dataAgent"
+            part.toolInvocation?.toolName === "DataVisAgent"
         )
     );
 
@@ -208,12 +207,12 @@ export function optimizeMessages(
 
       // Process the parts array
       const processedParts = message.parts.map((part) => {
-        // Only modify dataAgent tool parts
+        // Only modify DataVisAgent tool parts
         if (
           part.type === "tool-invocation" &&
-          part.toolInvocation?.toolName === "dataAgent"
+          part.toolInvocation?.toolName === "DataVisAgent"
         ) {
-          // Is this from the most recent dataAgent message?
+          // Is this from the most recent DataVisAgent message?
           const isLatestToolMessage = index === mostRecentToolCallMessageIndex;
 
           // Only keep the full data for the most recent tool call if includeRecent is true
