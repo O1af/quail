@@ -1,4 +1,4 @@
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
 import { cn } from "@/lib/utils";
 import { Messages } from "./Messages";
 import { Input } from "./Input";
@@ -11,6 +11,7 @@ import { Welcome } from "./Welcome";
 import { useInitializeChat } from "@/hooks/useInitializeChat";
 import { loadChat } from "@/components/stores/chat_store";
 import { useDbStore } from "@/components/stores/db_store";
+import { optimizeMessages } from "@/app/app/api/biChat/utils/format";
 import { useDatabaseStructure } from "@/components/stores/table_store";
 
 interface ChatProps {
@@ -46,6 +47,7 @@ export default function Chat({ className, id }: ChatProps) {
     sendExtraMessageFields: true,
     experimental_prepareRequestBody: (body) => ({
       ...body,
+      messages: optimizeMessages(body.messages),
       dbType: currentDB?.type || "postgres",
       connectionString: currentDB?.connectionString,
       databaseStructure,

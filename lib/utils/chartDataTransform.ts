@@ -75,7 +75,6 @@ export function transformData(
       borderWidth: 1,
     };
   });
-  console.log("Transformed data:", { labels, datasets });
 
   return { labels, datasets };
 }

@@ -121,51 +121,127 @@ numeric: Decimal numbers\n\n`
   return formattedSchema;
 }
 
-function formatContent(content: string | Array<any>): string {
-  if (typeof content === "string") {
-    return content;
+function formatMessage(message: Message): string {
+  const role = message.role.toUpperCase();
+  // Handle parts array
+  if (Array.isArray(message.parts)) {
+    const formattedParts = message.parts
+      .map((part) => {
+        if (
+          part.type === "tool-invocation" &&
+          part.toolInvocation?.toolName === "dataAgent"
+        ) {
+          // Create a copy to avoid modifying the original
+          const processedPart = JSON.parse(JSON.stringify(part));
+          if (
+            processedPart.toolInvocation.state === "result" &&
+            processedPart.toolInvocation.result?.data
+          ) {
+            processedPart.toolInvocation.result.data = "[data]";
+          }
+          return JSON.stringify(processedPart);
+        }
+        return typeof part === "string" ? part : JSON.stringify(part);
+      })
+      .join("\n");
+
+    return `${role}: ${formattedParts}`;
   }
 
-  return content
-    .map((part) => {
-      switch (part.type) {
-        case "text":
-          return part.text;
-        case "tool-call":
-          return `[Tool Call: ${part.toolName}(${JSON.stringify(part.args)})]`;
-        case "tool-result":
-          // Extract only query and visualization config from tool results
-          if (typeof part.result === "object" && part.result !== null) {
-            const { query, visualization } = part.result;
-            const formattedResult = {
-              ...(query && { query }),
-              ...(visualization && { visualization }),
-            };
-            return `[Tool Result${part.isError ? " (Error)" : ""}: ${
-              part.toolName
-            } → ${JSON.stringify(formattedResult, null, 2)}]`;
-          }
-          return `[Tool Result${part.isError ? " (Error)" : ""}: ${
-            part.toolName
-          } → ${String(part.result)}]`;
-        default:
-          return "";
-      }
-    })
-    .join("\n");
+  // Fallback for other content formats
+  return `${role}: ${JSON.stringify(message.content)}`;
 }
 
 export function formatConversationHistory(
   messages: Message[],
-  num = 10
+  num = 10,
+  includeRecent = true
 ): string {
-  const recentMessages = messages.slice(-num);
+  const recentMessages = optimizeMessages(messages.slice(-num), includeRecent);
 
   const formattedMessages = recentMessages.map((msg) => {
     const role = msg.role.toUpperCase();
-    const formattedContent = formatContent(msg.content);
+    const formattedContent = formatMessage(msg);
     return `${role}: ${formattedContent}`;
   });
 
   return formattedMessages.join("\n\n");
+}
+
+export function optimizeMessages(
+  messages: Message[],
+  includeRecent = true
+): Message[] {
+  // Find the index of the most recent message with a dataAgent tool part
+  const lastToolCallIndex = messages
+    .slice()
+    .reverse()
+    .findIndex(
+      (message) =>
+        message.role === "assistant" &&
+        Array.isArray(message.parts) &&
+        message.parts.some(
+          (part) =>
+            part.type === "tool-invocation" &&
+            part.toolInvocation?.toolName === "dataAgent"
+        )
+    );
+
+  const mostRecentToolCallMessageIndex =
+    lastToolCallIndex === -1 ? -1 : messages.length - 1 - lastToolCallIndex;
+
+  return messages.map((message, index) => {
+    // Always keep user messages unchanged
+    if (message.role === "user") {
+      return message;
+    }
+
+    // For assistant messages
+    if (message.role === "assistant") {
+      // Clone the message without toolInvocations
+      const { toolInvocations, ...strippedMessage } = message;
+
+      // If no parts array or not the kind we're processing, just return without toolInvocations
+      if (!Array.isArray(message.parts)) {
+        return strippedMessage;
+      }
+
+      // Process the parts array
+      const processedParts = message.parts.map((part) => {
+        // Only modify dataAgent tool parts
+        if (
+          part.type === "tool-invocation" &&
+          part.toolInvocation?.toolName === "dataAgent"
+        ) {
+          // Is this from the most recent dataAgent message?
+          const isLatestToolMessage = index === mostRecentToolCallMessageIndex;
+
+          // Only keep the full data for the most recent tool call if includeRecent is true
+          if (
+            (!isLatestToolMessage || !includeRecent) &&
+            part.toolInvocation.state === "result"
+          ) {
+            // Deep clone the part to avoid modifying the original
+            const clonedPart = JSON.parse(JSON.stringify(part));
+            // Replace the data field with placeholder
+            clonedPart.toolInvocation.result.data =
+              "[data removed to save tokens]";
+            return clonedPart;
+          }
+        }
+        // Return other parts unchanged
+        return part;
+      });
+
+      // Return message with processed parts but without toolInvocations
+      return {
+        ...strippedMessage,
+        parts: processedParts,
+      };
+    }
+
+    // Default case - return the message without toolInvocations
+    const { toolInvocations, ...rest } = message;
+    return rest;
+  });
 }

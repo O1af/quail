@@ -14,27 +14,17 @@ export function createSqlPrompt({
   dbType: string;
   databaseStructure: DatabaseStructure;
 }): string {
-  // Get only the most recent user message for clear focus
-  const latestUserMessage =
-    messages.filter((m) => m.role === "user").pop()?.content || "";
-
-  // Use concise format (verbose=false) to reduce tokens
   return `Database Type: ${dbType}
 
 Schema:
 ${formatDatabaseSchema(databaseStructure, false)}
 
-# CURRENT USER REQUEST
-"${latestUserMessage}"
+# CONVERSATION HISTORY
+${formatConversationHistory(messages, 10, false)}
 
-# CONTEXT (only reference if directly relevant to current request)
-${formatConversationHistory(messages, 3)} // Limit to last 3 exchanges
-
-# TASK: Generate a visualization-ready SQL query that directly answers ONLY the user's MOST RECENT request
+# TASK: Generate a visualization-ready SQL query that directly answers the user's request
 
 ## CRITICAL REQUIREMENTS:
-- PRIORITIZE the MOST RECENT user request above all else
-- IGNORE previous queries/context unless explicitly referenced in the latest request
 - ONLY use tables/columns that EXIST in the schema above
 - Use proper table qualification for all column references in JOINs
 - Apply filters ONLY based on user's explicit requirements
@@ -45,7 +35,7 @@ ${formatConversationHistory(messages, 3)} // Limit to last 3 exchanges
 ## QUERY STRUCTURE:
 - SELECT: Choose meaningful metrics (numeric) and dimensions (categorical) for visualization
 - JOIN: Use only when necessary with explicit ON conditions
-- WHERE: Only include filters directly related to user's CURRENT request
+- WHERE: Only include filters directly related to user's request
 - GROUP BY: Include for all non-aggregated columns
 - LIMIT: Include appropriate limit based on visualization needs (typically 10-20 rows)
 
@@ -65,7 +55,6 @@ ${formatConversationHistory(messages, 3)} // Limit to last 3 exchanges
 - Verify all column references are from tables in FROM/JOIN clauses
 - Avoid overly specific filters that might return no data
 - Double check table/column names against the schema
-- ENSURE your query relates ONLY to the CURRENT request
 
 IMPORTANT: DO NOT FORMAT YOUR RESPONSE AS MARKDOWN. DO NOT USE BACKTICKS, CODE BLOCKS OR ANY MARKDOWN SYNTAX.
 RETURN ONLY THE RAW SQL QUERY WITHOUT ANY FORMATTING OR EXPLANATIONS.`;
@@ -139,7 +128,7 @@ export function createChartPrompt({
 # TASK: Generate JSX code that renders a Chart.js visualization for the data
 
 ## USER INTENT
-${formatConversationHistory(messages, 3)}
+${formatConversationHistory(messages, 5)}
 
 ## QUERY EXECUTED
 \`\`\`sql
@@ -206,32 +195,47 @@ RETURN ONLY THE JSX CODE, NOTHING ELSE. DONT return any markdown`;
 
 export function createSystemPrompt(
   dbType: string,
-  messages: Message[]
+  databaseStructure: DatabaseStructure
 ): string {
-  return `You are an expert data analyst specializing in ${dbType} databases who helps users understand their data through visualizations and insights.
+  return `You are an expert data analyst specializing in ${dbType} databases who helps users understand their data through explanations, insights, visualizations, and analysis.
 
-# WORKFLOW DECISION TREE
-1. User asks question about DATA VISUALIZATION or ANALYSIS → Use dataAgent immediately
-2. User asks for SQL QUERY or mentions DATABASE → Use dataAgent immediately
-3. User asks FOLLOW-UP about previous visualization → Use dataAgent with reference to prior context
-4. User wants CONCEPTUAL explanation about data/charts → Answer directly WITHOUT dataAgent
-5. User has GENERAL question not about their data → Answer directly WITHOUT dataAgent
+# DATABASE SCHEMA
+${formatDatabaseSchema(databaseStructure, false)}
+
+# RESPONSE TYPES
+1. DIRECT ANSWERS - Answer without using the dataAgent when:
+   - User asks about general data concepts, terminology, or best practices
+   - User needs explanation of previous results or visualizations
+   - User asks about database structure, schema, or available tables
+   - User needs help interpreting data they've already seen
+   - User asks follow-up questions about insights you've already provided
+
+2. DATA AGENT RESPONSES - Use the dataAgent tool when:
+   - User requests visualizations ("show me", "graph", "chart", "plot", "visualize")
+   - User asks for specific metrics or calculations that require actual data ("how many", "what's the average", "calculate")
+   - User wants to analyze trends or patterns over time ("over time", "trend", "growth")
+   - User needs comparisons between different categories in the data
+   - User wants to identify outliers or anomalies in the data
+
+# DIRECT ANSWER GUIDELINES
+- Explain data concepts clearly and concisely
+- Reference tables and columns from the schema when discussing data structure
+- Provide best practices for analysis when relevant
+- Help users understand what questions would be valuable to ask about their data
+- Suggest potential visualizations they might want to explore
 
 # WHEN USING DATAAGENT TOOL
-- ALWAYS use for questions that need actual data to answer
-- NEVER use for conceptual questions that don't require querying a database
-- If user request is ambiguous, ask a SINGLE clarifying question before proceeding
+1. First, craft a clear description of the user's data request 
+2. Pass this description to the dataAgent with just the essential request details
+3. When returning results:
+   - Explain key insights from the visualization (2-3 bullet points)
+   - Connect findings back to the user's original question
+   - Suggest potential follow-up analyses if relevant
 
-# AFTER VISUALIZATION IS GENERATED
-1. Point out 2-3 SPECIFIC insights from the data (trends, outliers, patterns)
-2. Explain what the visualization reveals about the user's question
-3. Suggest follow-up analysis if appropriate
+# ERROR HANDLING
+- If schema doesn't contain tables needed to answer the query, politely explain and suggest alternatives
+- If user request is ambiguous, ask for clarification before using dataAgent
+- If data is insufficient for requested analysis, explain limitations
 
-# RESPONSE STRUCTURE
-- Keep explanations concise (3-5 sentences maximum)
-- Use bullet points for multiple insights
-- Refer to specific data points by their values
-- Don't repeat SQL syntax details unless asked
-
-Remember: Your primary goal is to help users understand their data, not to explain how SQL or databases work.`;
+Remember: Only use the dataAgent tool when the user's request specifically requires data visualization or quantitative analysis. Answer all conceptual, explanatory, and interpretative questions directly.`;
 }

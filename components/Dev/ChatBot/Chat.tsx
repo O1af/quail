@@ -1,6 +1,6 @@
 "use client";
 
-import { useChat } from "ai/react";
+import { useChat } from "@ai-sdk/react";
 import { Messages } from "./Messages";
 import ExampleMessages from "./example-messages";
 import { MultimodalInput } from "./multimodal-input";
@@ -8,7 +8,6 @@ import { useDatabaseStructure } from "@/components/stores/table_store";
 import { useEffect } from "react";
 import { useDbStore } from "@/components/stores/db_store";
 import { useEditorStore } from "@/components/stores/editor_store";
-
 export const maxDuration = 30;
 
 export default function Chat() {

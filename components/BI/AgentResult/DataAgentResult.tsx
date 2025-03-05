@@ -78,7 +78,7 @@ export function DataAgentResult({
             value="data"
             className="absolute inset-0 data-[state=inactive]:hidden p-6"
           >
-            {data && data.rows.length > 0 ? (
+            {data && data.rows && data.rows.length > 0 ? (
               <div className="h-full flex flex-col">
                 <ScrollArea className="flex-1 border rounded-md">
                   <Table>

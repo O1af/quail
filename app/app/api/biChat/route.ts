@@ -91,7 +91,7 @@ export async function POST(req: Request) {
 
       const stream = streamText({
         model: azure("gpt-4o"),
-        system: createSystemPrompt(dbType, messages),
+        system: createSystemPrompt(dbType, databaseStructure),
         messages,
         experimental_transform: smoothStream({ chunking: "word" }),
         maxTokens: 1000,

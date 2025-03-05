@@ -39,12 +39,13 @@ export const DataAgentTool = (params: DataAgentParams) =>
 
       const modelName = getModelName(userTier);
 
-      // Step 1: Generate SQL query
+      // Step 1: Generate SQL query using the full conversation context
       const sqlPrompt = createSqlPrompt({
         messages,
         dbType,
         databaseStructure: dbSchema,
       });
+      console.log("SQL Prompt:", sqlPrompt);
 
       await updateStatus(stream, "Crafting SQL query...", {
         step: 1,
