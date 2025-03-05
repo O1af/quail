@@ -1,8 +1,7 @@
 "use client";
 
-import { ChartConfiguration } from "@/lib/types/BI/chartjsTypes";
-import { DynamicChart } from "./dynamic-chartjs";
-import { Card, CardContent } from "@/components/ui/card";
+import { DynamicChartRenderer } from "./DynamicChartRenderer";
+import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
   Table,
@@ -14,10 +13,11 @@ import {
 } from "@/components/ui/table";
 import { BarChart3, Database, Code } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
-
+import { PostgresResponse } from "@/lib/types/DBQueryTypes";
+import { useEffect, useState } from "react";
 interface DataAgentResultProps {
-  visualization?: ChartConfiguration;
-  data?: any[];
+  chartJsx?: string;
+  data?: PostgresResponse;
   query?: string;
 }
 
@@ -30,11 +30,12 @@ function EmptyState({ message }: { message: string }) {
 }
 
 export function DataAgentResult({
-  visualization,
+  chartJsx,
   data,
   query,
 }: DataAgentResultProps) {
-  if (!visualization && !data && !query) return null;
+  if (!chartJsx && !data && !query) return null;
+  const postgresData = data as PostgresResponse;
 
   return (
     <Card className="w-[700px]">
@@ -60,10 +61,11 @@ export function DataAgentResult({
             value="chart"
             className="absolute inset-0 data-[state=inactive]:hidden p-6"
           >
-            {visualization ? (
+            {chartJsx ? (
               <div className="h-full w-full">
-                <DynamicChart
-                  config={visualization}
+                <DynamicChartRenderer
+                  jsxString={chartJsx}
+                  data={postgresData}
                   className="w-full h-full"
                 />
               </div>
@@ -76,13 +78,13 @@ export function DataAgentResult({
             value="data"
             className="absolute inset-0 data-[state=inactive]:hidden p-6"
           >
-            {data && data.length > 0 ? (
+            {data && data.rows.length > 0 ? (
               <div className="h-full flex flex-col">
                 <ScrollArea className="flex-1 border rounded-md">
                   <Table>
                     <TableHeader className="sticky top-0 bg-background z-10">
                       <TableRow>
-                        {Object.keys(data[0]).map((key) => (
+                        {Object.keys(data.rows[0]).map((key) => (
                           <TableHead key={key} className="whitespace-nowrap">
                             {key}
                           </TableHead>
@@ -90,7 +92,7 @@ export function DataAgentResult({
                       </TableRow>
                     </TableHeader>
                     <TableBody>
-                      {data.map((row, i) => (
+                      {data.rows.map((row, i) => (
                         <TableRow key={i}>
                           {Object.values(row).map((value: any, j) => (
                             <TableCell

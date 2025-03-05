@@ -136,7 +136,7 @@ export function createChartPrompt({
   const tokenCount = countTokens(JSON.stringify(data));
   console.log("Token count for data:", tokenCount);
   return `
-# TASK: Generate optimal Chart.js configuration for the following data
+# TASK: Generate JSX code that renders a Chart.js visualization for the data
 
 ## USER INTENT
 ${formatConversationHistory(messages, 3)}
@@ -152,53 +152,56 @@ ${data.rows.length} rows
 ## COLUMN DETAILS
 ${data.types.map((type) => `- ${type.colName}: ${type.jsType}`).join("\n")}
 
-## COLUMN MAPPING REQUIREMENTS
-- Label column: Identify the most appropriate column for axis labels
-  - Specify labelType based on SQL data type:
-    - "numeric" for INT, FLOAT, DECIMAL, etc.
-    - "string" for VARCHAR, TEXT, CHAR, etc.
-    - "date" for DATE columns
-    - "datetime" for TIMESTAMP columns
-    - "boolean" for BOOLEAN columns
-    - "categorical" for values representing distinct categories
-    - "other" for other data types
-    
-- Value columns: For each metric to display:
-  - Specify column name exactly as it appears in query results
-  - Provide a descriptive display label
-  - Indicate column type using the same mapping above
-  - Optionally provide a specific color
-  - Specify format based on the data:
-    - "percentage" for decimal values representing percentages
-    - "currency" for monetary values
-    - "integer" for whole numbers
-    - "decimal" for numbers with decimal places
-    - "date" for date formatting
-    - "datetime" for timestamp formatting
-    - "string" for text values
-    - "default" if no special formatting needed
+## AVAILABLE COMPONENTS AND UTILITIES
+- Chart components: <Line>, <Bar>, <Pie>, <Doughnut>, <Scatter>, <Bubble>, <Radar>, <PolarArea>
+- transformData(data, options): Transforms raw data into Chart.js format
+  - options.labelColumn: Specify which column to use for chart labels
+  - options.valueColumns: Array of columns to use as datasets
+  - options.colors: Custom colors for datasets
 
-## CHART SELECTION DECISION TREE
-- Time-based data + trend analysis → Line chart
-- Categorical comparisons (< 10 categories) → Vertical bar chart
-- Categorical comparisons (≥ 10 categories) → Horizontal bar chart
-- Composition/percentage data (≤ 7 segments) → Pie/Doughnut chart
-- Correlation between two variables → Scatter chart
-- Multiple metrics across categories → Radar chart
+## CHART SELECTION CRITERIA
+- Time-based data + trend analysis → <Line />
+- Categorical comparisons (< 10 categories) → <Bar />
+- Categorical comparisons (≥ 10 categories) → Horizontal <Bar />
+- Composition/percentage data (≤ 7 segments) → <Pie /> or <Doughnut />
+- Correlation between two variables → <Scatter />
+- Multiple metrics across categories → <Radar />
 
-## PIE/DOUGHNUT CHART SPECIAL REQUIREMENTS
-- For pie/doughnut charts, select ONE numeric value column only
-- Choose categorical column for labels
-- Ensure data is suitable for part-to-whole visualization
-- Don't use pie charts for time series or data with negative values
+## YOUR TASK
+Generate a SINGLE JSX element that creates the most appropriate chart for the data.
 
-## CONFIGURATION REQUIREMENTS
-- Title: Concise description answering user's question
-- Axes: Clear labels describing the data measurements (not for pie/doughnut)
-- Layout: Optimize for readability (responsive: true)
-- Legend: Position for minimal overlap with data
+DO NOT include:
+- Import statements
+- Function definitions
+- React hooks or component definitions
+- External dependencies other than the provided utilities
 
-RETURN ONLY A VALID CHART.JS CONFIGURATION OBJECT MATCHING THE ENHANCED SCHEMA`;
+ONLY write the JSX that renders the chart component with appropriate props.
+
+## JSX TEMPLATE
+For example, to create a bar chart:
+\`\`\`jsx
+<Bar 
+  data={transformData(data, {
+    labelColumn: 'category',
+    valueColumns: ['sales', 'profit']
+  })}
+  options={{
+    responsive: true,
+    plugins: {
+      legend: {
+        position: 'top',
+      },
+      title: {
+        display: true,
+        text: 'Sales and Profit by Category',
+      },
+    },
+  }}
+/>
+\`\`\`
+
+RETURN ONLY THE JSX CODE, NOTHING ELSE. DONT return any markdown`;
 }
 
 export function createSystemPrompt(

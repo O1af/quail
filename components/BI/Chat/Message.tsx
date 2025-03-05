@@ -7,18 +7,9 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Markdown } from "@/components/Dev/ChatBot/markdown";
 import { DataAgentResult } from "../AgentResult/DataAgentResult";
-import { ChartConfiguration } from "@/lib/types/BI/chartjsTypes";
 
 export interface MessageProps {
   message: AIMessage;
-}
-
-function ChartErrorFallback({ error }: { error: Error }) {
-  return (
-    <div className="w-full max-w-2xl p-4 text-sm text-red-500 bg-red-50 dark:bg-red-950/20 rounded-xl">
-      Failed to render chart: {error.message}
-    </div>
-  );
 }
 
 export function Message({ message }: MessageProps) {
@@ -50,9 +41,7 @@ export function Message({ message }: MessageProps) {
       tool.state === "result" && tool.toolName === "dataAgent"
   )?.result;
 
-  const visualization = dataAgentResult?.visualization as
-    | ChartConfiguration
-    | undefined;
+  const chartJsx = dataAgentResult?.chartJsx as string;
   const query = dataAgentResult?.query as string | undefined;
 
   return (
@@ -83,9 +72,9 @@ export function Message({ message }: MessageProps) {
             message.role === "user" ? "items-end" : "items-start"
           )}
         >
-          {(visualization || dataAgentResult?.data || query) && (
+          {(chartJsx || dataAgentResult?.data || query) && (
             <DataAgentResult
-              visualization={visualization}
+              chartJsx={chartJsx}
               data={dataAgentResult?.data}
               query={query}
             />

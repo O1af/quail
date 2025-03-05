@@ -1,13 +1,5 @@
-import {
-  generateText,
-  generateObject,
-  tool,
-  Message,
-  Provider,
-  DataStreamWriter,
-} from "ai";
+import { generateText, tool, Message, Provider, DataStreamWriter } from "ai";
 import { z } from "zod";
-import { ChartConfiguration } from "@/lib/types/BI/chartjsTypes";
 import {
   createSqlPrompt,
   createChartPrompt,
@@ -17,8 +9,7 @@ import { getModelName } from "@/utils/metrics/AI";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { tryCatch } from "@/lib/trycatch";
 import { executeQueryWithErrorHandling, updateStatus } from "./utils/workflow";
-import { hydrateChartConfig } from "@/lib/utils/chartHydration";
-import { ChartColumnMapping } from "@/lib/types/BI/chartjsTypes";
+import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 
 interface DataAgentParams {
   userTier: string;
@@ -77,7 +68,7 @@ export const DataAgentTool = (params: DataAgentParams) =>
         return {
           error: "Query generation failed",
           data: null,
-          visualization: null,
+          chartJsx: null,
           query: null,
         };
       }
@@ -112,12 +103,12 @@ export const DataAgentTool = (params: DataAgentParams) =>
         return {
           error: "No data found",
           data: [],
-          visualization: null,
+          chartJsx: null,
           query: finalQuery,
         };
       }
 
-      // Step 3: Generate visualization
+      // Step 3: Generate visualization JSX
       const chartPrompt = createChartPrompt({
         data: resultData,
         query: finalQuery,
@@ -128,28 +119,30 @@ export const DataAgentTool = (params: DataAgentParams) =>
         rowCount: resultData.rows.length,
       });
 
-      const { data: columnMapping, error: vizError } = await tryCatch(
-        generateObject({
+      const { data: chartJsxData, error: vizError } = await tryCatch(
+        generateText({
           model: provider(modelName),
           prompt: chartPrompt,
-          schema: ChartColumnMapping,
           system:
-            "Select appropriate columns for data visualization based on query results and user intent.",
+            "You are a data visualization expert. Generate Chart.js JSX code based on data analysis requirements.",
         })
       );
 
       const result: {
-        data: any[];
+        data: PostgresResponse;
         query: string;
-        visualization: ChartConfiguration | null;
+        chartJsx: string | null;
       } = {
-        data: resultData.rows,
+        data: resultData,
         query: finalQuery,
-        visualization: null,
+        chartJsx: null,
       };
 
-      if (vizError || !columnMapping) {
-        console.error("DataAgentTool: Visualization mapping error:", vizError);
+      if (vizError || !chartJsxData) {
+        console.error(
+          "DataAgentTool: Visualization JSX generation error:",
+          vizError
+        );
         await updateStatus(
           stream,
           "Could not generate visualization, but query executed successfully.",
@@ -161,11 +154,8 @@ export const DataAgentTool = (params: DataAgentParams) =>
         return result;
       }
 
-      // Create chart configuration from column mapping
-      result.visualization = hydrateChartConfig(
-        columnMapping.object,
-        resultData.rows
-      );
+      // Set the generated JSX
+      result.chartJsx = chartJsxData.text;
 
       // Return final results
       await updateStatus(

@@ -71,8 +71,6 @@ export async function POST(req: Request) {
     databaseStructure,
     dbType,
     connectionString,
-    editorValue,
-    editorError,
     userTier,
     id,
   } = await req.json();
@@ -90,8 +88,6 @@ export async function POST(req: Request) {
               generateTitleFromUserMessage({ message: messages[0], azure })
             )
           : { data: undefined, error: null };
-
-      dataStream.writeData({ status: "processing" });
 
       const stream = streamText({
         model: azure("gpt-4o"),
