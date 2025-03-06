@@ -4,6 +4,7 @@ import JsxParser from "react-jsx-parser";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 import { transformData, getUniqueValues } from "@/lib/utils/chartDataTransform";
 import { generateColors } from "@/lib/utils/colorGenerator";
+import { formatNumber, formatDate } from "@/lib/utils/chartHelpers";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -14,10 +15,12 @@ import {
   ArcElement,
   RadialLinearScale,
   TimeScale,
+  LogarithmicScale,
   Title,
   Tooltip,
   Legend,
-  Colors,
+  Filler,
+  SubTitle,
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 
@@ -39,16 +42,18 @@ import {
 ChartJS.register(
   CategoryScale,
   LinearScale,
+  LogarithmicScale,
   PointElement,
   LineElement,
   BarElement,
   ArcElement,
   TimeScale,
   RadialLinearScale,
+  Filler,
   Title,
+  SubTitle,
   Tooltip,
-  Legend,
-  Colors
+  Legend
 );
 
 // Set default locale for the date adapter
@@ -70,18 +75,6 @@ const chartComponents = {
   Bubble,
   Radar,
   PolarArea,
-  CategoryScale,
-  LinearScale,
-  PointElement,
-  LineElement,
-  BarElement,
-  ArcElement,
-  TimeScale,
-  RadialLinearScale,
-  Title,
-  Tooltip,
-  Legend,
-  Colors,
 };
 
 // Create memoized error renderer
@@ -133,6 +126,8 @@ export function DynamicChartRenderer({
       transformData,
       getUniqueValues,
       generateColors,
+      formatNumber,
+      formatDate,
       d3, // Provide d3 directly
     }),
     [data]

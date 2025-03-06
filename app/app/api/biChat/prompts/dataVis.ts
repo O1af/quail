@@ -153,6 +153,18 @@ ${data.types.map((type) => `- ${type.colName}: ${type.jsType}`).join("\n")}
   - options.valueColumns: Array of columns to use as datasets (y-axis values)
   - options.colors: Color configuration object (required)
 
+- Helper Functions (for data formatting only):
+  - formatNumber(value, format): Formats numbers (e.g., "1,234.56")
+  - formatDate(value, format): Formats dates (e.g., "Jan 1, 2023") 
+  - getUniqueValues(data, column): Gets distinct values from a column
+
+## CRITICAL PARSER LIMITATIONS
+- DO NOT use inline function declarations like () => { } or function() { }
+- DO NOT use arrow functions with bodies: () => { return ... }
+- DO NOT use user-defined functions in JSX
+- Chart options should be direct objects (not helper-generated)
+- DO NOT create or reference custom variables outside the JSX
+
 ## COLOR CONFIGURATION
 The colors configuration is required and automatically adjusts based on chart type:
 - For pie/doughnut: Colors will be generated for each slice
@@ -172,7 +184,7 @@ D3 color scales are accessible directly through the d3 object:
 - Default choice: d3.interpolateCool
 - Sequential scales: d3.interpolateViridis, d3.interpolateInferno, d3.interpolateMagma, d3.interpolateWarm
 - Single hue scales: d3.interpolateBlues, d3.interpolateGreens, d3.interpolateOranges, d3.interpolateReds
-- Multi-hue scales: d3.interpolateRdBu
+- Multi-hue scales: d3.interpolateRdBu, d3.interpolatePiYG, d3.interpolateBrBG
 - Cyclical scales: d3.interpolateRainbow, d3.interpolateSinebow
 
 ## CHART SELECTION CRITERIA
@@ -183,43 +195,254 @@ D3 color scales are accessible directly through the d3 object:
 - Correlation between two variables → <Scatter />
 - Multiple metrics across categories → <Radar />
 
-## JSX EXAMPLES
+## CHART.JS OPTIONS REFERENCE
 
-### Pie Chart Example:
+### Complete Examples
+
+#### Pie Chart Example:
 \`\`\`jsx
 <Pie 
   data={transformData(data, {
     labelColumn: 'category',
     valueColumns: ['total_sales'],
-    colors: { colorScale: d3.interpolateCool, colorStart: 0.2, colorEnd: 0.8 }
+    colors: { colorScale: d3.interpolateRainbow, colorStart: 0.2, colorEnd: 0.8 }
   })}
   options={{
     responsive: true,
     plugins: {
-      legend: { position: 'top' },
-      title: { display: true, text: 'Total Sales by Category' }
+      legend: { 
+        position: 'right', 
+        align: 'start',
+        labels: {
+          usePointStyle: true,
+          boxWidth: 10,
+          font: { size: 12 }
+        }
+      },
+      title: { 
+        display: true, 
+        text: 'Total Sales by Category',
+        font: { size: 16, weight: 'bold' }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0,0,0,0.7)',
+        titleFont: { size: 12 },
+        bodyFont: { size: 12 },
+        padding: 10,
+        cornerRadius: 6,
+        displayColors: true
+      },
+      datalabels: {
+        display: false
+      }
+    },
+    cutout: '40%',
+    animation: {
+      animateRotate: true,
+      animateScale: true
     }
   }}
 />
 \`\`\`
 
-### Bar Chart Example:
+#### Bar Chart Example:
 \`\`\`jsx
 <Bar 
   data={transformData(data, {
     labelColumn: 'category',
     valueColumns: ['sales', 'profit'],
-    colors: { colorScale: d3.interpolateCool, colorStart: 0.3, colorEnd: 0.7 }
+    colors: { colorScale: d3.interpolateBlues, colorStart: 0.3, colorEnd: 0.7 }
   })}
   options={{
     responsive: true,
     plugins: {
       legend: { position: 'top' },
-      title: { display: true, text: 'Sales and Profit by Category' }
+      title: { 
+        display: true, 
+        text: 'Sales and Profit by Category',
+        font: { size: 16, weight: 'bold' }
+      },
+      tooltip: {
+        backgroundColor: 'rgba(0,0,0,0.7)'
+      }
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Category'
+        },
+        grid: {
+          display: false
+        },
+        ticks: {
+          maxRotation: 45,
+          minRotation: 45
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Amount ($)'
+        },
+        grid: {
+          color: 'rgba(0,0,0,0.1)'
+        }
+      }
+    },
+    barPercentage: 0.8,
+    categoryPercentage: 0.7
+  }}
+/>
+\`\`\`
+
+#### Time-Series Line Chart Example:
+\`\`\`jsx
+<Line 
+  data={transformData(data, {
+    labelColumn: 'date',
+    valueColumns: ['revenue', 'expenses'],
+    colors: { colorScale: d3.interpolateRdBu, colorStart: 0.2, colorEnd: 0.8 }
+  })}
+  options={{
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { 
+        display: true, 
+        text: 'Revenue vs Expenses Over Time',
+        font: { size: 16, weight: 'bold' }
+      }
+    },
+    scales: {
+      x: {
+        type: 'time',
+        time: {
+          unit: 'month',
+          tooltipFormat: 'MMM d, yyyy',
+          displayFormats: {
+            month: 'MMM yyyy'
+          }
+        },
+        title: {
+          display: true,
+          text: 'Date'
+        },
+        grid: {
+          display: false
+        }
+      },
+      y: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Amount ($)'
+        },
+        grid: {
+          color: 'rgba(0,0,0,0.1)'
+        }
+      }
+    },
+    elements: {
+      line: {
+        tension: 0.3,
+        borderWidth: 2,
+      },
+      point: {
+        radius: 3,
+        hoverRadius: 7,
+      }
     }
   }}
 />
 \`\`\`
 
-RETURN ONLY THE JSX CODE, NOTHING ELSE. DO NOT return any markdown`;
+#### Horizontal Bar Chart Example:
+\`\`\`jsx
+<Bar 
+  data={transformData(data, {
+    labelColumn: 'product_name',
+    valueColumns: ['units_sold'],
+    colors: { colorScale: d3.interpolateGreens, colorStart: 0.4, colorEnd: 0.8 }
+  })}
+  options={{
+    indexAxis: 'y',       // This makes the bar chart horizontal
+    responsive: true,
+    maintainAspectRatio: false,
+    plugins: {
+      legend: { position: 'top' },
+      title: { 
+        display: true, 
+        text: 'Units Sold by Product',
+        font: { size: 16, weight: 'bold' }
+      }
+    },
+    scales: {
+      x: {
+        beginAtZero: true,
+        title: {
+          display: true,
+          text: 'Units Sold'
+        }
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Product'
+        }
+      }
+    }
+  }}
+/>
+\`\`\`
+
+#### Scatter Plot Example:
+\`\`\`jsx
+<Scatter
+  data={transformData(data, {
+    labelColumn: 'category',
+    valueColumns: ['price', 'rating'],
+    colors: { colorScale: d3.interpolateCool, colorStart: 0.3, colorEnd: 0.8 }
+  })}
+  options={{
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { 
+        display: true, 
+        text: 'Price vs. Rating Correlation',
+        font: { size: 16, weight: 'bold' }
+      }
+    },
+    scales: {
+      x: {
+        title: {
+          display: true,
+          text: 'Price ($)'
+        },
+        suggestedMin: 0
+      },
+      y: {
+        title: {
+          display: true,
+          text: 'Rating'
+        },
+        suggestedMin: 0,
+        suggestedMax: 5
+      }
+    },
+    elements: {
+      point: {
+        radius: 6,
+        hoverRadius: 10,
+      }
+    }
+  }}
+/>
+\`\`\`
+
+RETURN ONLY THE JSX CODE, NOTHING ELSE. DO NOT return any markdown.
+DO NOT use inline function declarations or arrow functions. 
+All Chart.js configuration should be direct objects without helper functions.`;
 }
