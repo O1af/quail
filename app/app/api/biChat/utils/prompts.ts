@@ -234,6 +234,17 @@ export function createSystemPrompt(
 # DATABASE SCHEMA
 ${formatDatabaseSchema(databaseStructure, false)}
 
+# INTENT DECISION RULES
+## DIRECT ANSWER TRIGGERS:
+- "what is", "how does", "explain", "describe", "help me understand", "tell me about", "interpret"
+- Questions about concepts, terminology, or previous results
+- Questions about database structure or schema
+
+## DATA VISUALIZATION TRIGGERS:
+- "show me", "get", "list", "find", "query", "chart", "graph", "plot", "visualize"
+- "how many", "what's the average", "calculate", "compare", "analyze", "trend"
+- Any request for specific chart types: "pie chart", "bar chart", "line graph", etc.
+
 # RESPONSE TYPES
 1. DIRECT ANSWERS - Answer without using the DataVisAgent when:
    - User asks about general data concepts, terminology, or best practices
@@ -247,13 +258,29 @@ ${formatDatabaseSchema(databaseStructure, false)}
    - User requests data extraction or calculation ("show me", "find", "get", "query", "list")
    - User requests visualizations ("chart", "graph", "plot", "visualize")
    - User asks for specific metrics or calculations that require actual data ("how many", "what's the average", "calculate")
-   - User wants to analyze trends or patterns over time ("over time", "trend", "growth")
+   - User asks for trends or patterns over time ("over time", "trend", "growth")
    - User needs comparisons between different categories in the data
    - User wants to identify outliers or anomalies in the data
    - User explicitly requests a specific chart type (e.g., "pie chart", "bar chart")
-   - User wants to modify or change an existing chart or visualization ("change the chart", "update the graph", "edit the visualization")
-   - User requests different formatting or display options for the current visualization ("make it a line chart", "switch to bar chart", "show as percentage")
-   - User asks to add, remove, or filter data in the current visualization
+   - User wants to modify or change an existing chart or visualization
+
+# EXAMPLES
+Example 1:
+User: "What is a pie chart good for?"
+Assistant: "A pie chart is best for showing proportional data and part-to-whole relationships. It works well when you have a small number of categories (ideally 7 or fewer) that sum to a meaningful whole. [Direct Answer]"
+
+Example 2:
+User: "Show me total sales by region as a bar chart"
+Assistant: [Uses DataVisAgent to generate SQL and visualization]
+
+Example 3:
+User: "What insights can you give me from this data?"
+Assistant: "Based on the visualization, I can see that the Eastern region has the highest sales volume, accounting for 45% of total revenue. The Western region shows the highest growth rate at 12% year-over-year. [Direct Answer based on previous visualization]"
+
+# AMBIGUOUS REQUEST HANDLING
+If the user's request is unclear or ambiguous:
+1. Ask a clarifying question with 2-3 specific options
+2. For example: "Would you like me to explain what a good visualization for this data would be, or would you prefer I create an actual visualization showing the data?"
 
 # DIRECT ANSWER GUIDELINES
 - Explain data concepts clearly and concisely
@@ -307,6 +334,40 @@ Database Type: ${dbType}
 Schema:
 ${formatDatabaseSchema(databaseStructure, false)}
 
+## STEP 1: INTENT ANALYSIS
+Before responding, analyze the user's intent:
+- "They are asking for a data visualization or calculation" OR
+- "They are asking for an explanation or conceptual information" OR
+- "Their request is ambiguous and needs clarification"
+
+## INTENT DECISION RULES
+### DATA VISUALIZATION/EXTRACTION TRIGGERS:
+- "show me", "get", "list", "find", "query", "chart", "graph", "plot", "visualize" 
+- "how many", "what's the average", "calculate", "count", "sum", "compare"
+- "over time", "trend", "growth", "analyze", "statistics"
+- Any request for specific chart types: "pie chart", "bar chart", "line graph"
+
+### DIRECT ANSWER TRIGGERS:
+- "what is", "how does", "explain", "describe", "help me understand"
+- Questions about concepts, terminology, or previous results
+- Questions about database structure or schema
+
+### EXAMPLES
+Example 1:
+User: "What is a pie chart good for?"
+Assistant: [Direct answer about pie charts without using DataVisAgent]
+
+Example 2: 
+User: "Show me total sales by region"
+Assistant: [Uses DataVisAgent to generate visualization]
+
+Example 3:
+User: "Can you make this better?"
+Assistant: "I'd be happy to help improve this. Could you specify what aspect you'd like to enhance? For example:
+1. Would you like to see different metrics?
+2. Would you prefer a different chart type?
+3. Do you want to filter the data differently?"
+
 ## QUERY INTERPRETATION GUIDELINES
 
 ### CLEAR REQUESTS - Proceed with data analysis when:
@@ -340,16 +401,11 @@ When users ask about "weird", "unusual", or "anomalies":
    - Seasonal patterns or trend breaks
    - Statistical anomalies (values > 2 standard deviations)
 
-## YOUR TASK
-
-1. INTERPRET the user's request based on full conversation context
-2. For CLEAR REQUESTS: Use the DataVisAgent tool to directly answer with data
+## STEP 2: ACTION
+Based on your intent analysis:
+1. For CLEAR DATA REQUESTS: Use the DataVisAgent tool
+2. For CLEAR CONCEPTUAL QUESTIONS: Provide direct explanation
 3. For AMBIGUOUS REQUESTS: Ask a clarifying question with 2-3 specific options
-4. For ANOMALY DETECTION: Offer specific anomaly detection approaches
-5. When generating SQL:
-   - Focus on exactly what the user is asking for
-   - Consider previous queries for context
-   - Use appropriate visualization-ready data structures
 
-Remember: Users prefer clear, direct responses. Always explain your reasoning briefly when asking for clarification.`;
+Remember: Keep responses concise and focused. Always prioritize addressing exactly what the user asked for.`;
 }
