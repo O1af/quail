@@ -4,17 +4,20 @@ import { DynamicChartRenderer } from "./DynamicChartRenderer";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { BarChart3, Database, Code } from "lucide-react";
-import { ScrollArea } from "@/components/ui/scroll-area";
+  BarChart3,
+  Database,
+  Code,
+  Save,
+  Edit,
+  ArrowDownUp,
+} from "lucide-react";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
-import { useEffect, useState } from "react";
+import { DataVisTable } from "./DataVisTable";
+import { DataVisQuery } from "./DataVisQuery";
+import { Button } from "@/components/ui/button";
+import { useRouter } from "next/navigation";
+import { useState, useMemo } from "react";
+
 interface DataVisAgentResultProps {
   chartJsx?: string;
   data?: PostgresResponse;
@@ -34,108 +37,122 @@ export function DataVisAgentResult({
   data,
   query,
 }: DataVisAgentResultProps) {
+  const [activeTab, setActiveTab] = useState("chart");
+  const router = useRouter();
+
   if (!chartJsx && !data && !query) return null;
   const postgresData = data as PostgresResponse;
 
-  return (
-    <Card className="w-[700px]">
-      <Tabs defaultValue="chart" className="w-full">
-        <TabsList className="w-full border-b rounded-none grid grid-cols-3">
-          <TabsTrigger value="chart" className="gap-2">
-            <BarChart3 className="h-4 w-4" />
-            Chart
-          </TabsTrigger>
-          <TabsTrigger value="data" className="gap-2">
-            <Database className="h-4 w-4" />
-            Data
-          </TabsTrigger>
-          <TabsTrigger value="query" className="gap-2">
-            <Code className="h-4 w-4" />
-            Query
-          </TabsTrigger>
-        </TabsList>
+  // Detect chart type to set appropriate height
+  const chartHeight = useMemo(() => {
+    if (!chartJsx) return "h-[400px]";
 
-        <div className="h-[500px] relative">
-          {/* Chart Tab */}
-          <TabsContent
-            value="chart"
-            className="absolute inset-0 data-[state=inactive]:hidden p-6"
-          >
-            {chartJsx ? (
-              <div className="h-full w-full">
+    // Check for circular charts that need more height
+    const isCircularChart =
+      chartJsx.includes("<Pie") ||
+      chartJsx.includes("<Doughnut") ||
+      chartJsx.includes("<PolarArea");
+
+    return isCircularChart ? "h-[500px]" : "h-[400px]";
+  }, [chartJsx]);
+
+  const handleSave = () => {
+    console.log("Saving chart");
+    // Implementation for saving chart
+  };
+
+  const handleSaveAndEdit = () => {
+    console.log("Save and redirecting to edit page");
+    // Implementation for redirecting to edit page
+    // router.push('/path/to/edit-page');
+  };
+
+  const handleDrill = () => {
+    console.log("Drilling down/up");
+    // Implementation for drill down/up functionality
+  };
+
+  return (
+    <div className="w-full flex justify-center">
+      <Card className="w-full max-w-full md:max-w-[1000px] min-w-0 overflow-hidden">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="w-full border-b rounded-none grid grid-cols-3">
+            <TabsTrigger value="chart" className="gap-2">
+              <BarChart3 className="h-4 w-4" />
+              <span className="truncate">Chart</span>
+            </TabsTrigger>
+            <TabsTrigger value="data" className="gap-2">
+              <Database className="h-4 w-4" />
+              <span className="truncate">Data</span>
+            </TabsTrigger>
+            <TabsTrigger value="query" className="gap-2">
+              <Code className="h-4 w-4" />
+              <span className="truncate">Query</span>
+            </TabsTrigger>
+          </TabsList>
+
+          <div className={`relative ${chartHeight}`}>
+            {/* Chart Tab */}
+            <TabsContent
+              value="chart"
+              className="absolute inset-0 data-[state=inactive]:hidden p-6"
+            >
+              {chartJsx ? (
                 <DynamicChartRenderer
                   jsxString={chartJsx}
                   data={postgresData}
                   className="w-full h-full"
                 />
-              </div>
-            ) : (
-              <EmptyState message="No visualization available" />
-            )}
-          </TabsContent>
-          {/* Data Tab */}
-          <TabsContent
-            value="data"
-            className="absolute inset-0 data-[state=inactive]:hidden p-6"
-          >
-            {data && data.rows && data.rows.length > 0 ? (
-              <div className="h-full flex flex-col">
-                <ScrollArea className="flex-1 border rounded-md">
-                  <Table>
-                    <TableHeader className="sticky top-0 bg-background z-10">
-                      <TableRow>
-                        {Object.keys(data.rows[0]).map((key) => (
-                          <TableHead key={key} className="whitespace-nowrap">
-                            {key}
-                          </TableHead>
-                        ))}
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {data.rows.map((row, i) => (
-                        <TableRow key={i}>
-                          {Object.values(row).map((value: any, j) => (
-                            <TableCell
-                              key={j}
-                              className="truncate max-w-[200px]"
-                              title={
-                                typeof value === "object"
-                                  ? JSON.stringify(value)
-                                  : String(value)
-                              }
-                            >
-                              {typeof value === "object"
-                                ? JSON.stringify(value)
-                                : String(value)}
-                            </TableCell>
-                          ))}
-                        </TableRow>
-                      ))}
-                    </TableBody>
-                  </Table>
-                </ScrollArea>
-              </div>
-            ) : (
-              <EmptyState message="No data available" />
-            )}
-          </TabsContent>
-          {/* Query Tab */}
-          <TabsContent
-            value="query"
-            className="absolute inset-0 data-[state=inactive]:hidden p-6"
-          >
-            {query ? (
-              <ScrollArea className="h-full border rounded-md">
-                <pre className="p-4 font-mono text-sm">
-                  <code>{query}</code>
-                </pre>
-              </ScrollArea>
-            ) : (
-              <EmptyState message="No query available" />
-            )}
-          </TabsContent>
-        </div>
-      </Tabs>
-    </Card>
+              ) : (
+                <EmptyState message="No visualization available" />
+              )}
+            </TabsContent>
+
+            {/* Data Tab */}
+            <TabsContent
+              value="data"
+              className="absolute inset-0 data-[state=inactive]:hidden p-6"
+            >
+              <DataVisTable data={data} />
+            </TabsContent>
+
+            {/* Query Tab */}
+            <TabsContent
+              value="query"
+              className="absolute inset-0 data-[state=inactive]:hidden p-6"
+            >
+              <DataVisQuery query={query} />
+            </TabsContent>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex flex-wrap justify-between items-center p-4 border-t gap-2">
+            <Button variant="outline" className="gap-2" onClick={handleDrill}>
+              <ArrowDownUp className="h-4 w-4" />
+              <span className="hidden sm:inline">Drill Down/Up</span>
+              <span className="sm:hidden">Drill</span>
+            </Button>
+
+            <div className="flex flex-wrap gap-2">
+              <Button variant="outline" className="gap-2" onClick={handleSave}>
+                <Save className="h-4 w-4" />
+                <span className="hidden sm:inline">Save Chart</span>
+                <span className="sm:hidden">Save</span>
+              </Button>
+
+              <Button
+                variant="default"
+                className="gap-2"
+                onClick={handleSaveAndEdit}
+              >
+                <Edit className="h-4 w-4" />
+                <span className="hidden sm:inline">Save & Edit</span>
+                <span className="sm:hidden">Edit</span>
+              </Button>
+            </div>
+          </div>
+        </Tabs>
+      </Card>
+    </div>
   );
 }

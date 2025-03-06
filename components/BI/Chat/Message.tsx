@@ -69,16 +69,18 @@ export function Message({ message }: MessageProps) {
 
         <div
           className={cn(
-            "flex flex-col gap-4",
+            "flex flex-col gap-4 w-full",
             message.role === "user" ? "items-end" : "items-start"
           )}
         >
           {(chartJsx || LastResult?.data || query) && (
-            <DataVisAgentResult
-              chartJsx={chartJsx}
-              data={LastResult?.data}
-              query={query}
-            />
+            <div className="w-full">
+              <DataVisAgentResult
+                chartJsx={chartJsx}
+                data={LastResult?.data}
+                query={query}
+              />
+            </div>
           )}
           {textContent && (
             <div
