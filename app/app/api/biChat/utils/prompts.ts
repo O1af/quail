@@ -150,9 +150,31 @@ ${data.types.map((type) => `- ${type.colName}: ${type.jsType}`).join("\n")}
 ## AVAILABLE COMPONENTS AND UTILITIES
 - Chart components: <Line>, <Bar>, <Pie>, <Doughnut>, <Scatter>, <Bubble>, <Radar>, <PolarArea>
 - transformData(data, options): Transforms raw data into Chart.js format
-  - options.labelColumn: Specify which column to use for chart labels
-  - options.valueColumns: Array of columns to use as datasets
-  - options.colors: Custom colors for datasets
+  - options.labelColumn: Column to use for chart labels (x-axis or segments)
+  - options.valueColumns: Array of columns to use as datasets (y-axis values)
+  - options.colors: Color configuration object (required)
+
+## COLOR CONFIGURATION
+The colors configuration is required and automatically adjusts based on chart type:
+- For pie/doughnut: Colors will be generated for each slice
+- For bar/line: Colors will be generated for each dataset
+
+\`\`\`jsx
+// Standard color configuration (required):
+colors: { 
+  colorScale: d3.interpolateCool, // Default color scale
+  colorStart: 0.2,                // Start of color range (0-1)
+  colorEnd: 0.8                  // End of color range (0-1)
+}
+\`\`\`
+
+## AVAILABLE D3 COLOR SCALES
+D3 color scales are accessible directly through the d3 object:
+- Default choice: d3.interpolateCool
+- Sequential scales: d3.interpolateViridis, d3.interpolateInferno, d3.interpolateMagma, d3.interpolateWarm
+- Single hue scales: d3.interpolateBlues, d3.interpolateGreens, d3.interpolateOranges, d3.interpolateReds
+- Multi-hue scales: d3.interpolateRdBu
+- Cyclical scales: d3.interpolateRainbow, d3.interpolateSinebow
 
 ## CHART SELECTION CRITERIA
 - Time-based data + trend analysis → <Line />
@@ -161,49 +183,46 @@ ${data.types.map((type) => `- ${type.colName}: ${type.jsType}`).join("\n")}
 - Composition/percentage data (≤ 7 segments) → <Pie /> or <Doughnut />
 - Correlation between two variables → <Scatter />
 - Multiple metrics across categories → <Radar />
-- IMPORTANT: If user explicitly requested a specific chart type (Pie, Bar, Line, etc.), use that type unless the data is completely incompatible
 
-## DATA COMPATIBILITY REQUIREMENTS
-- Pie/Doughnut: Need exactly ONE categorical column and ONE numeric column
-- Bar: Need ONE categorical column and at least ONE numeric column  
-- Line: Need ONE time/ordinal column for x-axis and ONE+ numeric columns
-- Scatter: Need TWO numeric columns (x and y)
+## JSX EXAMPLES
 
-## YOUR TASK
-Generate a SINGLE JSX element that creates the most appropriate chart for the data.
-
-DO NOT include:
-- Import statements
-- Function definitions
-- React hooks or component definitions
-- External dependencies other than the provided utilities
-
-ONLY write the JSX that renders the chart component with appropriate props.
-
-## JSX TEMPLATE
-For example, to create a bar chart:
+### Pie Chart Example:
 \`\`\`jsx
-<Bar 
+<Pie 
   data={transformData(data, {
     labelColumn: 'category',
-    valueColumns: ['sales', 'profit']
+    valueColumns: ['total_sales'],
+    colors: { colorScale: d3.interpolateCool, colorStart: 0.2, colorEnd: 0.8 }
   })}
   options={{
     responsive: true,
     plugins: {
-      legend: {
-        position: 'top',
-      },
-      title: {
-        display: true,
-        text: 'Sales and Profit by Category',
-      },
-    },
+      legend: { position: 'top' },
+      title: { display: true, text: 'Total Sales by Category' }
+    }
   }}
 />
 \`\`\`
 
-RETURN ONLY THE JSX CODE, NOTHING ELSE. DONT return any markdown`;
+### Bar Chart Example:
+\`\`\`jsx
+<Bar 
+  data={transformData(data, {
+    labelColumn: 'category',
+    valueColumns: ['sales', 'profit'],
+    colors: { colorScale: d3.interpolateCool, colorStart: 0.3, colorEnd: 0.7 }
+  })}
+  options={{
+    responsive: true,
+    plugins: {
+      legend: { position: 'top' },
+      title: { display: true, text: 'Sales and Profit by Category' }
+    }
+  }}
+/>
+\`\`\`
+
+RETURN ONLY THE JSX CODE, NOTHING ELSE. DO NOT return any markdown`;
 }
 
 export function createSystemPrompt(

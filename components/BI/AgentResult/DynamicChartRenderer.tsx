@@ -3,6 +3,7 @@ import { useMemo, useCallback, memo } from "react";
 import JsxParser from "react-jsx-parser";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 import { transformData, getUniqueValues } from "@/lib/utils/chartDataTransform";
+import { generateColors } from "@/lib/utils/colorGenerator";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -19,7 +20,9 @@ import {
   Colors,
 } from "chart.js";
 import "chartjs-adapter-date-fns";
-import { enUS } from "date-fns/locale";
+
+// Import D3 color scales directly
+import * as d3 from "d3-scale-chromatic";
 
 import {
   Line,
@@ -88,7 +91,7 @@ const ErrorDisplay = memo(({ message }: { message: string }) => (
   </div>
 ));
 
-// Memoize the actual JSX Parser component
+// Memoize the JSX Parser component for better performance
 const MemoizedJsxParser = memo(
   ({ jsx, components, bindings, onError }: any) => (
     <JsxParser
@@ -101,7 +104,7 @@ const MemoizedJsxParser = memo(
     />
   ),
   (prevProps, nextProps) => {
-    // Custom equality check - only re-render when jsx or data actually change
+    // Only re-render when jsx or data actually change
     return (
       prevProps.jsx === nextProps.jsx &&
       prevProps.bindings.data === nextProps.bindings.data
@@ -129,9 +132,10 @@ export function DynamicChartRenderer({
       data,
       transformData,
       getUniqueValues,
-      Math,
+      generateColors,
+      d3, // Provide d3 directly
     }),
-    [data] // Only recreate when data changes
+    [data]
   );
 
   try {

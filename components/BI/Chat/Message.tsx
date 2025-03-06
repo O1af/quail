@@ -43,6 +43,7 @@ export function Message({ message }: MessageProps) {
 
   const chartJsx = LastResult?.chartJsx as string;
   const query = LastResult?.query as string | undefined;
+  console.log("Result: ", LastResult);
 
   return (
     <motion.div

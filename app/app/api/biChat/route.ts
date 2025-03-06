@@ -82,8 +82,6 @@ export async function POST(req: Request) {
       await updateStatus(dataStream, "Understanding your request...", {
         messageCount: messages.length,
       });
-      console.log("Messages:", messages);
-      console.log("optimizeMessages:", optimizeMessages(messages));
 
       const { data: title, error: titleError } =
         messages.length === 1

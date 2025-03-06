@@ -1,5 +1,6 @@
 "use client";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
+import { generateColors } from "./colorGenerator";
 
 type ChartDataset = {
   label: string;
@@ -14,69 +15,78 @@ export interface TransformedChartData {
   datasets: ChartDataset[];
 }
 
+// Simplified and required color configuration
+export interface ColorConfig {
+  colorScale: (t: number) => string;
+  colorStart: number;
+  colorEnd: number;
+  useEndAsStart?: boolean;
+}
+
+interface TransformOptions {
+  labelColumn: string;
+  valueColumns: string[];
+  colors: ColorConfig;
+}
+
 /**
  * Transforms PostgreSQL query results into Chart.js compatible format
+ * with intelligent color handling for different chart types
  */
 export function transformData(
   data: PostgresResponse,
-  options: {
-    labelColumn?: string;
-    valueColumns?: string[];
-    colors?: string[];
-  } = {}
+  options: TransformOptions
 ): TransformedChartData {
   if (!data || !data.rows || data.rows.length === 0) {
     return { labels: [], datasets: [] };
   }
 
+  const { labelColumn, valueColumns, colors } = options;
   const rows = data.rows;
-  const columns = Object.keys(rows[0]);
 
-  // Determine label column (default to first column)
-  const labelColumn = options.labelColumn || columns[0];
-
-  // Determine value columns (default to all non-label numeric columns)
-  let valueColumns = options.valueColumns || [];
-  if (valueColumns.length === 0) {
-    valueColumns = columns.filter((col) => {
-      if (col === labelColumn) return false;
-      // Check if the column contains numeric data
-      const firstValue = rows[0][col];
-      return typeof firstValue === "number";
-    });
-  }
-
-  // Default colors
-  const defaultColors = [
-    "#4361ee",
-    "#3a0ca3",
-    "#7209b7",
-    "#f72585",
-    "#4cc9f0",
-    "#4895ef",
-    "#560bad",
-    "#f15bb5",
-    "#fee440",
-    "#00bbf9",
-  ];
-
-  // Extract labels from the designated column
+  // Extract labels
   const labels = rows.map((row) => row[labelColumn]);
 
-  // Create datasets for each value column
-  const datasets = valueColumns.map((column, index) => {
-    return {
-      label: column,
-      data: rows.map((row) => row[column]),
-      backgroundColor:
-        options.colors?.[index] || defaultColors[index % defaultColors.length],
-      borderColor:
-        options.colors?.[index] || defaultColors[index % defaultColors.length],
-      borderWidth: 1,
-    };
+  // Determine if this is a single-dataset visualization (like pie/doughnut)
+  const isSingleDataset = valueColumns.length === 1;
+
+  // Generate colors based on the chart type
+  const colorCount = isSingleDataset ? labels.length : valueColumns.length;
+  const generatedColors = generateColors(colorCount, colors.colorScale, {
+    colorStart: colors.colorStart,
+    colorEnd: colors.colorEnd,
+    useEndAsStart: colors.useEndAsStart || false,
   });
 
-  return { labels, datasets };
+  if (isSingleDataset) {
+    // For single dataset charts like pie/doughnut
+    const dataset = {
+      label: valueColumns[0],
+      data: rows.map((row) => row[valueColumns[0]]),
+      backgroundColor: generatedColors,
+    };
+
+    return {
+      labels,
+      datasets: [dataset],
+    };
+  } else {
+    // For multi-dataset charts like bar/line
+    const datasets = valueColumns.map((column, index) => {
+      const color = generatedColors[index % generatedColors.length];
+      return {
+        label: column,
+        data: rows.map((row) => row[column]),
+        backgroundColor: color,
+        borderColor: color,
+      };
+    });
+
+    return {
+      labels,
+      datasets,
+    };
+  }
 }
 
 /**
@@ -85,12 +95,9 @@ export function transformData(
 export function getUniqueValues(data: PostgresResponse, column: string): any[] {
   if (!data || !data.rows || data.rows.length === 0) return [];
 
-  const uniqueValues = new Set<any>();
-  data.rows.forEach((row) => {
-    if (row[column] !== undefined) {
-      uniqueValues.add(row[column]);
-    }
-  });
-
-  return Array.from(uniqueValues);
+  return Array.from(
+    new Set(
+      data.rows.map((row) => row[column]).filter((val) => val !== undefined)
+    )
+  );
 }
