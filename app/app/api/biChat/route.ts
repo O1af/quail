@@ -10,7 +10,7 @@ import { saveChat, deleteChat } from "@/components/stores/chat_store";
 import { generateTitleFromUserMessage } from "./utils/title";
 import { DataVisAgentTool } from "./DataVisAgent";
 import { tryCatch } from "@/lib/trycatch";
-import { createSystemPrompt, createAgentPrompt } from "./utils/prompts";
+import { createAgentPrompt } from "./prompts/mainAgent";
 import { updateStatus } from "./utils/workflow";
 import { optimizeMessages } from "./utils/format";
 

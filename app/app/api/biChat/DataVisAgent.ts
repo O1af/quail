@@ -2,9 +2,9 @@ import { generateText, tool, Message, Provider, DataStreamWriter } from "ai";
 import { z } from "zod";
 import {
   createSqlPrompt,
-  createChartPrompt,
   createQueryValidationPrompt,
-} from "./utils/prompts";
+  createChartPrompt,
+} from "./prompts/dataVis";
 import { getModelName } from "@/utils/metrics/AI";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { tryCatch } from "@/lib/trycatch";
