@@ -73,6 +73,7 @@ export async function signInWithGoogle() {
   const { data, error } = await supabase.auth.signInWithOAuth({
     provider: "google",
     options: {
+      redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}`,
       queryParams: {
         access_type: "offline",
         prompt: "select_account",
@@ -98,26 +99,26 @@ export async function forgotPassword(formData: FormData) {
 
   if (error) {
     throw new Error(
-      "An error occurred while attempting to reset your password.",
+      "An error occurred while attempting to reset your password."
     );
   }
 }
 
 export async function resetPassword(
   formData: FormData,
-  searchParams: { code?: string },
+  searchParams: { code?: string }
 ) {
   const password = formData.get("password") as string;
   const supabase = await createClient();
 
   if (searchParams.code) {
     const { error } = await supabase.auth.exchangeCodeForSession(
-      searchParams.code,
+      searchParams.code
     );
 
     if (error) {
       return redirect(
-        `/reset-password?message=Unable to reset Password. Link expired!`,
+        `/reset-password?message=Unable to reset Password. Link expired!`
       );
     }
   }
@@ -129,7 +130,7 @@ export async function resetPassword(
   if (error) {
     // console.log(error);
     return redirect(
-      `/reset-password?message=Unable to reset Password. Try again!`,
+      `/reset-password?message=Unable to reset Password. Try again!`
     );
   }
 }
