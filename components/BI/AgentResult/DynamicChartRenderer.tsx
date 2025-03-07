@@ -1,5 +1,6 @@
 "use client";
-import { useMemo, useCallback, memo } from "react";
+import { useMemo, useCallback, memo, useEffect } from "react";
+import { useTheme } from "next-themes";
 import JsxParser from "react-jsx-parser";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 import { transformData, getUniqueValues } from "@/lib/utils/chartDataTransform";
@@ -58,6 +59,54 @@ ChartJS.register(
 
 // Set default locale for the date adapter
 ChartJS.defaults.locale = "en-US";
+
+// Configure theme-aware Chart.js defaults
+const configureChartDefaults = (isDarkMode: boolean) => {
+  const gridColor = isDarkMode
+    ? "rgba(255, 255, 255, 0.1)"
+    : "rgba(0, 0, 0, 0.1)";
+  const textColor = isDarkMode
+    ? "rgba(255, 255, 255, 0.7)"
+    : "rgba(0, 0, 0, 0.7)";
+
+  // Set default scale options
+  ChartJS.defaults.scales.linear.grid = {
+    ...ChartJS.defaults.scales.linear.grid,
+    color: gridColor,
+  };
+
+  ChartJS.defaults.scales.category.grid = {
+    ...ChartJS.defaults.scales.category.grid,
+    color: gridColor,
+  };
+
+  ChartJS.defaults.scales.time.grid = {
+    ...ChartJS.defaults.scales.time.grid,
+    color: gridColor,
+  };
+
+  // Set default text color
+  ChartJS.defaults.color = textColor;
+
+  // Set default legend text color
+  ChartJS.defaults.plugins.legend.labels = {
+    ...ChartJS.defaults.plugins.legend.labels,
+    color: textColor,
+  };
+
+  // Set default tooltip styles
+  ChartJS.defaults.plugins.tooltip = {
+    ...ChartJS.defaults.plugins.tooltip,
+    titleColor: isDarkMode ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.9)",
+    bodyColor: isDarkMode ? "rgba(255, 255, 255, 0.9)" : "rgba(0, 0, 0, 0.9)",
+    backgroundColor: isDarkMode
+      ? "rgba(50, 50, 50, 0.9)"
+      : "rgba(255, 255, 255, 0.9)",
+    borderColor: isDarkMode
+      ? "rgba(100, 100, 100, 0.8)"
+      : "rgba(200, 200, 200, 0.9)",
+  };
+};
 
 // Configure Chart.js tooltip callbacks outside component to avoid recreation
 const configureTooltipCallbacks = (() => {
@@ -145,11 +194,12 @@ const MemoizedJsxParser = memo(
     />
   ),
   (prevProps, nextProps) => {
-    // Only re-render when jsx or data actually change
+    // Re-render when jsx, data, or theme changes
     return (
       prevProps.jsx === nextProps.jsx &&
       JSON.stringify(prevProps.bindings.data) ===
-        JSON.stringify(nextProps.bindings.data)
+        JSON.stringify(nextProps.bindings.data) &&
+      prevProps.bindings.isDarkMode === nextProps.bindings.isDarkMode
     );
   }
 );
@@ -166,6 +216,15 @@ function DynamicChartRenderer({
   data,
   className,
 }: DynamicChartRendererProps) {
+  // Get the current theme
+  const { resolvedTheme } = useTheme();
+
+  // Update chart defaults when theme changes
+  useEffect(() => {
+    const isDarkMode = resolvedTheme === "dark";
+    configureChartDefaults(isDarkMode);
+  }, [resolvedTheme]);
+
   if (!jsxString || !data) {
     return <EmptyState />;
   }
@@ -193,6 +252,7 @@ function DynamicChartRenderer({
     return (
       <div className={className}>
         <MemoizedJsxParser
+          key={`chart-${resolvedTheme}`} // Force re-render on theme change
           jsx={jsxString}
           components={chartComponents}
           bindings={bindings}
