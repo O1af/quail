@@ -27,6 +27,7 @@ interface TransformOptions {
   labelColumn: string;
   valueColumns: string[];
   colors: ColorConfig;
+  seriesColumn?: string; // New option for multi-series support
 }
 
 /**
@@ -37,42 +38,68 @@ export function transformData(
   data: PostgresResponse,
   options: TransformOptions
 ): TransformedChartData {
-  if (!data || !data.rows || data.rows.length === 0) {
+  if (!data?.rows?.length) {
     return { labels: [], datasets: [] };
   }
 
-  const { labelColumn, valueColumns, colors } = options;
+  const { labelColumn, valueColumns, colors, seriesColumn } = options;
   const rows = data.rows;
 
-  // Extract labels
-  const labels = rows.map((row) => row[labelColumn]);
+  // Extract and sort labels
+  const uniqueLabels = Array.from(new Set(rows.map((row) => row[labelColumn])));
+  const containsDates =
+    data.types.find((t) => t.colName === labelColumn)?.jsType === "Date";
 
-  // Determine if this is a single-dataset visualization (like pie/doughnut)
-  const isSingleDataset = valueColumns.length === 1;
+  const sortedLabels = uniqueLabels.sort((a, b) => {
+    if (containsDates) {
+      return new Date(a).getTime() - new Date(b).getTime();
+    }
+    return String(a).localeCompare(String(b));
+  });
 
-  // Generate colors based on the chart type
-  const colorCount = isSingleDataset ? labels.length : valueColumns.length;
+  // Generate colors based on what we're visualizing
+  const colorCount = seriesColumn
+    ? getUniqueValues(data, seriesColumn).length
+    : valueColumns.length === 1
+    ? sortedLabels.length
+    : valueColumns.length;
+
   const generatedColors = generateColors(colorCount, colors.colorScale, {
     colorStart: colors.colorStart,
     colorEnd: colors.colorEnd,
     useEndAsStart: colors.useEndAsStart || false,
   });
 
-  if (isSingleDataset) {
-    // For single dataset charts like pie/doughnut
-    const dataset = {
-      label: valueColumns[0],
-      data: rows.map((row) => row[valueColumns[0]]),
-      backgroundColor: generatedColors,
-    };
+  // Handle multi-series data
+  if (seriesColumn) {
+    return createSeriesBasedDatasets(
+      rows,
+      sortedLabels,
+      valueColumns[0],
+      seriesColumn,
+      labelColumn,
+      generatedColors
+    );
+  }
 
+  // Handle single dataset visualization (like pie/doughnut)
+  if (valueColumns.length === 1) {
     return {
-      labels,
-      datasets: [dataset],
+      labels: sortedLabels,
+      datasets: [
+        {
+          label: valueColumns[0],
+          data: rows.map((row) => row[valueColumns[0]]),
+          backgroundColor: generatedColors,
+        },
+      ],
     };
-  } else {
-    // For multi-dataset charts like bar/line
-    const datasets = valueColumns.map((column, index) => {
+  }
+
+  // Handle multi-dataset charts (like bar/line with multiple metrics)
+  return {
+    labels: sortedLabels,
+    datasets: valueColumns.map((column, index) => {
       const color = generatedColors[index % generatedColors.length];
       return {
         label: column,
@@ -80,13 +107,47 @@ export function transformData(
         backgroundColor: color,
         borderColor: color,
       };
+    }),
+  };
+}
+
+/**
+ * Helper function to create datasets for series-based charts
+ */
+function createSeriesBasedDatasets(
+  rows: any[],
+  sortedLabels: any[],
+  valueColumn: string,
+  seriesColumn: string,
+  labelColumn: string,
+  seriesColors: string[]
+): TransformedChartData {
+  const seriesValues = Array.from(
+    new Set(rows.map((row) => row[seriesColumn]))
+  );
+
+  const datasets = seriesValues.map((seriesValue, index) => {
+    // Create a map for quick lookup
+    const dataMap = new Map();
+    rows
+      .filter((row) => row[seriesColumn] === seriesValue)
+      .forEach((row) => dataMap.set(row[labelColumn], row));
+
+    // Generate data array in the same order as sortedLabels
+    const dataArray = sortedLabels.map((label) => {
+      const row = dataMap.get(label);
+      return row ? row[valueColumn] : null;
     });
 
     return {
-      labels,
-      datasets,
+      label: String(seriesValue),
+      data: dataArray,
+      backgroundColor: seriesColors[index],
+      borderColor: seriesColors[index],
     };
-  }
+  });
+
+  return { labels: sortedLabels, datasets };
 }
 
 /**

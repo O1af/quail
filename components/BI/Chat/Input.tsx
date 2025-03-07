@@ -37,6 +37,45 @@ interface InputProps {
   className?: string;
 }
 
+// Memoize button components to prevent re-renders
+const DatabaseButton = memo(({ onClick }: { onClick: () => void }) => (
+  <Button
+    className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+    onClick={onClick}
+  >
+    <Database size={14} />
+  </Button>
+));
+
+const StopButton = memo(
+  ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
+    <Button
+      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      onClick={onClick}
+    >
+      <StopIcon size={14} />
+    </Button>
+  )
+);
+
+const SubmitButton = memo(
+  ({
+    onClick,
+    disabled,
+  }: {
+    onClick: (e: React.MouseEvent) => void;
+    disabled: boolean;
+  }) => (
+    <Button
+      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      onClick={onClick}
+      disabled={disabled}
+    >
+      <ArrowUpIcon size={14} />
+    </Button>
+  )
+);
+
 function PureInput({
   input,
   setInput,
@@ -55,12 +94,12 @@ function PureInput({
     ""
   );
 
-  const adjustHeight = () => {
+  const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  };
+  }, []);
 
   useEffect(() => {
     if (textareaRef.current) {
@@ -75,10 +114,13 @@ function PureInput({
     setLocalStorageInput(input);
   }, [input, setLocalStorageInput]);
 
-  const handleInput = (event: React.ChangeEvent<HTMLTextAreaElement>) => {
-    setInput(event.target.value);
-    adjustHeight();
-  };
+  const handleInput = useCallback(
+    (event: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setInput(event.target.value);
+      adjustHeight();
+    },
+    [adjustHeight, setInput]
+  );
 
   const submitForm = useCallback(() => {
     setLocalStorageInput("");
@@ -87,6 +129,48 @@ function PureInput({
     }
     handleSubmit();
   }, [handleSubmit, setLocalStorageInput, width]);
+
+  const handleKeyDown = useCallback(
+    (event: React.KeyboardEvent) => {
+      if (event.key === "Enter" && !event.shiftKey) {
+        event.preventDefault();
+        if (isLoading) {
+          toast({
+            title: "Please wait for the model to finish its response!",
+            duration: 1500,
+            variant: "destructive",
+          });
+        } else if (input.trim().length > 0) {
+          submitForm();
+        }
+      }
+    },
+    [input, isLoading, submitForm, toast]
+  );
+
+  const handleOpenSettings = useCallback(() => {
+    const event = new CustomEvent("openSettings", {
+      detail: { section: "database" },
+    });
+    window.dispatchEvent(event);
+  }, []);
+
+  const handleStop = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      stop();
+      setMessages((msgs) => sanitizeUIMessages(msgs));
+    },
+    [setMessages, stop]
+  );
+
+  const handleSubmitClick = useCallback(
+    (e: React.MouseEvent) => {
+      e.preventDefault();
+      submitForm();
+    },
+    [submitForm]
+  );
 
   return (
     <div className="relative w-full flex flex-col items-center gap-4 px-4 py-2">
@@ -102,55 +186,17 @@ function PureInput({
           )}
           rows={3}
           autoFocus
-          onKeyDown={(event) => {
-            if (event.key === "Enter" && !event.shiftKey) {
-              event.preventDefault();
-              if (isLoading) {
-                toast({
-                  title: "Please wait for the model to finish its response!",
-                  duration: 1500,
-                  variant: "destructive",
-                });
-              } else {
-                submitForm();
-              }
-            }
-          }}
+          onKeyDown={handleKeyDown}
         />
         <div className="absolute bottom-2 right-2 space-y-1 flex flex-col items-end">
-          <Button
-            className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
-            onClick={() => {
-              const event = new CustomEvent("openSettings", {
-                detail: { section: "database" },
-              });
-              window.dispatchEvent(event);
-            }}
-          >
-            <Database size={14} />
-          </Button>
+          <DatabaseButton onClick={handleOpenSettings} />
           {isLoading ? (
-            <Button
-              className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
-              onClick={(e) => {
-                e.preventDefault();
-                stop();
-                setMessages((msgs) => sanitizeUIMessages(msgs));
-              }}
-            >
-              <StopIcon size={14} />
-            </Button>
+            <StopButton onClick={handleStop} />
           ) : (
-            <Button
-              className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
-              onClick={(e) => {
-                e.preventDefault();
-                submitForm();
-              }}
-              disabled={input.length === 0}
-            >
-              <ArrowUpIcon size={14} />
-            </Button>
+            <SubmitButton
+              onClick={handleSubmitClick}
+              disabled={input.trim().length === 0}
+            />
           )}
         </div>
       </div>
@@ -159,7 +205,9 @@ function PureInput({
 }
 
 export const Input = memo(PureInput, (prevProps, nextProps) => {
-  if (prevProps.input !== nextProps.input) return false;
-  if (prevProps.isLoading !== nextProps.isLoading) return false;
-  return true;
+  // Only re-render when these crucial props change
+  return (
+    prevProps.input === nextProps.input &&
+    prevProps.isLoading === nextProps.isLoading
+  );
 });

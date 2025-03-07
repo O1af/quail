@@ -7,6 +7,7 @@ import { cn } from "@/lib/utils";
 import { useTheme } from "next-themes";
 import { Markdown } from "@/components/Dev/ChatBot/markdown";
 import { DataVisAgentResult } from "../AgentResult/DataVisAgentResult";
+import { useMemo } from "react";
 
 export interface MessageProps {
   message: AIMessage;
@@ -16,34 +17,41 @@ export function Message({ message }: MessageProps) {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
 
-  // Process message parts or fallback to content
-  const parts = message.parts;
+  // Memoize message content extraction for performance
+  const { textContent, chartJsx, query, resultData } = useMemo(() => {
+    // Extract text content
+    const text = message.parts
+      ?.filter((part): part is TextPart => part.type === "text")
+      .map((part) => part.text)
+      .join("");
 
-  // Extract text content
-  const textContent = parts
-    ?.filter((part): part is TextPart => part.type === "text")
-    .map((part) => part.text)
-    .join("");
+    // Extract tool invocations with proper typing
+    const toolInvocations = message.parts
+      ?.filter(
+        (
+          part
+        ): part is {
+          type: "tool-invocation";
+          toolInvocation: ToolInvocation;
+        } => part.type === "tool-invocation"
+      )
+      .map((part) => part.toolInvocation);
 
-  // Extract tool invocations and results with proper typing
-  const toolInvocations = parts
-    ?.filter(
-      (
-        part
-      ): part is { type: "tool-invocation"; toolInvocation: ToolInvocation } =>
-        part.type === "tool-invocation"
-    )
-    .map((part) => part.toolInvocation);
+    // Find completed DataVisAgent result
+    const lastResult = toolInvocations?.find(
+      (tool): tool is ToolInvocation & { state: "result"; result: any } =>
+        tool.state === "result" && tool.toolName === "DataVisAgent"
+    )?.result;
 
-  // Find completed DataVisAgent result with proper typing
-  const LastResult = toolInvocations?.find(
-    (tool): tool is ToolInvocation & { state: "result"; result: any } =>
-      tool.state === "result" && tool.toolName === "DataVisAgent"
-  )?.result;
+    return {
+      textContent: text,
+      chartJsx: lastResult?.chartJsx as string,
+      query: lastResult?.query as string | undefined,
+      resultData: lastResult?.data,
+    };
+  }, [message.parts]);
 
-  const chartJsx = LastResult?.chartJsx as string;
-  const query = LastResult?.query as string | undefined;
-  console.log("Result: ", LastResult);
+  const hasVisualization = Boolean(chartJsx || resultData || query);
 
   return (
     <motion.div
@@ -73,11 +81,11 @@ export function Message({ message }: MessageProps) {
             message.role === "user" ? "items-end" : "items-start"
           )}
         >
-          {(chartJsx || LastResult?.data || query) && (
+          {hasVisualization && (
             <div className="w-full">
               <DataVisAgentResult
                 chartJsx={chartJsx}
-                data={LastResult?.data}
+                data={resultData}
                 query={query}
               />
             </div>
@@ -91,7 +99,7 @@ export function Message({ message }: MessageProps) {
                   : "bg-muted"
               )}
             >
-              <Markdown>{textContent ?? ""}</Markdown>
+              <Markdown>{textContent}</Markdown>
             </div>
           )}
         </div>

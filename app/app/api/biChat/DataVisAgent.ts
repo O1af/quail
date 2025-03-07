@@ -45,7 +45,6 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         dbType,
         databaseStructure: dbSchema,
       });
-      console.log("SQL Prompt:", sqlPrompt);
 
       await updateStatus(stream, "Crafting SQL query...", {
         step: 1,
@@ -140,10 +139,6 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
       };
 
       if (vizError || !chartJsxData) {
-        console.error(
-          "DataVisAgentTool: Visualization JSX generation error:",
-          vizError
-        );
         await updateStatus(
           stream,
           "Could not generate visualization, but query executed successfully.",

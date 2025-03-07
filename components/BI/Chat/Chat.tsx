@@ -2,7 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { cn } from "@/lib/utils";
 import { Messages } from "./Messages";
 import { Input } from "./Input";
-import { useMemo } from "react";
+import { useMemo, useCallback } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { ChatSkeleton } from "./ChatSkeleton";
@@ -23,9 +23,20 @@ export default function Chat({ className, id }: ChatProps) {
   const { error, localId, initialMessages, isInitialLoad, title, setTitle } =
     useInitializeChat(id);
 
-  // Move hooks to component level
+  // Get current database info
   const currentDB = useDbStore().getCurrentDatabase();
   const databaseStructure = useDatabaseStructure();
+
+  // Memoize request preparation to prevent unnecessary re-creation
+  const prepareRequestBody = useCallback(
+    (body: any) => ({
+      ...body,
+      dbType: currentDB?.type || "postgres",
+      connectionString: currentDB?.connectionString,
+      databaseStructure,
+    }),
+    [currentDB?.type, currentDB?.connectionString, databaseStructure]
+  );
 
   const {
     messages,
@@ -44,17 +55,8 @@ export default function Chat({ className, id }: ChatProps) {
     id: localId,
     initialMessages,
     sendExtraMessageFields: true,
-    experimental_prepareRequestBody: (body) => ({
-      ...body,
-      dbType: currentDB?.type || "postgres",
-      connectionString: currentDB?.connectionString,
-      databaseStructure,
-    }),
-    onResponse: (response) => {
-      console.log("Chat: Received response", response);
-    },
+    experimental_prepareRequestBody: prepareRequestBody,
     onFinish: async (message) => {
-      console.log("Chat: Finished message", message);
       if (localId) {
         const supabase = await createClient();
         const { data: user } = await supabase.auth.getUser();
@@ -67,12 +69,17 @@ export default function Chat({ className, id }: ChatProps) {
     },
   });
 
-  const handleSubmit = (event?: { preventDefault?: () => void }) => {
-    setData(undefined);
-    originalHandleSubmit(event);
-  };
+  // Optimized submit handler
+  const handleSubmit = useCallback(
+    (event?: { preventDefault?: () => void }) => {
+      setData(undefined);
+      originalHandleSubmit(event);
+    },
+    [originalHandleSubmit, setData]
+  );
 
-  const handleDelete = async () => {
+  // Memoized delete handler
+  const handleDelete = useCallback(async () => {
     if (!localId || localId === "new") return;
     try {
       const response = await fetch(`/api/biChat?id=${localId}`, {
@@ -84,12 +91,13 @@ export default function Chat({ className, id }: ChatProps) {
     } catch (err) {
       console.error("Failed to delete chat:", err);
     }
-  };
+  }, [localId, router]);
 
-  const memoizedMessages = useMemo(() => messages, [messages, data]);
-
-  const showWelcome =
-    (!memoizedMessages?.length && title === "New Chat") || (!id && !localId);
+  // Check if we should show welcome screen
+  const showWelcome = useMemo(
+    () => (!messages.length && title === "New Chat") || (!id && !localId),
+    [messages.length, title, id, localId]
+  );
 
   if (error) {
     return (
@@ -116,19 +124,14 @@ export default function Chat({ className, id }: ChatProps) {
   }
 
   return (
-    <div
-      className={cn(
-        "flex flex-col h-full", // removed bg-gradient-to-b from-background to-muted/50
-        className
-      )}
-    >
+    <div className={cn("flex flex-col h-full", className)}>
       <div className="flex-1 overflow-hidden">
         {showWelcome ? (
           <Welcome />
         ) : (
           <div className="h-full relative">
             <Messages
-              messages={memoizedMessages}
+              messages={messages}
               isLoading={isChatLoading}
               data={data}
             />

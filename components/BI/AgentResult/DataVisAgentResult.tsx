@@ -1,6 +1,6 @@
 "use client";
 
-import { DynamicChartRenderer } from "./DynamicChartRenderer";
+import DynamicChartRenderer from "./DynamicChartRenderer";
 import { Card } from "@/components/ui/card";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import {
@@ -16,7 +16,7 @@ import { DataVisTable } from "./DataVisTable";
 import { DataVisQuery } from "./DataVisQuery";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
-import { useState, useMemo } from "react";
+import { useState, useMemo, memo, useCallback } from "react";
 
 interface DataVisAgentResultProps {
   chartJsx?: string;
@@ -24,13 +24,47 @@ interface DataVisAgentResultProps {
   query?: string;
 }
 
-function EmptyState({ message }: { message: string }) {
-  return (
-    <div className="flex items-center justify-center h-full text-muted-foreground">
-      {message}
+// Memoize EmptyState component
+const EmptyState = memo(({ message }: { message: string }) => (
+  <div className="flex items-center justify-center h-full text-muted-foreground">
+    {message}
+  </div>
+));
+
+// Memoize action buttons
+const ActionButtons = memo(
+  ({
+    onDrill,
+    onSave,
+    onSaveAndEdit,
+  }: {
+    onDrill: () => void;
+    onSave: () => void;
+    onSaveAndEdit: () => void;
+  }) => (
+    <div className="flex flex-wrap justify-between items-center p-4 border-t gap-2">
+      <Button variant="outline" className="gap-2" onClick={onDrill}>
+        <ArrowDownUp className="h-4 w-4" />
+        <span className="hidden sm:inline">Drill Down/Up</span>
+        <span className="sm:hidden">Drill</span>
+      </Button>
+
+      <div className="flex flex-wrap gap-2">
+        <Button variant="outline" className="gap-2" onClick={onSave}>
+          <Save className="h-4 w-4" />
+          <span className="hidden sm:inline">Save Chart</span>
+          <span className="sm:hidden">Save</span>
+        </Button>
+
+        <Button variant="default" className="gap-2" onClick={onSaveAndEdit}>
+          <Edit className="h-4 w-4" />
+          <span className="hidden sm:inline">Save & Edit</span>
+          <span className="sm:hidden">Edit</span>
+        </Button>
+      </div>
     </div>
-  );
-}
+  )
+);
 
 export function DataVisAgentResult({
   chartJsx,
@@ -41,9 +75,8 @@ export function DataVisAgentResult({
   const router = useRouter();
 
   if (!chartJsx && !data && !query) return null;
-  const postgresData = data as PostgresResponse;
 
-  // Detect chart type to set appropriate height
+  // Memoize chart height calculation
   const chartHeight = useMemo(() => {
     if (!chartJsx) return "h-[400px]";
 
@@ -56,21 +89,22 @@ export function DataVisAgentResult({
     return isCircularChart ? "h-[500px]" : "h-[400px]";
   }, [chartJsx]);
 
-  const handleSave = () => {
+  // Memoized handler functions
+  const handleSave = useCallback(() => {
     console.log("Saving chart");
     // Implementation for saving chart
-  };
+  }, []);
 
-  const handleSaveAndEdit = () => {
+  const handleSaveAndEdit = useCallback(() => {
     console.log("Save and redirecting to edit page");
     // Implementation for redirecting to edit page
     // router.push('/path/to/edit-page');
-  };
+  }, []);
 
-  const handleDrill = () => {
+  const handleDrill = useCallback(() => {
     console.log("Drilling down/up");
     // Implementation for drill down/up functionality
-  };
+  }, []);
 
   return (
     <div className="w-full flex justify-center">
@@ -92,7 +126,6 @@ export function DataVisAgentResult({
           </TabsList>
 
           <div className={`relative ${chartHeight}`}>
-            {/* Chart Tab */}
             <TabsContent
               value="chart"
               className="absolute inset-0 data-[state=inactive]:hidden p-6"
@@ -100,7 +133,7 @@ export function DataVisAgentResult({
               {chartJsx ? (
                 <DynamicChartRenderer
                   jsxString={chartJsx}
-                  data={postgresData}
+                  data={data as PostgresResponse}
                   className="w-full h-full"
                 />
               ) : (
@@ -108,7 +141,6 @@ export function DataVisAgentResult({
               )}
             </TabsContent>
 
-            {/* Data Tab */}
             <TabsContent
               value="data"
               className="absolute inset-0 data-[state=inactive]:hidden p-6"
@@ -116,7 +148,6 @@ export function DataVisAgentResult({
               <DataVisTable data={data} />
             </TabsContent>
 
-            {/* Query Tab */}
             <TabsContent
               value="query"
               className="absolute inset-0 data-[state=inactive]:hidden p-6"
@@ -125,32 +156,11 @@ export function DataVisAgentResult({
             </TabsContent>
           </div>
 
-          {/* Action buttons */}
-          <div className="flex flex-wrap justify-between items-center p-4 border-t gap-2">
-            <Button variant="outline" className="gap-2" onClick={handleDrill}>
-              <ArrowDownUp className="h-4 w-4" />
-              <span className="hidden sm:inline">Drill Down/Up</span>
-              <span className="sm:hidden">Drill</span>
-            </Button>
-
-            <div className="flex flex-wrap gap-2">
-              <Button variant="outline" className="gap-2" onClick={handleSave}>
-                <Save className="h-4 w-4" />
-                <span className="hidden sm:inline">Save Chart</span>
-                <span className="sm:hidden">Save</span>
-              </Button>
-
-              <Button
-                variant="default"
-                className="gap-2"
-                onClick={handleSaveAndEdit}
-              >
-                <Edit className="h-4 w-4" />
-                <span className="hidden sm:inline">Save & Edit</span>
-                <span className="sm:hidden">Edit</span>
-              </Button>
-            </div>
-          </div>
+          <ActionButtons
+            onDrill={handleDrill}
+            onSave={handleSave}
+            onSaveAndEdit={handleSaveAndEdit}
+          />
         </Tabs>
       </Card>
     </div>
