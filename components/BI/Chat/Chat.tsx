@@ -15,13 +15,14 @@ import { useDatabaseStructure } from "@/components/stores/table_store";
 
 interface ChatProps {
   className?: string;
-  id?: string;
+  chat_id?: string; // Changed from id to chat_id
 }
 
-export default function Chat({ className, id }: ChatProps) {
+export default function Chat({ className, chat_id }: ChatProps) {
+  // Changed from id to chat_id
   const router = useRouter();
   const { error, localId, initialMessages, isInitialLoad, title, setTitle } =
-    useInitializeChat(id);
+    useInitializeChat(chat_id); // Changed from id to chat_id
   useEffect(() => {
     if (localId) {
       const supabase = createClient();
@@ -100,8 +101,8 @@ export default function Chat({ className, id }: ChatProps) {
 
   // Check if we should show welcome screen
   const showWelcome = useMemo(
-    () => (!messages.length && title === "New Chat") || (!id && !localId),
-    [messages.length, title, id, localId]
+    () => (!messages.length && title === "New Chat") || (!chat_id && !localId), // Changed from id to chat_id
+    [messages.length, title, chat_id, localId] // Changed from id to chat_id
   );
 
   if (error) {
