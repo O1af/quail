@@ -2,7 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { cn } from "@/lib/utils";
 import { Messages } from "./Messages";
 import { Input } from "./Input";
-import { useMemo, useCallback } from "react";
+import { useMemo, useCallback, useEffect } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { ChatSkeleton } from "./ChatSkeleton";
@@ -22,6 +22,11 @@ export default function Chat({ className, id }: ChatProps) {
   const router = useRouter();
   const { error, localId, initialMessages, isInitialLoad, title, setTitle } =
     useInitializeChat(id);
+  useEffect(() => {
+    if (localId) {
+      const supabase = createClient();
+    }
+  }, [localId, setTitle]);
 
   // Get current database info
   const currentDB = useDbStore().getCurrentDatabase();

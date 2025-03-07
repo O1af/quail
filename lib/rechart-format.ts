@@ -1,4 +1,4 @@
-import { Config } from "./types/chartTypes";
+import { Config } from "./types/rechartTypes";
 
 type InputDataPoint = Record<string, string | number>;
 

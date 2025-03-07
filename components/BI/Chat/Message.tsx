@@ -8,17 +8,19 @@ import { useTheme } from "next-themes";
 import { Markdown } from "@/components/Dev/ChatBot/markdown";
 import { DataVisAgentResult } from "../AgentResult/DataVisAgentResult";
 import { useMemo } from "react";
+import { ChartData } from "@/lib/types/stores/chart";
 
 export interface MessageProps {
   message: AIMessage;
+  savedCharts: Array<{ _id: string; title: string; updatedAt: Date }>;
 }
 
-export function Message({ message }: MessageProps) {
+export function Message({ message, savedCharts }: MessageProps) {
   const { theme } = useTheme();
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
 
   // Memoize message content extraction for performance
-  const { textContent, chartJsx, query, resultData } = useMemo(() => {
+  const { textContent, visualizationData } = useMemo(() => {
     // Extract text content
     const text = message.parts
       ?.filter((part): part is TextPart => part.type === "text")
@@ -43,15 +45,29 @@ export function Message({ message }: MessageProps) {
         tool.state === "result" && tool.toolName === "DataVisAgent"
     )?.result;
 
+    // Prepare visualization data only if all required fields are present
+    let vizData = null;
+    if (
+      lastResult?.chartJsx &&
+      lastResult?.data &&
+      lastResult?.query &&
+      lastResult?.chartId
+    ) {
+      vizData = {
+        chartData: {
+          chartJsx: lastResult.chartJsx,
+          data: lastResult.data,
+          query: lastResult.query,
+        } as ChartData,
+        chartId: lastResult.chartId,
+      };
+    }
+
     return {
       textContent: text,
-      chartJsx: lastResult?.chartJsx as string,
-      query: lastResult?.query as string | undefined,
-      resultData: lastResult?.data,
+      visualizationData: vizData,
     };
   }, [message.parts]);
-
-  const hasVisualization = Boolean(chartJsx || resultData || query);
 
   return (
     <motion.div
@@ -81,12 +97,12 @@ export function Message({ message }: MessageProps) {
             message.role === "user" ? "items-end" : "items-start"
           )}
         >
-          {hasVisualization && (
+          {visualizationData && (
             <div className="w-full">
               <DataVisAgentResult
-                chartJsx={chartJsx}
-                data={resultData}
-                query={query}
+                chartData={visualizationData.chartData}
+                chartId={visualizationData.chartId}
+                savedCharts={savedCharts}
               />
             </div>
           )}

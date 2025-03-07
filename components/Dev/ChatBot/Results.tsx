@@ -1,4 +1,4 @@
-import { Config, Result } from "@/lib/types/chartTypes";
+import { Config, Result } from "@/lib/types/rechartTypes";
 import { DynamicChart } from "./dynamic-chart";
 import { SkeletonCard } from "./skeleton-card";
 import {

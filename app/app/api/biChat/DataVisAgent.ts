@@ -10,6 +10,7 @@ import { DatabaseStructure } from "@/components/stores/table_store";
 import { tryCatch } from "@/lib/trycatch";
 import { executeQueryWithErrorHandling, updateStatus } from "./utils/workflow";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
+import { ObjectId } from "mongodb";
 
 interface DataVisAgentParams {
   userTier: string;
@@ -66,10 +67,7 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         });
 
         return {
-          error: "Query generation failed",
-          data: null,
-          chartJsx: null,
-          query: null,
+          error: "Failed to generate SQL query",
         };
       }
 
@@ -102,8 +100,6 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
 
         return {
           error: "No data found",
-          data: [],
-          chartJsx: null,
           query: finalQuery,
         };
       }
@@ -128,16 +124,6 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         })
       );
 
-      const result: {
-        data: PostgresResponse;
-        query: string;
-        chartJsx: string | null;
-      } = {
-        data: resultData,
-        query: finalQuery,
-        chartJsx: null,
-      };
-
       if (vizError || !chartJsxData) {
         await updateStatus(
           stream,
@@ -147,11 +133,23 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
           }
         );
 
-        return result;
+        return {
+          error: "Visualization failed",
+          data: resultData,
+          query: finalQuery,
+        };
       }
 
-      // Set the generated JSX
-      result.chartJsx = chartJsxData.text;
+      // Generate a chart ID
+      const chartId = new ObjectId().toString();
+
+      // Create final result with all required fields
+      const result = {
+        data: resultData,
+        query: finalQuery,
+        chartJsx: chartJsxData.text,
+        chartId: chartId,
+      };
 
       // Return final results
       await updateStatus(

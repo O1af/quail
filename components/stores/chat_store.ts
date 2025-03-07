@@ -2,7 +2,11 @@
 import { Message } from "ai";
 import { ObjectId } from "mongodb";
 import { connectToMongo, getDatabase } from "./utils/mongo";
-import { ChatDocument, ChatResponse, ChatListResponse } from "@/lib/types/chat";
+import {
+  ChatDocument,
+  ChatResponse,
+  ChatListResponse,
+} from "@/lib/types/stores/chat";
 
 const getCollection = () => getDatabase().collection<ChatDocument>("chats");
 

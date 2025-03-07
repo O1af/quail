@@ -2,13 +2,15 @@
 
 import { JSONValue, type Message } from "ai";
 import { AnimatePresence } from "framer-motion";
-import { memo } from "react";
+import { memo, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import { useScrollToBottom } from "@/components/Dev/ChatBot/use-scroll-to-bottom";
 import { Message as MessageComponent } from "./Message";
 import { Avatar } from "@/components/ui/avatar";
 import { AvatarImage } from "@radix-ui/react-avatar";
 import { motion } from "framer-motion";
+import { listCharts } from "@/components/stores/chart_store";
+import { createClient } from "@/utils/supabase/client";
 
 interface MessagesProps {
   messages: Message[];
@@ -54,6 +56,28 @@ const MemoizedMessageComponent = memo(MessageComponent);
 function PureMessages({ messages, isLoading, data }: MessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
+  const [savedCharts, setSavedCharts] = useState<
+    Array<{ _id: string; title: string; updatedAt: Date }>
+  >([]);
+
+  // Fetch saved charts when component mounts
+  useEffect(() => {
+    async function fetchCharts() {
+      try {
+        const supabase = await createClient();
+        const { data: userData } = await supabase.auth.getUser();
+
+        if (userData.user) {
+          const charts = await listCharts(userData.user.id);
+          setSavedCharts(charts);
+        }
+      } catch (error) {
+        console.error("Failed to fetch charts:", error);
+      }
+    }
+
+    fetchCharts();
+  }, []);
 
   const currentStatus = data?.[data.length - 1];
   const showStatus = isLoading && currentStatus;
@@ -66,7 +90,10 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
       <div className="flex flex-col gap-6 px-4 py-4">
         {messages.map((message) => (
           <AnimatePresence key={message.id} mode="wait">
-            <MemoizedMessageComponent message={message} />
+            <MemoizedMessageComponent
+              message={message}
+              savedCharts={savedCharts}
+            />
           </AnimatePresence>
         ))}
 
