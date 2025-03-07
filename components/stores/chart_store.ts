@@ -57,11 +57,14 @@ export async function saveChart(
 
 export async function listCharts(
   userId: string
-): Promise<Array<{ _id: string; title: string; updatedAt: Date }>> {
+): Promise<Array<Pick<ChartDocument, "_id" | "title" | "updatedAt" | "data">>> {
   try {
     await connectToMongo();
     return await getCollection()
-      .find({ userId }, { projection: { title: 1, updatedAt: 1, _id: 1 } })
+      .find(
+        { userId },
+        { projection: { title: 1, updatedAt: 1, _id: 1, data: 1 } }
+      )
       .sort({ updatedAt: -1 })
       .toArray();
   } catch (error) {
