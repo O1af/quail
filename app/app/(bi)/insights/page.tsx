@@ -13,6 +13,8 @@ import {
 // UI Components
 import { Button } from "@/components/ui/button";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { SearchBar } from "@/components/header/dashboard-search-bar";
+import { useHeader } from "@/components/header/header-context";
 
 // Icons
 import {
@@ -45,39 +47,40 @@ const fuseOptions = {
   threshold: 0.3,
 };
 
-export default function DashboardPage({
-  searchQuery: externalSearchQuery = "",
-}) {
+export default function DashboardPage() {
   // State hooks
   const [viewMode, setViewMode] = useState<ViewMode>("grid");
-  const [searchQuery, setSearchQuery] = useState(externalSearchQuery);
+  const [searchQuery, setSearchQuery] = useState("");
   const [selectedTab, setSelectedTab] = useState<TabValue>("dashboards");
-  const [charts, setCharts] = useState<Chart[]>([]); // Changed to use Chart type
+  const [charts, setCharts] = useState<Chart[]>([]);
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const [pinnedCharts, setPinnedCharts] = useState<Set<string>>(new Set());
+  const { setHeaderContent } = useHeader();
 
   const supabase = createClient();
 
-  // Listen for search events from the layout component
+  // Function to handle search updates
+  const handleSearch = (query: string) => {
+    setSearchQuery(query);
+  };
+
+  // Set up the search bar in the header
   useEffect(() => {
-    const handleSearch = (event: Event) => {
-      const customEvent = event as CustomEvent;
-      setSearchQuery(customEvent.detail.query);
-    };
+    setHeaderContent(
+      <SearchBar
+        placeholder="Search insights..."
+        value={searchQuery}
+        onChange={handleSearch}
+        className="w-full max-w-lg mx-auto"
+        debounceMs={300}
+      />
+    );
 
-    window.addEventListener("app:search", handleSearch);
-
-    return () => {
-      window.removeEventListener("app:search", handleSearch);
-    };
-  }, []);
-
-  // Update internal search state when external search prop changes
-  useEffect(() => {
-    setSearchQuery(externalSearchQuery);
-  }, [externalSearchQuery]);
+    // Clean up when unmounting
+    return () => setHeaderContent(null);
+  }, [setHeaderContent, searchQuery]);
 
   // Fetch user data
   useEffect(() => {
@@ -357,8 +360,6 @@ export default function DashboardPage({
       >
         {filteredContent.length > 0 ? (
           filteredContent.map((item) => {
-            // Adapt Chart from API to ChartCard props
-            console.log(item);
             return (
               <ChartCard
                 key={item._id}
@@ -402,7 +403,7 @@ export default function DashboardPage({
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <div className="flex-1 space-y-6">
-        {/* Header with actions (search bar was moved to layout) */}
+        {/* Header with actions (search bar was moved to layout header) */}
         <div className="flex items-center justify-between">
           <h1 className="text-2xl font-bold">Business Insights</h1>
           <div className="flex items-center gap-2">
