@@ -5,6 +5,7 @@ import { ConnectionsList } from "./ConnectionsList";
 import { ConnectionForm } from "./ConnectionForm";
 import { useState, useCallback, memo, useEffect } from "react";
 import { useToast } from "@/hooks/use-toast";
+import { useConnectionsState } from "@/hooks/useConnectionsState";
 
 export const Connections = memo(function Connections() {
   const {
@@ -15,34 +16,21 @@ export const Connections = memo(function Connections() {
     currentDatabaseId,
   } = useDbStore();
 
-  const [isCreating, setIsCreating] = useState(false);
-  const [editingConnectionId, setEditingConnectionId] = useState<number | null>(
-    null
-  );
+  const {
+    isCreating,
+    editingConnectionId,
+    closeConnectionForm,
+    openAddConnectionForm,
+    openEditConnectionForm,
+  } = useConnectionsState();
   const { toast } = useToast();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Handle external "Add Connection" button trigger
+  // Handle loading state
   useEffect(() => {
-    const handleAddConnection = () => {
-      setIsCreating(true);
-      setEditingConnectionId(null);
-    };
-
-    const addButton = document.getElementById("add-connection-trigger");
-    if (addButton) {
-      addButton.addEventListener("click", handleAddConnection);
-    }
-
     // Simulate loading for better UX
     const timer = setTimeout(() => setIsLoading(false), 500);
-
-    return () => {
-      if (addButton) {
-        addButton.removeEventListener("click", handleAddConnection);
-      }
-      clearTimeout(timer);
-    };
+    return () => clearTimeout(timer);
   }, []);
 
   // Connection being edited if any
@@ -55,7 +43,7 @@ export const Connections = memo(function Connections() {
     async (data: any) => {
       try {
         addDatabase(data);
-        setIsCreating(false);
+        closeConnectionForm();
         toast({
           title: "Connection added",
           description: `Successfully added ${data.name} database connection.`,
@@ -68,14 +56,14 @@ export const Connections = memo(function Connections() {
         });
       }
     },
-    [addDatabase, toast]
+    [addDatabase, toast, closeConnectionForm]
   );
 
   const handleUpdateDatabase = useCallback(
     async (id: number, data: any) => {
       try {
         updateDatabase(id, data);
-        setEditingConnectionId(null);
+        closeConnectionForm();
         toast({
           title: "Connection updated",
           description: `Successfully updated ${data.name} database connection.`,
@@ -88,7 +76,7 @@ export const Connections = memo(function Connections() {
         });
       }
     },
-    [updateDatabase, toast]
+    [updateDatabase, toast, closeConnectionForm]
   );
 
   const handleRemoveDatabase = useCallback(
@@ -110,11 +98,6 @@ export const Connections = memo(function Connections() {
     [removeDatabase, toast]
   );
 
-  const cancelEditing = () => {
-    setIsCreating(false);
-    setEditingConnectionId(null);
-  };
-
   if (isLoading) {
     // Return optimistic UI instead of skeleton for smoother experience
     return (
@@ -134,14 +117,17 @@ export const Connections = memo(function Connections() {
     <div className="space-y-6">
       {/* Show creation form if isCreating is true */}
       {isCreating && (
-        <ConnectionForm onSubmit={handleAddDatabase} onCancel={cancelEditing} />
+        <ConnectionForm
+          onSubmit={handleAddDatabase}
+          onCancel={closeConnectionForm}
+        />
       )}
 
       {/* Show edit form if editing a connection */}
       {editingConnectionId !== null && connectionBeingEdited && (
         <ConnectionForm
           onSubmit={(data) => handleUpdateDatabase(editingConnectionId, data)}
-          onCancel={cancelEditing}
+          onCancel={closeConnectionForm}
           defaultValues={connectionBeingEdited}
           isEditing={true}
         />
@@ -150,15 +136,9 @@ export const Connections = memo(function Connections() {
       <ConnectionsList
         connections={databases}
         currentConnectionId={currentDatabaseId}
-        onUpdate={(id) => {
-          setEditingConnectionId(id);
-          setIsCreating(false);
-        }}
+        onUpdate={(id) => openEditConnectionForm(id)}
         onRemove={handleRemoveDatabase}
-        onAddNew={() => {
-          setIsCreating(true);
-          setEditingConnectionId(null);
-        }}
+        onAddNew={openAddConnectionForm}
       />
     </div>
   );

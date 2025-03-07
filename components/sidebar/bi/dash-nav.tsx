@@ -7,6 +7,7 @@ import {
   Share2,
   BarChart3,
   Database,
+  SearchCode,
 } from "lucide-react";
 import {
   SidebarGroup,
@@ -42,22 +43,21 @@ export function DashNav() {
     },
     {
       icon: BarChart3,
-      label: "Analytics",
-      path: "/analytics",
-      description: "Data analytics and reports",
-      badge: "New",
+      label: "Charts",
+      path: "/charts",
+      description: "View and manage charts",
     },
     {
-      icon: Share2,
+      icon: Database,
       label: "Connections",
       path: "/connections",
       description: "Manage data connections",
     },
     {
-      icon: Database,
-      label: "Data Sources",
-      path: "/sources",
-      description: "Configure data sources",
+      label: "SQL Editor",
+      icon: SearchCode,
+      path: "/editor",
+      description: "AI Powered SQL Editor",
     },
     {
       icon: Settings,
@@ -83,14 +83,6 @@ export function DashNav() {
                     >
                       <item.icon className="h-4 w-4 mr-2 flex-shrink-0" />
                       <span className="truncate">{item.label}</span>
-                      {item.badge && (
-                        <Badge
-                          variant="outline"
-                          className="ml-auto text-xs py-0 h-5 bg-primary/10 text-primary"
-                        >
-                          {item.badge}
-                        </Badge>
-                      )}
                     </SidebarMenuButton>
                   </TooltipTrigger>
                   <TooltipContent side={isMobile ? "bottom" : "right"}>

@@ -1,12 +1,14 @@
 "use client";
-import { Connections } from "@/components/BI/connections/connections";
+import { Connections } from "@/components/BI/Connections/connections";
 import { useHeader } from "@/components/header/header-context";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
+import { useConnectionsState } from "@/hooks/useConnectionsState";
 
 export default function ConnectionsPage() {
   const { setHeaderContent, setHeaderButtons } = useHeader();
+  const { openAddConnectionForm } = useConnectionsState();
 
   useEffect(() => {
     // Example of setting custom header content
@@ -19,9 +21,9 @@ export default function ConnectionsPage() {
       </div>
     );
 
-    // Set page-specific button
+    // Set page-specific button with direct click handler
     setHeaderButtons(
-      <Button className="gap-2" id="add-connection-trigger">
+      <Button className="gap-2" onClick={openAddConnectionForm}>
         <PlusCircle className="h-4 w-4" />
         Add Connection
       </Button>
@@ -32,7 +34,7 @@ export default function ConnectionsPage() {
       setHeaderContent(null);
       setHeaderButtons(null);
     };
-  }, [setHeaderContent, setHeaderButtons]);
+  }, [setHeaderContent, setHeaderButtons, openAddConnectionForm]);
 
   return (
     <div className="container max-w-5xl mx-auto">
