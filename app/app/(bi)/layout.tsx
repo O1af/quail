@@ -8,7 +8,8 @@ import { CreateChat } from "@/components/header/create-chat";
 import { usePathname } from "next/navigation";
 import { SearchBar } from "@/components/header/dashboard-search-bar";
 import { CreateDashboard } from "@/components/header/create-dashboard";
-import { StickyNoteIcon } from "lucide-react";
+import { PlusCircle, StickyNoteIcon } from "lucide-react";
+import { Button } from "@/components/ui/button";
 
 /**
  * BI Layout component used for all business intelligence pages
@@ -18,21 +19,13 @@ export default function BILayout({ children }: { children: React.ReactNode }) {
   const [searchQuery, setSearchQuery] = useState("");
 
   const isInsightsPage = pathname === "/insights";
+  const isConnectionsPage = pathname === "/connections";
 
   // Function to handle search updates for insights
   const handleSearch = (query: string) => {
     setSearchQuery(query);
     window.dispatchEvent(new CustomEvent("app:search", { detail: { query } }));
   };
-
-  const nav = [
-    // ...existing nav items...
-    {
-      title: "Notes",
-      href: "/notes",
-      icon: StickyNoteIcon,
-    },
-  ];
 
   return (
     <SidebarProvider>
@@ -43,7 +36,7 @@ export default function BILayout({ children }: { children: React.ReactNode }) {
             <SidebarTrigger className="-ml-1" />
           </div>
 
-          {/* Middle section with search (only on insights page) */}
+          {/* Middle section with search or page title */}
           <div className="flex-1 ml-4">
             {isInsightsPage && (
               <SearchBar
@@ -54,10 +47,28 @@ export default function BILayout({ children }: { children: React.ReactNode }) {
                 debounceMs={300}
               />
             )}
+
+            {isConnectionsPage && (
+              <div>
+                <h1 className="text-xl font-semibold">Database Connections</h1>
+                <p className="text-sm text-muted-foreground">
+                  Connect to your databases to access and query your data.
+                </p>
+              </div>
+            )}
           </div>
 
           <div className="flex items-center gap-3 ml-auto">
-            {isInsightsPage ? <CreateDashboard /> : <CreateChat />}
+            {isInsightsPage ? (
+              <CreateDashboard />
+            ) : isConnectionsPage ? (
+              <Button className="gap-2" id="add-connection-trigger">
+                <PlusCircle className="h-4 w-4" />
+                Add Connection
+              </Button>
+            ) : (
+              <CreateChat />
+            )}
             <ModeToggle />
           </div>
         </header>
