@@ -4,17 +4,12 @@ import { SidebarTrigger } from "@/components/ui/sidebar";
 import { ModeToggle } from "@/components/header/mode-toggle";
 import { DashSidebar } from "@/components/sidebar/dash-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
-import { CreateChat } from "@/components/header/create-chat";
 import { usePathname } from "next/navigation";
-import { CreateDashboard } from "@/components/header/create-dashboard";
-import { PlusCircle } from "lucide-react";
-import { Button } from "@/components/ui/button";
 import { HeaderProvider, useHeader } from "@/components/header/header-context";
 
 // Header content component that uses the context
 function HeaderContent() {
   const { headerContent } = useHeader();
-  const pathname = usePathname();
 
   // If there's custom header content, render it
   if (headerContent) {
@@ -24,14 +19,21 @@ function HeaderContent() {
   return null;
 }
 
+// Header buttons component that uses the context
+function HeaderButtons() {
+  const { headerButtons } = useHeader();
+
+  if (headerButtons) {
+    return <>{headerButtons}</>;
+  }
+
+  return null;
+}
+
 /**
  * BI Layout component used for all business intelligence pages
  */
 export default function BILayout({ children }: { children: React.ReactNode }) {
-  const pathname = usePathname();
-  const isInsightsPage = pathname === "/insights";
-  const isConnectionsPage = pathname === "/connections";
-
   return (
     <HeaderProvider>
       <SidebarProvider>
@@ -48,16 +50,7 @@ export default function BILayout({ children }: { children: React.ReactNode }) {
             </div>
 
             <div className="flex items-center gap-3 ml-auto">
-              {isInsightsPage ? (
-                <CreateDashboard />
-              ) : isConnectionsPage ? (
-                <Button className="gap-2" id="add-connection-trigger">
-                  <PlusCircle className="h-4 w-4" />
-                  Add Connection
-                </Button>
-              ) : (
-                <CreateChat />
-              )}
+              <HeaderButtons />
               <ModeToggle />
             </div>
           </header>
