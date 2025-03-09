@@ -3,6 +3,7 @@
 import { connectToMongo, getDatabase } from "@/components/stores/utils/mongo";
 import { Collection } from "mongodb";
 import { ObjectId } from "mongodb";
+import { ChartDocument } from "@/lib/types/stores/chart";
 
 // Define the Dashboard type
 export interface Dashboard {
@@ -12,19 +13,6 @@ export interface Dashboard {
   description?: string;
   charts: string[];
   layout: LayoutItem[];
-  createdAt: Date;
-  updatedAt: Date;
-}
-
-// Chart and LayoutItem interfaces
-export interface Chart {
-  _id: string;
-  userId: string;
-  type: "bar" | "line" | "pie" | "area" | "scatter";
-  title: string;
-  query: string;
-  visualization: any;
-  description?: string;
   createdAt: Date;
   updatedAt: Date;
 }
@@ -51,8 +39,8 @@ function getDashboardsCollection(): Collection<Dashboard> {
   return getDatabase().collection<Dashboard>("dashboards");
 }
 
-function getChartsCollection(): Collection<Chart> {
-  return getDatabase().collection<Chart>("charts");
+function getChartsCollection(): Collection<ChartDocument> {
+  return getDatabase().collection<ChartDocument>("charts");
 }
 
 /**
@@ -218,7 +206,7 @@ export async function loadUserCharts(
     skip?: number;
     sort?: { [key: string]: 1 | -1 };
   } = {}
-): Promise<Chart[]> {
+): Promise<ChartDocument[]> {
   try {
     await connectToMongo();
     const collection = getChartsCollection();
@@ -246,14 +234,14 @@ export async function loadUserCharts(
  * @returns A promise that resolves to the created chart
  */
 export async function createChart(
-  chart: Omit<Chart, "_id" | "createdAt" | "updatedAt">
-): Promise<Chart> {
+  chart: Omit<ChartDocument, "_id" | "createdAt" | "updatedAt">
+): Promise<ChartDocument> {
   try {
     await connectToMongo();
     const collection = getChartsCollection();
 
     const now = new Date();
-    const newChart: Chart = {
+    const newChart: ChartDocument = {
       _id: new ObjectId().toString(),
       ...chart,
       createdAt: now,

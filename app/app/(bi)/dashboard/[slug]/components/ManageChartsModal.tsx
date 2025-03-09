@@ -16,13 +16,13 @@ import {
   Loader2,
   Plus,
   Trash2,
-  CheckCircle2,
   BarChart3,
   LineChart,
   PieChart,
   ArrowDown,
 } from "lucide-react";
-import { loadUserCharts, Chart } from "@/components/stores/dashboard_store";
+import { listCharts } from "@/components/stores/chart_store";
+import { ChartDocument } from "@/lib/types/stores/chart";
 import { cn } from "@/lib/utils";
 
 interface ManageChartsModalProps {
@@ -40,7 +40,7 @@ export function ManageChartsModal({
   currentCharts,
   onChartsChange,
 }: ManageChartsModalProps) {
-  const [allCharts, setAllCharts] = useState<Chart[]>([]);
+  const [allCharts, setAllCharts] = useState<ChartDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recentlyModified, setRecentlyModified] = useState<string[]>([]);
@@ -61,8 +61,8 @@ export function ManageChartsModal({
 
       try {
         setLoading(true);
-        const charts = await loadUserCharts(userId);
-        setAllCharts(charts);
+        const charts = await listCharts(userId);
+        setAllCharts(charts as ChartDocument[]);
         console.log("All charts:", charts);
         console.log("Current charts in dashboard:", currentCharts);
         setError(null);
@@ -81,30 +81,18 @@ export function ManageChartsModal({
 
   // Enhanced action handlers with visual feedback
   const handleAddChart = (chartId: string) => {
-    console.log(`Adding chart ${chartId} to dashboard`);
-
-    // Add to recently modified for animation
+    // ...existing add chart code...
     setRecentlyModified((prev) => [...prev, chartId]);
-
-    // Update temp dashboard charts
     setTempDashboardCharts((prev) => [...prev, chartId]);
-
-    // Remove from animation after delay
     setTimeout(() => {
       setRecentlyModified((prev) => prev.filter((id) => id !== chartId));
     }, 1000);
   };
 
   const handleRemoveChart = (chartId: string) => {
-    console.log(`Removing chart ${chartId} from dashboard`);
-
-    // Add to recently modified for animation
+    // ...existing remove chart code...
     setRecentlyModified((prev) => [...prev, chartId]);
-
-    // Update temp dashboard charts
     setTempDashboardCharts((prev) => prev.filter((id) => id !== chartId));
-
-    // Remove from animation after delay
     setTimeout(() => {
       setRecentlyModified((prev) => prev.filter((id) => id !== chartId));
     }, 1000);
@@ -112,6 +100,7 @@ export function ManageChartsModal({
 
   // Function to handle applying changes
   const handleApplyChanges = () => {
+    // ...existing apply changes code...
     if (onChartsChange) {
       onChartsChange(tempDashboardCharts, true);
     }
@@ -120,31 +109,38 @@ export function ManageChartsModal({
 
   // Function to handle canceling changes
   const handleCancel = () => {
-    // Reset temp charts to original state
+    // ...existing cancel code...
     setTempDashboardCharts([...currentCharts]);
-
-    // Notify parent of cancelled changes
     if (onChartsChange) {
       onChartsChange(currentCharts, false);
     }
-
-    // Close modal
     onOpenChange(false);
   };
 
-  // Helper function to get chart type icon
-  const getChartTypeIcon = (type: string | undefined) => {
-    switch (type?.toLowerCase()) {
-      case "bar":
-        return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
-      case "line":
-        return <LineChart className="h-4 w-4 text-muted-foreground" />;
-      case "pie":
-        return <PieChart className="h-4 w-4 text-muted-foreground" />;
-      default:
-        return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
+  // Helper function to get chart type icon based on visualization type
+  // const getChartTypeIcon = (chart: ChartDocument) => {
+  //   // Try to determine chart type from data structure
+  //   const chartType = (chart.data?.chartType || chart.data?.type)?.toLowerCase();
+
+  //   switch (chartType) {
+  //     case "bar":
+  //       return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
+  //     case "line":
+  //       return <LineChart className="h-4 w-4 text-muted-foreground" />;
+  //     case "pie":
+  //       return <PieChart className="h-4 w-4 text-muted-foreground" />;
+  //     default:
+  //       return <BarChart3 className="h-4 w-4 text-muted-foreground" />; // Default icon
+  //   }
+  // };
+
+  // // Get chart type text for display
+  // const getChartTypeText = (chart: ChartDocument) => {
+  //   const chartType = chart.data?.chartType || chart.data?.type;
+  //   return chartType
+  //     ? chartType.charAt(0).toUpperCase() + chartType.slice(1)
+  //     : "Chart";
+  // };
 
   // Track if any changes have been made
   const hasChanges =
@@ -216,14 +212,11 @@ export function ManageChartsModal({
                         )}
                       >
                         <div className="flex items-center gap-3">
-                          {getChartTypeIcon(chart.type)}
+                          {/* {getChartTypeIcon(chart)} */}
                           <div>
                             <p className="font-medium">{chart.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {chart.type
-                                ? chart.type.charAt(0).toUpperCase() +
-                                  chart.type.slice(1)
-                                : "Chart"}
+                              {/* {getChartTypeText(chart)} */}
                             </p>
                           </div>
                         </div>
@@ -278,14 +271,11 @@ export function ManageChartsModal({
                         )}
                       >
                         <div className="flex items-center gap-3">
-                          {getChartTypeIcon(chart.type)}
+                          {/* {getChartTypeIcon(chart)} */}
                           <div>
                             <p className="font-medium">{chart.title}</p>
                             <p className="text-xs text-muted-foreground">
-                              {chart.type
-                                ? chart.type.charAt(0).toUpperCase() +
-                                  chart.type.slice(1)
-                                : "Chart"}
+                              {/* {getChartTypeText(chart)} */}
                             </p>
                           </div>
                         </div>
