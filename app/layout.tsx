@@ -42,12 +42,12 @@ export default function RootLayout({
   return (
     <html lang="en">
       <head>
-        {/* {process.env.NODE_ENV !== "production" && (
-          <script
+        {process.env.NODE_ENV !== "production" && (
+          <Script
             crossOrigin="anonymous"
             src="//unpkg.com/react-scan/dist/auto.global.js"
           />
-        )} */}
+        )}
         {/* Preconnect hints tell the browser to establish early connections to critical domains,
         reducing latency when resources are needed. DNS-prefetch is a fallback for older browsers */}
         <link
