@@ -7,8 +7,9 @@ import {
   updateDashboard,
 } from "@/components/stores/dashboard_store";
 import { Loader2, PencilRuler, LayoutGrid } from "lucide-react";
-import { loadChart } from "@/components/stores/chartActions";
+import { loadChart } from "@/components/stores/chart_store"; // Updated import
 import { Button } from "@/components/ui/button";
+import { ChartDocument } from "@/lib/types/stores/chart"; // Added import for ChartDocument
 
 import { DashboardGrid } from "@/app/app/(bi)/dashboard/[slug]/components/DashboardGrid";
 import { TitleEditor } from "./components/TitleEditor";
@@ -28,7 +29,9 @@ export default function Page({
   const [isLoading, setIsLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
-  const [chartData, setChartData] = useState<Map<string, any>>(new Map());
+  const [chartData, setChartData] = useState<Map<string, ChartDocument | null>>(
+    new Map()
+  ); // Updated type
 
   // State for manage charts modal
   const [isManageChartsOpen, setIsManageChartsOpen] = useState(false);
@@ -100,8 +103,13 @@ export default function Page({
       if (newChartIds.length > 0) {
         const newChartDataMap = new Map(chartData);
         for (const chartId of newChartIds) {
-          const chart = await loadChart(user.id, chartId);
-          newChartDataMap.set(chartId, chart);
+          try {
+            const chart = await loadChart(chartId, user.id);
+            newChartDataMap.set(chartId, chart);
+          } catch (err) {
+            console.error(`Failed to load chart ${chartId}:`, err);
+            newChartDataMap.set(chartId, null);
+          }
         }
         setChartData(newChartDataMap);
       }
@@ -184,13 +192,29 @@ export default function Page({
         if (!dashboardData) {
           setError("Dashboard not found or you don't have access");
         } else {
-          const chartDataMap = new Map<string, any>();
-          for (const chartId of dashboardData.charts) {
-            const chart = await loadChart(user.id, chartId);
-            chartDataMap.set(chartId, chart); //add chart to map
-          }
-          console.log("Chart data map:", chartDataMap);
-          setChartData(chartDataMap); //set chart data
+          const chartDataMap = new Map<string, ChartDocument | null>();
+
+          // Load charts in parallel to improve performance
+          const chartPromises = dashboardData.charts.map(async (chartId) => {
+            try {
+              const chart = await loadChart(chartId, user.id);
+              return { chartId, chart };
+            } catch (err) {
+              console.error(`Error loading chart ${chartId}:`, err);
+              return { chartId, chart: null };
+            }
+          });
+
+          // Wait for all chart data to be fetched
+          const chartResults = await Promise.all(chartPromises);
+
+          // Populate the map
+          chartResults.forEach(({ chartId, chart }) => {
+            chartDataMap.set(chartId, chart);
+          });
+
+          console.log("Chart data loaded:", chartDataMap);
+          setChartData(chartDataMap);
         }
       } catch (err) {
         console.error("Error loading dashboard:", err);
