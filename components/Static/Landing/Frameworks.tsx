@@ -1,32 +1,74 @@
-import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { useState, useCallback, useEffect, memo } from "react";
 import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
+// Import SVGs as URL strings
+import NeonDarkUrl from "@/public/logos/neon-dark.svg?url";
+import NeonLightUrl from "@/public/logos/neon-light.svg?url";
+import PostgresIconUrl from "@/public/logos/postgres.svg?url";
+import MySQLIconUrl from "@/public/logos/mysql.svg?url";
+
+// Use img tags to render SVGs
 const NeonLogo = () => {
   const { resolvedTheme } = useTheme();
-  const logoSrc =
-    resolvedTheme === "dark"
-      ? "https://neon.tech/brand/neon-logomark-dark-color.svg"
-      : "https://neon.tech/brand/neon-logomark-light-color.svg";
+  const isDarkTheme = resolvedTheme === "dark";
 
-  return <img src={logoSrc} alt="Neon" className="w-full h-full" />;
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src={isDarkTheme ? NeonDarkUrl : NeonLightUrl}
+        alt="Neon Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
+};
+
+const PostgresLogo = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src={PostgresIconUrl}
+        alt="PostgreSQL Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
+};
+
+const MySQLLogo = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src={MySQLIconUrl}
+        alt="MySQL Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
 };
 
 const frameworks = [
   {
     name: "PostgreSQL",
     href: "#",
-    icon: SiPostgresql,
+    icon: PostgresLogo,
     color: "#336791",
   },
   {
     name: "MySQL",
     href: "#",
-    icon: SiMysql,
+    icon: MySQLLogo,
     color: "#00758F",
   },
   {

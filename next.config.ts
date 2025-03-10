@@ -18,6 +18,15 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  webpack(config) {
+    // Simpler SVGR configuration
+    config.module.rules.push({
+      test: /\.svg$/,
+      use: ["@svgr/webpack"],
+    });
+
+    return config;
+  },
 };
 
 export default nextConfig;
