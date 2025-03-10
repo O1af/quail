@@ -19,25 +19,25 @@ const NeonLogo = () => {
 const frameworks = [
   {
     name: "PostgreSQL",
-    href: "/docs/guides/getting-started/quickstarts/postgresql",
+    href: "#",
     icon: SiPostgresql,
     color: "#336791",
   },
   {
     name: "MySQL",
-    href: "/docs/guides/getting-started/quickstarts/mysql",
+    href: "#",
     icon: SiMysql,
     color: "#00758F",
   },
   {
     name: "Supabase",
-    href: "/docs/guides/getting-started/quickstarts/elasticsearch",
+    href: "#",
     icon: SiSupabase,
     color: "#3ECF8E",
   },
   {
     name: "Neon.tech",
-    href: "/docs/guides/getting-started/quickstarts/neon",
+    href: "#",
     icon: NeonLogo,
     color: "#00E699",
   },
