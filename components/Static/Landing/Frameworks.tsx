@@ -1,16 +1,10 @@
 import { Container } from "@/components/ui/container";
 import { useState, useCallback, useEffect, memo } from "react";
-import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
+import { SiSupabase } from "react-icons/si";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Image from "next/image";
-
-// Import SVGs as URL strings
-import NeonDarkUrl from "@/public/logos/neon-dark.svg?url";
-import NeonLightUrl from "@/public/logos/neon-light.svg?url";
-import PostgresIconUrl from "@/public/logos/postgres.svg?url";
-import MySQLIconUrl from "@/public/logos/mysql.svg?url";
 
 // Use img tags to render SVGs
 const NeonLogo = () => {
@@ -20,7 +14,7 @@ const NeonLogo = () => {
   return (
     <div className="w-full h-full flex items-center justify-center">
       <Image
-        src={isDarkTheme ? NeonDarkUrl : NeonLightUrl}
+        src={isDarkTheme ? "/logos/neon-dark.svg" : "/logos/neon-light.svg"}
         alt="Neon Logo"
         className="w-full h-full"
         width={40}
@@ -34,7 +28,7 @@ const PostgresLogo = () => {
   return (
     <div className="w-full h-full flex items-center justify-center">
       <Image
-        src={PostgresIconUrl}
+        src="/logos/postgres.svg"
         alt="PostgreSQL Logo"
         className="w-full h-full"
         width={40}
@@ -48,8 +42,8 @@ const MySQLLogo = () => {
   return (
     <div className="w-full h-full flex items-center justify-center">
       <Image
-        src={MySQLIconUrl}
-        alt="MySQL Logo"
+        src="/logos/mysql.svg"
+        alt="PostgreSQL Logo"
         className="w-full h-full"
         width={40}
         height={40}
