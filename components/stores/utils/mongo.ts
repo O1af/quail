@@ -14,6 +14,7 @@ class MongoDB {
   private client: MongoClient | null = null;
   private db: Db | null = null;
   private connectionTimeout: NodeJS.Timeout | null = null;
+  private connectionPromise: Promise<void> | null = null;
   private readonly IDLE_TIME = 1000 * 60 * 30; // 30 minutes
 
   private constructor() {}
@@ -26,25 +27,38 @@ class MongoDB {
   }
 
   async connect(): Promise<void> {
-    if (!this.client) {
+    // Return existing connection attempt if one is in progress
+    if (this.connectionPromise) return this.connectionPromise;
+
+    // If already connected, just reset timeout
+    if (this.client && this.db) {
+      this.resetConnectionTimeout();
+      return Promise.resolve();
+    }
+
+    // Create new connection
+    this.connectionPromise = (async () => {
       try {
         this.client = new MongoClient(uri, options);
         await this.client.connect();
         this.db = this.client.db(dbName);
         this.resetConnectionTimeout();
-        console.log("Connected to MongoDB");
       } catch (error) {
+        this.client = null;
+        this.db = null;
         console.error("MongoDB connection error:", error);
         throw error;
+      } finally {
+        this.connectionPromise = null;
       }
-    }
-    this.resetConnectionTimeout();
+    })();
+
+    return this.connectionPromise;
   }
 
-  private resetConnectionTimeout() {
-    if (this.connectionTimeout) {
-      clearTimeout(this.connectionTimeout);
-    }
+  private resetConnectionTimeout(): void {
+    if (this.connectionTimeout) clearTimeout(this.connectionTimeout);
+
     this.connectionTimeout = setTimeout(async () => {
       console.log("Closing idle MongoDB connection");
       this.connectionTimeout = null;
@@ -56,6 +70,7 @@ class MongoDB {
     if (!this.db) {
       throw new Error("Database not initialized. Call connect() first.");
     }
+    this.resetConnectionTimeout();
     return this.db;
   }
 
