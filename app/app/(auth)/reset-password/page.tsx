@@ -17,8 +17,8 @@ const ResetPasswordPage = () => {
         data: { user },
       } = await supabase.auth.getUser();
       setUser(user);
-      if (user) {
-        router.push(Routes.Page);
+      if (!user) {
+        router.push(Routes.LoginPage);
       }
     };
     fetchUser();

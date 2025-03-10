@@ -13,10 +13,10 @@ import { DatabasesForm } from "./DatabaseForm/databases-form";
 import { BillingForm } from "./BillingForm/billing-form";
 
 const sidebarNavItems = [
-  // {
-  //   title: "Account",
-  //   href: "account",
-  // },
+  {
+    title: "Profile",
+    href: "profile",
+  },
   {
     title: "Databases",
     href: "database",

@@ -20,6 +20,8 @@ import { ToastAction } from "@/components/ui/toast"; // Import the ToastAction c
 import { resetPassword } from "@/lib/auth-actions"; // Replace with your actual resetPassword function
 import Routes from "@/components/routes";
 import { useRouter } from "next/navigation";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useTheme } from "next-themes";
 
 // Zod schema for validation
 const formSchema = z
@@ -42,7 +44,9 @@ export function ResetPasswordForm({
   const [error, setError] = useState<string | null>(null);
   const { toast } = useToast(); // Initialize the toast hook
   const router = useRouter();
-
+  /*   const [captchaToken, setCaptchaToken] = useState("");
+  const { theme } = useTheme();
+ */
   const form = useForm({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -60,6 +64,7 @@ export function ResetPasswordForm({
     try {
       const formData = new FormData();
       formData.append("password", data.password);
+      /*     formData.append("captchaToken", captchaToken); */
 
       await resetPassword(formData, searchParams); // Replace with your API call for resetting the password
 
@@ -126,6 +131,15 @@ export function ResetPasswordForm({
                 </div>
               )}
             </div>
+            {/* <div className="flex justify-center">
+              <Turnstile
+                siteKey="0x4AAAAAAA-4oeMkEXIOQGB8"
+                data-theme={theme === "dark" ? "dark" : "light"}
+                onSuccess={(token) => {
+                  setCaptchaToken(token);
+                }}
+              />
+            </div> */}
             <Button type="submit" className="w-full">
               Reset Password
             </Button>

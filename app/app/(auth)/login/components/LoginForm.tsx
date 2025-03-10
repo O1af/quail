@@ -24,6 +24,9 @@ import {
   FormLabel,
   FormMessage,
 } from "@/components/ui/form";
+import { useTheme } from "next-themes";
+import { Turnstile } from "@marsidev/react-turnstile";
+import { useRouter } from "next/navigation";
 
 const formSchema = z.object({
   email: z.string().nonempty({ message: "Email is required." }),
@@ -35,6 +38,10 @@ export function LoginForm({
   ...props
 }: React.ComponentPropsWithoutRef<"div">) {
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const { theme } = useTheme();
+  const [captchaToken, setCaptchaToken] = useState("");
+  const router = useRouter();
 
   const form = useForm({
     resolver: zodResolver(formSchema),
@@ -46,15 +53,34 @@ export function LoginForm({
 
   const onSubmit = async (data: { email: string; password: string }) => {
     setError(null);
+    setIsSubmitting(true);
 
     try {
       const formData = new FormData();
       formData.append("email", data.email);
       formData.append("password", data.password);
-      await login(formData);
+      formData.append("captchaToken", captchaToken);
+
+      // Call the login function
+
+      const result = await login(formData);
+      // Reset form state
+      setCaptchaToken("");
+      form.reset();
+      setError(null);
+
+      if (result.success) {
+        window.location.href = "/";
+      }
     } catch (err) {
-      // console.log(err);
-      setError("Invalid email or password. Please try again.");
+      console.error("Login error:", err);
+      setError(
+        err instanceof Error
+          ? "Invalid email or password. Please try again."
+          : "Invalid email or password. Please try again."
+      );
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
@@ -130,8 +156,23 @@ export function LoginForm({
                       </FormItem>
                     )}
                   />
-                  <Button type="submit" className="w-full">
-                    Login
+                  <div className="flex justify-center">
+                    <Turnstile
+                      siteKey="0x4AAAAAAA-4oeMkEXIOQGB8"
+                      /*                       siteKey="1x00000000000000000000AA" */
+                      data-theme={theme === "dark" ? "dark" : "light"}
+                      onSuccess={(token) => {
+                        setCaptchaToken(token);
+                      }}
+                    />
+                  </div>
+
+                  <Button
+                    type="submit"
+                    className="w-full"
+                    disabled={isSubmitting}
+                  >
+                    {isSubmitting ? "Logging in..." : "Login"}
                   </Button>
                 </div>
                 <div className="text-center text-sm">

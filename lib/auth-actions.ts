@@ -13,17 +13,33 @@ export async function login(formData: FormData) {
   const data = {
     email: formData.get("email") as string,
     password: formData.get("password") as string,
+    options: {
+      captchaToken: formData.get("captchaToken") as string,
+    },
   };
 
   const { error } = await supabase.auth.signInWithPassword(data);
 
   if (error) {
-    // console.log("Error: ", error);
-    throw new Error("Invalid email or password.");
-  }
+    console.error("Login error:", error);
 
+    // Provide more specific error messages based on error type
+    if (error.message.includes("captcha")) {
+      throw new Error("Captcha verification failed. Please try again.");
+    } else if (error.message.includes("password")) {
+      throw new Error(
+        "Invalid password. Please check your password and try again."
+      );
+    } else if (error.message.includes("user")) {
+      throw new Error("User not found. Please check your email or sign up.");
+    } else {
+      throw new Error(error.message || "Invalid email or password.");
+    }
+  }
+  /* 
   revalidatePath("/", "layout");
-  redirect("/");
+  redirect("/"); */
+  return { success: true };
 }
 
 export async function signup(formData: FormData) {
@@ -91,10 +107,13 @@ export async function signInWithGoogle() {
 
 export async function forgotPassword(formData: FormData) {
   const email = formData.get("email") as string;
+  const captchaToken = formData.get("captchaToken") as string;
+
   const supabase = await createClient();
 
   const { error } = await supabase.auth.resetPasswordForEmail(email, {
-    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}/reset-password`,
+    redirectTo: `${process.env.NEXT_PUBLIC_APP_URL}`,
+    captchaToken,
   });
 
   if (error) {
@@ -109,6 +128,7 @@ export async function resetPassword(
   searchParams: { code?: string }
 ) {
   const password = formData.get("password") as string;
+
   const supabase = await createClient();
 
   if (searchParams.code) {

@@ -19,6 +19,7 @@
     "@editorjs/table": "^2.2.2",
     "@hcaptcha/react-hcaptcha": "^1.11.1",
     "@hookform/resolvers": "^3.9.1",
+    "@marsidev/react-turnstile": "^1.1.0",
     "@monaco-editor/react": "^4.7.0-rc.0",
     "@quail-ai/azure-ai-provider": "^1.0.0",
     "@radix-ui/react-alert-dialog": "^1.1.6",
