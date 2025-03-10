@@ -22,7 +22,7 @@ import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState, useEffect, useCallback, memo } from "react";
-import { DatabaseConfig } from "../../stores/db_store";
+import { DatabaseConfig } from "../../stores/db_mongo_client";
 import { testConnection } from "../../stores/utils/query";
 import { getAzureIP } from "@/utils/actions/getIP";
 

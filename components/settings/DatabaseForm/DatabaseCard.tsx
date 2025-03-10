@@ -1,4 +1,4 @@
-import { DatabaseConfig, useDbStore } from "../../stores/db_store";
+import { DatabaseConfig, useDbStore } from "../../stores/db_mongo_client";
 import { Button } from "@/components/ui/button";
 import { Pencil, Trash2, CheckCircle, Circle, Loader2 } from "lucide-react";
 import { DatabaseDialog } from "./DatabaseDialog";

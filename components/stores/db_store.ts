@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from "zustand/middleware";
 import { encryptedStorage } from "./utils/encrypted_store";
 export type DbType = "postgres" | "mysql";
 
-export interface DatabaseConfig {
+ interface DatabaseConfig {
   id: number;
   name: string;
   type: DbType;
@@ -39,7 +39,7 @@ type DbActions = {
   resetDatabaseChange: () => void;
 };
 
-export const useDbStore = create<DbState & DbActions>()(
+const useDbStore = create<DbState & DbActions>()(
   persist(
     (set, get) => ({
       databases: [defaultDatabase],

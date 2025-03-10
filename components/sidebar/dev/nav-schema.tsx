@@ -35,13 +35,14 @@ import {
 import { useDatabaseStructure } from "../../stores/table_store";
 import { queryMetadata, handleQuery } from "../../stores/utils/query";
 import { useState } from "react";
-import { useDbStore } from "../../stores/db_store";
+import { useDbStoreWithAutoLoad } from "../../stores/db_mongo_client";
 import { useEditorStore } from "../../stores/editor_store";
 import { match } from "assert";
 export function NavSchema() {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
-  const getCurrentDatabase = useDbStore((state) => state.getCurrentDatabase);
+  const dbStore = useDbStoreWithAutoLoad();
+  const getCurrentDatabase = dbStore.getCurrentDatabase;
   const databaseStructure = useDatabaseStructure();
   const executeQuery = useEditorStore((state) => state.executeQuery);
   const setValue = useEditorStore((state) => state.setValue);

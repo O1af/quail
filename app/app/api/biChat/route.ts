@@ -76,6 +76,17 @@ export async function POST(req: Request) {
     id,
   } = await req.json();
 
+  // Verify database connection information is present
+  if (!connectionString || !dbType) {
+    return new Response(
+      JSON.stringify({
+        message:
+          "No database connection available. Please select a database from the settings.",
+      }),
+      { status: 400 }
+    );
+  }
+
   return createDataStreamResponse({
     async execute(dataStream) {
       // First, update with understanding status

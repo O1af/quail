@@ -1,3 +1,4 @@
+"use client";
 import { StateStorage } from "zustand/middleware";
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
@@ -5,7 +6,8 @@ const ALGORITHM = "aes-256-gcm";
 const KEY =
   process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default-key-32-chars-security123";
 
-function encrypt(text: string): string {
+// Encryption/decryption helpers
+export function encrypt(text: string): string {
   const iv = randomBytes(12);
   const cipher = createCipheriv(ALGORITHM, KEY, iv);
   const encrypted = Buffer.concat([
@@ -16,7 +18,7 @@ function encrypt(text: string): string {
   return Buffer.concat([iv, tag, encrypted]).toString("base64");
 }
 
-function decrypt(data: string): string {
+export function decrypt(data: string): string {
   const buf = Buffer.from(data, "base64");
   const iv = buf.subarray(0, 12);
   const tag = buf.subarray(12, 28);
@@ -30,6 +32,7 @@ function decrypt(data: string): string {
 
 const isClient = typeof window !== "undefined";
 
+// Original encrypted local storage implementation
 export const encryptedStorage: StateStorage = {
   getItem: (name: string) => {
     if (!isClient) return null;

@@ -1,6 +1,6 @@
 "use client";
 
-import { useDbStore } from "../../stores/db_store";
+import { useDbStore } from "../../stores/db_mongo_client";
 import { DatabaseCard } from "./DatabaseCard";
 import { DatabaseDialog } from "./DatabaseDialog";
 import { useEffect, useState, memo, useMemo } from "react";
@@ -39,8 +39,8 @@ export const DatabasesForm = memo(function DatabasesForm() {
           <DatabaseCard
             key={db.id}
             db={db}
-            onEdit={updateDatabase}
-            onDelete={removeDatabase}
+            onEdit={(id: number, config: any) => updateDatabase(id, config)}
+            onDelete={(id: number) => removeDatabase(id)}
           />
         ))}
       </div>

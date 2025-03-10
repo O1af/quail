@@ -9,6 +9,8 @@ import { Markdown } from "@/components/Dev/ChatBot/markdown";
 import { DataVisAgentResult } from "../AgentResult/DataVisAgentResult";
 import { useMemo } from "react";
 import { ChartData } from "@/lib/types/stores/chart";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { AlertCircle } from "lucide-react";
 
 export interface MessageProps {
   message: AIMessage;
@@ -20,7 +22,7 @@ export function Message({ message, savedCharts }: MessageProps) {
   const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
 
   // Memoize message content extraction for performance
-  const { textContent, visualizationData } = useMemo(() => {
+  const { textContent, visualizationData, errorData } = useMemo(() => {
     // Extract text content
     const text = message.parts
       ?.filter((part): part is TextPart => part.type === "text")
@@ -47,12 +49,21 @@ export function Message({ message, savedCharts }: MessageProps) {
 
     // Prepare visualization data only if all required fields are present
     let vizData = null;
-    if (
+    let errorData = null;
+
+    if (lastResult?.error) {
+      // Handle error result
+      errorData = {
+        error: lastResult.error,
+        query: lastResult.query,
+      };
+    } else if (
       lastResult?.chartJsx &&
       lastResult?.data &&
       lastResult?.query &&
       lastResult?.chartId
     ) {
+      // Handle successful visualization
       vizData = {
         chartData: {
           chartJsx: lastResult.chartJsx,
@@ -66,6 +77,7 @@ export function Message({ message, savedCharts }: MessageProps) {
     return {
       textContent: text,
       visualizationData: vizData,
+      errorData,
     };
   }, [message.parts]);
 
@@ -97,6 +109,23 @@ export function Message({ message, savedCharts }: MessageProps) {
             message.role === "user" ? "items-end" : "items-start"
           )}
         >
+          {errorData && (
+            <Alert variant="destructive" className="w-full">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Error</AlertTitle>
+              <AlertDescription className="mt-2">
+                {errorData.error}
+                {errorData.query && (
+                  <div className="mt-2">
+                    <div className="font-semibold">Query attempted:</div>
+                    <pre className="text-xs p-2 bg-muted/50 rounded-md overflow-x-auto mt-1">
+                      {errorData.query}
+                    </pre>
+                  </div>
+                )}
+              </AlertDescription>
+            </Alert>
+          )}
           {visualizationData && (
             <div className="w-full">
               <DataVisAgentResult

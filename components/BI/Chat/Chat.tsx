@@ -2,7 +2,7 @@ import { useChat } from "@ai-sdk/react";
 import { cn } from "@/lib/utils";
 import { Messages } from "./Messages";
 import { Input } from "./Input";
-import { useMemo, useCallback, useEffect } from "react";
+import { useMemo, useCallback, useEffect, useState } from "react";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation";
 import { ChatSkeleton } from "./ChatSkeleton";
@@ -10,19 +10,22 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Welcome } from "./Welcome";
 import { useInitializeChat } from "@/hooks/useInitializeChat";
 import { loadChat } from "@/components/stores/chat_store";
-import { useDbStore } from "@/components/stores/db_store";
+import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
 import { useDatabaseStructure } from "@/components/stores/table_store";
+import { AlertCircle } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface ChatProps {
   className?: string;
-  chat_id?: string; // Changed from id to chat_id
+  chat_id?: string;
 }
 
 export default function Chat({ className, chat_id }: ChatProps) {
-  // Changed from id to chat_id
   const router = useRouter();
   const { error, localId, initialMessages, isInitialLoad, title, setTitle } =
-    useInitializeChat(chat_id); // Changed from id to chat_id
+    useInitializeChat(chat_id);
+  const [noDatabaseSelected, setNoDatabaseSelected] = useState(false);
+
   useEffect(() => {
     if (localId) {
       const supabase = createClient();
@@ -30,18 +33,30 @@ export default function Chat({ className, chat_id }: ChatProps) {
   }, [localId, setTitle]);
 
   // Get current database info
-  const currentDB = useDbStore().getCurrentDatabase();
+  const currentDB = useDbStoreWithAutoLoad().getCurrentDatabase();
   const databaseStructure = useDatabaseStructure();
+
+  // Check if database is selected
+  useEffect(() => {
+    setNoDatabaseSelected(!currentDB);
+  }, [currentDB]);
 
   // Memoize request preparation to prevent unnecessary re-creation
   const prepareRequestBody = useCallback(
-    (body: any) => ({
-      ...body,
-      dbType: currentDB?.type || "postgres",
-      connectionString: currentDB?.connectionString,
-      databaseStructure,
-    }),
-    [currentDB?.type, currentDB?.connectionString, databaseStructure]
+    (body: any) => {
+      if (!currentDB) {
+        throw new Error(
+          "No database selected. Please select a database from the settings."
+        );
+      }
+      return {
+        ...body,
+        dbType: currentDB.type,
+        connectionString: currentDB.connectionString,
+        databaseStructure,
+      };
+    },
+    [currentDB, databaseStructure]
   );
 
   const {
@@ -101,8 +116,8 @@ export default function Chat({ className, chat_id }: ChatProps) {
 
   // Check if we should show welcome screen
   const showWelcome = useMemo(
-    () => (!messages.length && title === "New Chat") || (!chat_id && !localId), // Changed from id to chat_id
-    [messages.length, title, chat_id, localId] // Changed from id to chat_id
+    () => (!messages.length && title === "New Chat") || (!chat_id && !localId),
+    [messages.length, title, chat_id, localId]
   );
 
   if (error) {
@@ -124,6 +139,22 @@ export default function Chat({ className, chat_id }: ChatProps) {
         </div>
         <div className="px-4 py-2 border-t">
           <Skeleton className="h-10 w-full" />
+        </div>
+      </div>
+    );
+  }
+
+  if (noDatabaseSelected) {
+    return (
+      <div className={cn("flex flex-col h-full", className)}>
+        <Alert variant="destructive" className="m-4">
+          <AlertCircle className="h-4 w-4" />
+          <AlertDescription>
+            No database selected. Please select a database from the settings.
+          </AlertDescription>
+        </Alert>
+        <div className="flex-1">
+          <Welcome />
         </div>
       </div>
     );

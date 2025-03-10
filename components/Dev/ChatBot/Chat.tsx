@@ -6,13 +6,14 @@ import ExampleMessages from "./example-messages";
 import { MultimodalInput } from "./multimodal-input";
 import { useDatabaseStructure } from "@/components/stores/table_store";
 import { useEffect } from "react";
-import { useDbStore } from "@/components/stores/db_store";
+import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
 import { useEditorStore } from "@/components/stores/editor_store";
 export const maxDuration = 30;
 
 export default function Chat() {
   const databaseStructure = useDatabaseStructure();
-  const { getCurrentDatabase } = useDbStore();
+  const { getCurrentDatabase, isDatabaseChanged, resetDatabaseChange } =
+    useDbStoreWithAutoLoad();
   const { value, error } = useEditorStore();
 
   const {
@@ -26,7 +27,7 @@ export default function Chat() {
     isLoading,
     stop,
     reload,
-    error: chatError, // Add this
+    error: chatError,
   } = useChat({
     experimental_prepareRequestBody: ({ messages }) => {
       const currentDb = getCurrentDatabase();
@@ -42,8 +43,6 @@ export default function Chat() {
       );
     },
   });
-
-  const { isDatabaseChanged, resetDatabaseChange } = useDbStore();
 
   useEffect(() => {
     if (isDatabaseChanged) {

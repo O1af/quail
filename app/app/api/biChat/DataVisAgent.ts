@@ -9,7 +9,6 @@ import { getModelName } from "@/utils/metrics/AI";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { tryCatch } from "@/lib/trycatch";
 import { executeQueryWithErrorHandling, updateStatus } from "./utils/workflow";
-import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 import { ObjectId } from "mongodb";
 
 interface DataVisAgentParams {

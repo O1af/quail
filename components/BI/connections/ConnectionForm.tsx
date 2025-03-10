@@ -6,8 +6,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { getAzureIP } from "@/utils/actions/getIP";
 import { testConnection } from "@/components/stores/utils/query";
-import { DatabaseConfig } from "@/components/stores/db_store";
-
+import { DatabaseConfig } from "@/lib/types/stores/dbConnections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";

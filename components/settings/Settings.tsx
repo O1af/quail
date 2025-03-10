@@ -18,11 +18,6 @@ const sidebarNavItems = [
     href: "profile",
   },
   {
-    title: "Databases",
-    href: "database",
-  },
-
-  {
     title: "Billing",
     href: "billing",
   },

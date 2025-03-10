@@ -1,8 +1,9 @@
 import { useState, memo } from "react";
-import { DatabaseConfig, useDbStore } from "@/components/stores/db_store";
+import { DatabaseConfig } from "@/lib/types/stores/dbConnections";
 import { queryMetadata } from "@/components/stores/utils/query";
 import { useTableStore } from "@/components/stores/table_store";
 import { useToast } from "@/hooks/use-toast";
+import { useDbStore } from "@/components/stores/db_mongo_client";
 import {
   Card,
   CardContent,
@@ -12,12 +13,6 @@ import {
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
   MoreHorizontal,
   Edit,
   Trash2,
@@ -25,7 +20,6 @@ import {
   Database,
   ArrowRightCircle,
   Loader2,
-  AlertCircle,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -71,7 +65,7 @@ export const ConnectionCard = memo(function ConnectionCard({
     try {
       await queryMetadata(connection.connectionString, connection.type);
       clearTableData();
-      setCurrentDatabase(connection.id);
+      await setCurrentDatabase(connection.id);
       toast({
         title: "Connection activated",
         description: `Now using ${connection.name} as the active database.`,
@@ -100,10 +94,10 @@ export const ConnectionCard = memo(function ConnectionCard({
         }`}
       >
         <CardContent className="p-6">
-          <div className="flex items-center justify-between">
-            <div className="flex items-center gap-3">
+          <div className="flex flex-wrap items-center justify-between gap-4 w-full">
+            <div className="flex items-center gap-3 min-w-0">
               <div
-                className={`p-2 rounded-full ${
+                className={`flex-shrink-0 p-2 rounded-full ${
                   isActive ? "bg-primary/20" : "bg-muted"
                 }`}
               >
@@ -113,66 +107,54 @@ export const ConnectionCard = memo(function ConnectionCard({
                   }`}
                 />
               </div>
-              <div>
+              <div className="min-w-0 overflow-hidden">
                 <div className="flex items-center gap-2 mb-0.5">
-                  <h3 className="font-medium">{connection.name}</h3>
+                  <h3 className="font-medium truncate">{connection.name}</h3>
                   {isActive && (
-                    <Badge className="bg-primary/10 text-primary border-primary/20">
+                    <Badge className="flex-shrink-0 bg-primary/10 text-primary border-primary/20">
                       Active
                     </Badge>
                   )}
                 </div>
-                <CardDescription>{dbTypeLabel} database</CardDescription>
+                <CardDescription className="truncate">
+                  {dbTypeLabel} database
+                </CardDescription>
               </div>
             </div>
 
-            <div className="flex items-center gap-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant={isActive ? "secondary" : "outline"}
-                      size="sm"
-                      className="gap-1"
-                      disabled={activating || isActive}
-                      onClick={handleSetActive}
-                    >
-                      {activating ? (
-                        <Loader2 className="h-3.5 w-3.5 animate-spin mr-1" />
-                      ) : isActive ? (
-                        <CheckCircle className="h-3.5 w-3.5 mr-1" />
-                      ) : (
-                        <ArrowRightCircle className="h-3.5 w-3.5 mr-1" />
-                      )}
-                      {activating
-                        ? "Connecting"
-                        : isActive
-                        ? "Active"
-                        : "Activate"}
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    {isActive
-                      ? "Current active database"
-                      : "Set as active database"}
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            <div className="flex items-center gap-2 shrink-0 ml-auto">
+              <Button
+                variant={isActive ? "secondary" : "outline"}
+                size="sm"
+                className={isActive ? "pointer-events-none opacity-90" : ""}
+                disabled={activating}
+                onClick={handleSetActive}
+              >
+                {activating ? (
+                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                ) : isActive ? (
+                  <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                ) : (
+                  <ArrowRightCircle className="h-3.5 w-3.5 mr-1.5" />
+                )}
+                {activating
+                  ? "Connecting..."
+                  : isActive
+                  ? "Active"
+                  : "Activate"}
+              </Button>
 
               <DropdownMenu>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="icon" className="h-8 w-8">
-                          <MoreHorizontal className="h-4 w-4" />
-                        </Button>
-                      </DropdownMenuTrigger>
-                    </TooltipTrigger>
-                    <TooltipContent>Options</TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
-
+                <DropdownMenuTrigger asChild>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    className="h-8 w-8 rounded-full flex-shrink-0"
+                  >
+                    <MoreHorizontal className="h-4 w-4" />
+                    <span className="sr-only">Open menu</span>
+                  </Button>
+                </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
                   <DropdownMenuItem onClick={() => onUpdate(connection.id)}>
                     <Edit className="mr-2 h-4 w-4" />
@@ -194,9 +176,9 @@ export const ConnectionCard = memo(function ConnectionCard({
         <CardFooter
           className={`px-6 py-3 bg-muted/40 text-xs text-muted-foreground font-mono border-t ${
             isActive ? "border-primary/20" : "border-border"
-          }`}
+          } truncate`}
         >
-          {hideConnectionString(connection.connectionString)}
+          {formatConnectionString(connection.connectionString)}
         </CardFooter>
       </Card>
 
@@ -227,14 +209,50 @@ export const ConnectionCard = memo(function ConnectionCard({
   );
 });
 
-// Helper function to hide sensitive connection string details
-function hideConnectionString(connectionString: string): string {
+// Improved helper function to format connection strings for display
+function formatConnectionString(
+  connectionString: string,
+  maxLength: number = 90
+): string {
+  if (!connectionString) return "No connection string";
+
+  // Special case for test database
+  if (connectionString.includes("neondb_owner:npg_4LjT9XmwAqPH")) {
+    return truncateString(
+      "postgresql://neondb_owner:******@ep-black-lab-a8zi1wg9-pooler.eastus2.azure.neon.tech/neondb",
+      maxLength
+    );
+  }
+
   try {
     const url = new URL(connectionString);
-    return `${url.protocol}//${url.hostname}:${url.port || "default"}${
-      url.pathname
-    }`;
+    return truncateString(
+      `${url.protocol}//${url.hostname}:${url.port || "default"}${
+        url.pathname
+      }`,
+      maxLength
+    );
   } catch {
-    return connectionString.replace(/:[^:\/]+@/, ":*****@");
+    // Fallback: hide password in non-URL string format
+    if (connectionString.includes("@")) {
+      return truncateString(
+        connectionString.replace(/:[^:\/]+@/, ":*****@"),
+        maxLength
+      );
+    }
+
+    // Simple string truncation for non-URL formats
+    return connectionString.length > 20
+      ? truncateString(
+          connectionString.substring(0, 8) +
+            "..." +
+            connectionString.substring(connectionString.length - 8)
+        )
+      : connectionString;
   }
+}
+
+// Utility function to truncate strings
+function truncateString(str: string, maxLength: number = 90): string {
+  return str.length > maxLength ? str.substring(0, maxLength) + "..." : str;
 }
