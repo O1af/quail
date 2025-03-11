@@ -50,7 +50,9 @@ export function CreateDashboardDialog({
   const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
   const [isCreating, setIsCreating] = useState(false);
   const [isLoadingCharts, setIsLoadingCharts] = useState(false);
-  const [availableCharts, setAvailableCharts] = useState<ChartDocument[]>([]);
+  const [availableCharts, setAvailableCharts] = useState<
+    Pick<ChartDocument, "title" | "_id" | "updatedAt" | "data">[]
+  >([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
 
@@ -294,11 +296,11 @@ export function CreateDashboardDialog({
                             />
                             <div className="flex flex-col">
                               <span>{chart.title}</span>
-                              {chart.data?.chartType && (
+                              {/* {chart.data?.chartType && (
                                 <span className="text-xs text-muted-foreground">
                                   {chart.data.chartType} chart
                                 </span>
-                              )}
+                              )} */}
                             </div>
                           </div>
                         ))}

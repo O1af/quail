@@ -14,6 +14,7 @@ import { ChartDocument } from "@/lib/types/stores/chart"; // Added import for Ch
 import { DashboardGrid } from "@/app/app/(bi)/dashboard/[slug]/components/DashboardGrid";
 import { TitleEditor } from "./components/TitleEditor";
 import { ManageChartsModal } from "./components/ManageChartsModal";
+import { useHeader } from "@/components/header/header-context";
 
 export default function Page({
   params,
@@ -32,12 +33,39 @@ export default function Page({
   const [chartData, setChartData] = useState<Map<string, ChartDocument | null>>(
     new Map()
   ); // Updated type
+  const { setHeaderContent, setHeaderButtons } = useHeader();
 
   // State for manage charts modal
   const [isManageChartsOpen, setIsManageChartsOpen] = useState(false);
-
   // State for title editing
   const [tempTitle, setTempTitle] = useState("");
+
+  useEffect(() => {
+    setHeaderContent(
+      <div className="flex flex-1 justify-between items-center w-full">
+        <div>
+          <TitleEditor
+            isEditing={isEditing}
+            title={dashboard?.title || "Dashboard"}
+            tempTitle={tempTitle}
+            onTitleChange={handleTitleChange}
+          />
+          <p className="text-sm text-muted-foreground">
+            {dashboard?.description || "No description available"}
+          </p>
+        </div>
+        <div className="w-full ml-4 max-w-lg mr-4"></div>
+      </div>
+    );
+
+    setHeaderButtons(<div className="flex items-center gap-2"></div>);
+
+    return () => {
+      // Clean up by resetting header when component unmounts
+      setHeaderContent(null);
+      setHeaderButtons(null);
+    };
+  }, [setHeaderContent, setHeaderButtons, tempTitle, dashboard, isEditing]);
 
   // Use ref for layouts to prevent re-rendering
   const tempLayoutsRef = useRef<any[]>([]);
@@ -302,16 +330,16 @@ export default function Page({
 
   // Show dashboard content when loaded
   return (
-    <div className="p-6">
-      <div className="flex justify-between items-center mb-6">
-        <div className="flex-1 max-w-md">
+    <div className="p-4 py-2 pb-2">
+      <div className="justify-between items-center mb-6">
+        {/* <div className="flex-1 max-w-md">
           <TitleEditor
             isEditing={isEditing}
             title={dashboard?.title || "Dashboard"}
             tempTitle={tempTitle}
             onTitleChange={handleTitleChange}
           />
-        </div>
+        </div> */}
         <div className="flex gap-2">
           {!isEditing ? (
             <Button
