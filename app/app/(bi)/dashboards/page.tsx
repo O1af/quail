@@ -10,23 +10,16 @@ import {
 
 // UI Components
 import { Button } from "@/components/ui/button";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { SearchBar } from "@/components/header/dashboard-search-bar";
 import { useHeader } from "@/components/header/header-context";
 
 // Icons
-import {
-  Grid,
-  LayoutDashboard,
-  List,
-  Search,
-  Plus,
-  CirclePlus,
-} from "lucide-react";
+import { Grid, LayoutDashboard, List, Search, CirclePlus } from "lucide-react";
 
 // Local components
 import { EmptyState } from "@/app/app/(bi)/dashboards/components/EmptyState";
 import { DashboardCard } from "./components/DashboardCard";
+import { CreateDashboardDialog } from "./components/CreateDashboardDialog";
 
 // Types
 enum ViewMode {
@@ -42,6 +35,9 @@ export default function DashboardsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const { setHeaderContent, setHeaderButtons } = useHeader();
+  
+  // Create dashboard dialog state
+  const [isDialogOpen, setIsDialogOpen] = useState(false);
 
   const supabase = createClient();
 
@@ -90,20 +86,19 @@ export default function DashboardsPage() {
           )}
         </Button>
 
-        <Button>
+        <Button onClick={() => setIsDialogOpen(true)}>
           <CirclePlus className="h-4 w-4 mr-2" />
           Create Dashboard
         </Button>
       </div>
     );
 
-    // Important: Add searchQuery to the dependency array to update when it changes
     return () => {
       // Clean up by resetting header when component unmounts
       setHeaderContent(null);
       setHeaderButtons(null);
     };
-  }, [setHeaderContent, searchQuery]);
+  }, [setHeaderContent, setHeaderButtons, searchQuery, viewMode]);
 
   // Fetch user data
   useEffect(() => {
@@ -126,24 +121,12 @@ export default function DashboardsPage() {
   // Fetch dashboards when user is loaded
   useEffect(() => {
     if (user?.id) {
-      const fetchData = async () => {
-        setIsLoading(true);
-        try {
-          const fetchedDashboards = await loadUserDashboards(user.id);
-          setDashboards(fetchedDashboards);
-        } catch (error) {
-          console.error("Error loading dashboards:", error);
-        } finally {
-          setIsLoading(false);
-        }
-      };
-
       fetchData();
     }
   }, [user]);
 
   // Refresh data function
-  const refreshData = async () => {
+  const fetchData = async () => {
     if (!user?.id) return;
 
     setIsLoading(true);
@@ -174,7 +157,7 @@ export default function DashboardsPage() {
   // Handle dashboard duplication event
   useEffect(() => {
     const handleDashboardDuplicated = () => {
-      refreshData();
+      fetchData();
     };
 
     // Subscribe to events from dashboard cards
@@ -233,7 +216,7 @@ export default function DashboardsPage() {
             key={dashboard._id}
             dashboard={dashboard}
             viewMode={viewMode}
-            onRefresh={refreshData}
+            onRefresh={fetchData}
           />
         ))}
       </div>
@@ -246,8 +229,7 @@ export default function DashboardsPage() {
           <LayoutDashboard className="h-10 w-10 mb-2 text-muted-foreground" />
         }
         onAction={() => {
-          // Navigate to dashboard creation page or trigger creation modal
-          // This would be implemented based on your app's dashboard creation flow
+          setIsDialogOpen(true);
         }}
       />
     );
@@ -256,36 +238,17 @@ export default function DashboardsPage() {
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <div className="flex-1">
-        {/* Header with actions */}
-        {/* <div className="flex items-center justify-between">
-          <div className="flex items-center gap-2">
-            <Button
-              variant="outline"
-              size="icon"
-              onClick={() =>
-                setViewMode((prev) =>
-                  prev === ViewMode.Grid ? ViewMode.List : ViewMode.Grid
-                )
-              }
-              title={viewMode === ViewMode.Grid ? "List view" : "Grid view"}
-            >
-              {viewMode === ViewMode.Grid ? (
-                <List className="h-4 w-4" />
-              ) : (
-                <Grid className="h-4 w-4" />
-              )}
-            </Button>
-
-            <Button>
-              <Plus className="h-4 w-4 mr-2" />
-              New Dashboard
-            </Button>
-          </div>
-        </div> */}
-
         {/* Dashboard content */}
         <div className="space-y-6">{renderContent()}</div>
       </div>
+
+      {/* Create Dashboard Dialog */}
+      <CreateDashboardDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        onDashboardCreated={fetchData}
+        userId={user?.id || ""}
+      />
     </div>
   );
 }
