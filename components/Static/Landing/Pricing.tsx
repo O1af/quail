@@ -148,11 +148,16 @@ const pricingPlans = [
 
 export function Pricing() {
   return (
-    <section className="w-full min-h-screen flex items-center justify-center py-12 md:py-24 lg:py-32 bg-gradient-to-b from-background to-background/80">
+    <section
+      id="pricing"
+      className="w-full py-12 md:py-20 bg-gradient-to-b from-background to-background/80"
+    >
       <div className="container px-4 md:px-6 mx-auto">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl bg-gradient-to-r from-primary/90 to-primary bg-clip-text text-transparent">
-            Simple, Transparent Pricing
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-4 leading-tight">
+            <span className="bg-gradient-to-r from-primary/90 to-primary bg-clip-text text-transparent inline-block pb-1">
+              Simple, Transparent Pricing
+            </span>
           </h2>
           <p className="max-w-[700px] text-muted-foreground/80 md:text-xl/relaxed lg:text-base/relaxed xl:text-xl/relaxed">
             Choose the perfect plan for your needs. All plans include our core
@@ -160,7 +165,7 @@ export function Pricing() {
           </p>
         </div>
 
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 md:mt-12 lg:mt-16">
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-8 md:mt-10">
           {pricingPlans.map((plan) => (
             <Card
               key={plan.name}
