@@ -8,6 +8,7 @@ import {
   BarChart3,
   Database,
   SearchCode,
+  Search,
 } from "lucide-react";
 import {
   SidebarGroup,
@@ -36,9 +37,15 @@ export function DashNav() {
 
   const navigationItems = [
     {
+      icon: Search,
+      label: "Insights",
+      path: "/insights",
+      description: "Quick search & recent insights",
+    },
+    {
       icon: LayoutDashboard,
       label: "Dashboards",
-      path: "/insights",
+      path: "/dashboards",
       description: "View and manage dashboards",
     },
     {
