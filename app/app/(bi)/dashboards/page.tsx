@@ -3,7 +3,10 @@
 import { useState, useEffect } from "react";
 import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
-import { loadUserDashboards, Dashboard } from "@/components/stores/dashboard_store";
+import {
+  loadUserDashboards,
+  Dashboard,
+} from "@/components/stores/dashboard_store";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -17,17 +20,18 @@ import {
   LayoutDashboard,
   List,
   Search,
-  Plus
+  Plus,
+  CirclePlus,
 } from "lucide-react";
 
 // Local components
-import { EmptyState } from "./components/EmptyState";
+import { EmptyState } from "@/app/app/(bi)/dashboards/components/EmptyState";
 import { DashboardCard } from "./components/DashboardCard";
 
 // Types
 enum ViewMode {
   Grid = "grid",
-  List = "list"
+  List = "list",
 }
 
 export default function DashboardsPage() {
@@ -37,7 +41,7 @@ export default function DashboardsPage() {
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
-  const { setHeaderContent } = useHeader();
+  const { setHeaderContent, setHeaderButtons } = useHeader();
 
   const supabase = createClient();
 
@@ -49,17 +53,56 @@ export default function DashboardsPage() {
   // Set up the search bar in the header
   useEffect(() => {
     setHeaderContent(
-      <SearchBar
-        placeholder="Search dashboards..."
-        value={searchQuery}
-        onChange={handleSearch}
-        className="w-full max-w-lg mx-auto"
-        debounceMs={300}
-      />
+      <div className="flex flex-1 justify-between items-center w-full">
+        <div>
+          <h1 className="text-xl font-semibold">Dashboards</h1>
+          <p className="text-sm text-muted-foreground">
+            Manage and visualize your data
+          </p>
+        </div>
+        <div className="w-full ml-4 max-w-lg mr-4">
+          <SearchBar
+            placeholder="Search dashboards..."
+            value={searchQuery}
+            onChange={handleSearch}
+            debounceMs={300}
+          />
+        </div>
+      </div>
     );
 
-    // Clean up when unmounting
-    return () => setHeaderContent(null);
+    setHeaderButtons(
+      <div className="flex items-center gap-2">
+        <Button
+          variant="outline"
+          size="icon"
+          onClick={() =>
+            setViewMode((prev) =>
+              prev === ViewMode.Grid ? ViewMode.List : ViewMode.Grid
+            )
+          }
+          title={viewMode === ViewMode.Grid ? "List view" : "Grid view"}
+        >
+          {viewMode === ViewMode.Grid ? (
+            <List className="h-4 w-4" />
+          ) : (
+            <Grid className="h-4 w-4" />
+          )}
+        </Button>
+
+        <Button>
+          <CirclePlus className="h-4 w-4 mr-2" />
+          Create Dashboard
+        </Button>
+      </div>
+    );
+
+    // Important: Add searchQuery to the dependency array to update when it changes
+    return () => {
+      // Clean up by resetting header when component unmounts
+      setHeaderContent(null);
+      setHeaderButtons(null);
+    };
   }, [setHeaderContent, searchQuery]);
 
   // Fetch user data
@@ -135,11 +178,17 @@ export default function DashboardsPage() {
     };
 
     // Subscribe to events from dashboard cards
-    if (typeof window !== 'undefined' && window.addEventListener) {
-      window.addEventListener('dashboard-duplicated', handleDashboardDuplicated);
-      
+    if (typeof window !== "undefined" && window.addEventListener) {
+      window.addEventListener(
+        "dashboard-duplicated",
+        handleDashboardDuplicated
+      );
+
       return () => {
-        window.removeEventListener('dashboard-duplicated', handleDashboardDuplicated);
+        window.removeEventListener(
+          "dashboard-duplicated",
+          handleDashboardDuplicated
+        );
       };
     }
   }, []);
@@ -206,16 +255,17 @@ export default function DashboardsPage() {
 
   return (
     <div className="flex min-h-screen flex-col bg-background">
-      <div className="flex-1 space-y-6">
+      <div className="flex-1">
         {/* Header with actions */}
-        <div className="flex items-center justify-between">
-          <h1 className="text-2xl font-bold">Dashboards</h1>
+        {/* <div className="flex items-center justify-between">
           <div className="flex items-center gap-2">
             <Button
               variant="outline"
               size="icon"
               onClick={() =>
-                setViewMode(prev => prev === ViewMode.Grid ? ViewMode.List : ViewMode.Grid)
+                setViewMode((prev) =>
+                  prev === ViewMode.Grid ? ViewMode.List : ViewMode.Grid
+                )
               }
               title={viewMode === ViewMode.Grid ? "List view" : "Grid view"}
             >
@@ -225,18 +275,16 @@ export default function DashboardsPage() {
                 <Grid className="h-4 w-4" />
               )}
             </Button>
-            
+
             <Button>
               <Plus className="h-4 w-4 mr-2" />
               New Dashboard
             </Button>
           </div>
-        </div>
+        </div> */}
 
         {/* Dashboard content */}
-        <div className="space-y-6">
-          {renderContent()}
-        </div>
+        <div className="space-y-6">{renderContent()}</div>
       </div>
     </div>
   );

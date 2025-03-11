@@ -36,12 +36,12 @@ export function DashNav() {
   const isActive = (path: string) => pathname?.startsWith(path);
 
   const navigationItems = [
-    {
-      icon: Search,
-      label: "Insights",
-      path: "/insights",
-      description: "Quick search & recent insights",
-    },
+    // {
+    //   icon: Search,
+    //   label: "Insights",
+    //   path: "/insights",
+    //   description: "Quick search & recent insights",
+    // },
     {
       icon: LayoutDashboard,
       label: "Dashboards",

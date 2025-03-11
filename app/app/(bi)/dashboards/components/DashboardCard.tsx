@@ -11,12 +11,19 @@ import {
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
 import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
+import {
   Clock,
   LayoutDashboard,
   MoreVertical,
   Check,
   X,
   Loader2,
+  Info,
 } from "lucide-react";
 import {
   Dashboard,
@@ -182,6 +189,12 @@ export function DashboardCard({
     }
   };
 
+  // Prevent propagation for dropdown and other controls
+  const handleControlClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    e.stopPropagation();
+  };
+
   // Format the updated date
   const formatDate = (date: Date) => {
     return formatDistanceToNow(new Date(date), { addSuffix: true });
@@ -189,10 +202,149 @@ export function DashboardCard({
 
   if (viewMode === "grid") {
     return (
-      <Card className="transition-all hover:shadow-md">
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <div className="flex items-center space-x-2 flex-grow">
-            <LayoutDashboard className="h-4 w-4 flex-shrink-0" />
+      <Link
+        href={`/dashboard/${dashboard._id}`}
+        onClick={handleCardClick}
+        className="block"
+      >
+        <Card className="transition-all hover:shadow-md">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <div className="flex items-center space-x-2 flex-grow">
+              <LayoutDashboard className="h-4 w-4 flex-shrink-0" />
+              {isEditing ? (
+                <Input
+                  ref={inputRef}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="h-7 py-0 px-2 text-sm font-medium"
+                  disabled={isSaving}
+                  onClick={handleControlClick}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isSaving) {
+                      handleSave();
+                    } else if (e.key === "Escape") {
+                      handleCancel();
+                    }
+                  }}
+                />
+              ) : (
+                <div className="flex items-center gap-1 flex-grow">
+                  <CardTitle className="text-sm font-medium">{title}</CardTitle>
+                  {dashboard.description && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild onClick={handleControlClick}>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground opacity-70" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs text-sm">
+                            {dashboard.description}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+              )}
+            </div>
+            {isEditing ? (
+              <div className="flex space-x-1" onClick={handleControlClick}>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <Loader2 className="h-3 w-3 animate-spin" />
+                  ) : (
+                    <Check className="h-4 w-4" />
+                  )}
+                </Button>
+                <Button
+                  size="icon"
+                  variant="ghost"
+                  className="h-6 w-6"
+                  onClick={handleCancel}
+                  disabled={isSaving}
+                >
+                  <X className="h-4 w-4" />
+                </Button>
+              </div>
+            ) : (
+              <div onClick={handleControlClick}>
+                <DropdownMenu>
+                  <DropdownMenuTrigger asChild>
+                    <Button variant="ghost" size="icon" className="opacity-100">
+                      <MoreVertical className="h-4 w-4" />
+                    </Button>
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent align="end">
+                    <DropdownMenuItem onClick={startEditing}>
+                      Edit Title
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={handleDuplicate}
+                      disabled={isDuplicating}
+                    >
+                      {isDuplicating ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Duplicating...
+                        </>
+                      ) : (
+                        <>Duplicate</>
+                      )}
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      className="text-destructive"
+                      onClick={handleDelete}
+                      disabled={isDeleting}
+                    >
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Deleting...
+                        </>
+                      ) : (
+                        <>Delete</>
+                      )}
+                    </DropdownMenuItem>
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              </div>
+            )}
+          </CardHeader>
+          <CardContent>
+            <div className="flex items-center space-x-2 text-xs text-muted-foreground">
+              <div>
+                {dashboard.charts?.length || 0} chart
+                {dashboard.charts?.length !== 1 ? "s" : ""}
+              </div>
+              <div>•</div>
+              <div className="flex items-center space-x-1">
+                <Clock className="h-3 w-3" />
+                <span>Updated {formatDate(dashboard.updatedAt)}</span>
+              </div>
+            </div>
+          </CardContent>
+        </Card>
+      </Link>
+    );
+  }
+
+  // List view
+  return (
+    <Link
+      href={`/dashboard/${dashboard._id}`}
+      onClick={handleCardClick}
+      className="block"
+    >
+      <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 transition-colors">
+        <div className="flex items-center space-x-3 flex-1">
+          <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
+          <div className="flex-grow">
             {isEditing ? (
               <Input
                 ref={inputRef}
@@ -200,6 +352,7 @@ export function DashboardCard({
                 onChange={(e) => setTitle(e.target.value)}
                 className="h-7 py-0 px-2 text-sm font-medium"
                 disabled={isSaving}
+                onClick={handleControlClick}
                 onKeyDown={(e) => {
                   if (e.key === "Enter" && !isSaving) {
                     handleSave();
@@ -209,41 +362,60 @@ export function DashboardCard({
                 }}
               />
             ) : (
-              <Link
-                href={`/dashboard/${dashboard._id}`}
-                onClick={handleCardClick}
-                className="flex-grow"
-              >
-                <CardTitle className="text-sm font-medium">{title}</CardTitle>
-              </Link>
+              <>
+                <div className="flex items-center gap-1">
+                  <h3 className="text-sm font-medium">{title}</h3>
+                  {dashboard.description && (
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild onClick={handleControlClick}>
+                          <Info className="h-3.5 w-3.5 text-muted-foreground opacity-70" />
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p className="max-w-xs text-sm">
+                            {dashboard.description}
+                          </p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  )}
+                </div>
+                <p className="text-xs text-muted-foreground">
+                  {dashboard.charts?.length || 0} chart
+                  {dashboard.charts?.length !== 1 ? "s" : ""} • Updated{" "}
+                  {formatDate(dashboard.updatedAt)}
+                </p>
+              </>
             )}
           </div>
-          {isEditing ? (
-            <div className="flex space-x-1">
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6"
-                onClick={handleSave}
-                disabled={isSaving}
-              >
-                {isSaving ? (
-                  <Loader2 className="h-3 w-3 animate-spin" />
-                ) : (
-                  <Check className="h-4 w-4" />
-                )}
-              </Button>
-              <Button
-                size="icon"
-                variant="ghost"
-                className="h-6 w-6"
-                onClick={handleCancel}
-                disabled={isSaving}
-              >
-                <X className="h-4 w-4" />
-              </Button>
-            </div>
-          ) : (
+        </div>
+        {isEditing ? (
+          <div className="flex space-x-1" onClick={handleControlClick}>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              onClick={handleSave}
+              disabled={isSaving}
+            >
+              {isSaving ? (
+                <Loader2 className="h-3 w-3 animate-spin" />
+              ) : (
+                <Check className="h-4 w-4" />
+              )}
+            </Button>
+            <Button
+              size="icon"
+              variant="ghost"
+              className="h-7 w-7"
+              onClick={handleCancel}
+              disabled={isSaving}
+            >
+              <X className="h-4 w-4" />
+            </Button>
+          </div>
+        ) : (
+          <div onClick={handleControlClick}>
             <DropdownMenu>
               <DropdownMenuTrigger asChild>
                 <Button variant="ghost" size="icon" className="opacity-100">
@@ -252,7 +424,7 @@ export function DashboardCard({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={startEditing}>
-                  Edit Title
+                  Edit Name
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDuplicate}
@@ -283,130 +455,9 @@ export function DashboardCard({
                 </DropdownMenuItem>
               </DropdownMenuContent>
             </DropdownMenu>
-          )}
-        </CardHeader>
-        <CardContent>
-          <div className="flex items-center space-x-2 text-xs text-muted-foreground">
-            <div>
-              {dashboard.charts?.length || 0} chart
-              {dashboard.charts?.length !== 1 ? "s" : ""}
-            </div>
-            <div>•</div>
-            <div className="flex items-center space-x-1">
-              <Clock className="h-3 w-3" />
-              <span>Updated {formatDate(dashboard.updatedAt)}</span>
-            </div>
           </div>
-        </CardContent>
-      </Card>
-    );
-  }
-
-  // List view
-  return (
-    <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 transition-colors">
-      <div className="flex items-center space-x-3 flex-1">
-        <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
-        <div className="flex-grow">
-          {isEditing ? (
-            <Input
-              ref={inputRef}
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              className="h-7 py-0 px-2 text-sm font-medium"
-              disabled={isSaving}
-              onKeyDown={(e) => {
-                if (e.key === "Enter" && !isSaving) {
-                  handleSave();
-                } else if (e.key === "Escape") {
-                  handleCancel();
-                }
-              }}
-            />
-          ) : (
-            <Link
-              href={`/dashboard/${dashboard._id}`}
-              onClick={handleCardClick}
-              className="block"
-            >
-              <h3 className="text-sm font-medium">{title}</h3>
-              <p className="text-xs text-muted-foreground">
-                {dashboard.charts?.length || 0} chart
-                {dashboard.charts?.length !== 1 ? "s" : ""} • Updated{" "}
-                {formatDate(dashboard.updatedAt)}
-              </p>
-            </Link>
-          )}
-        </div>
+        )}
       </div>
-      {isEditing ? (
-        <div className="flex space-x-1">
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7"
-            onClick={handleSave}
-            disabled={isSaving}
-          >
-            {isSaving ? (
-              <Loader2 className="h-3 w-3 animate-spin" />
-            ) : (
-              <Check className="h-4 w-4" />
-            )}
-          </Button>
-          <Button
-            size="icon"
-            variant="ghost"
-            className="h-7 w-7"
-            onClick={handleCancel}
-            disabled={isSaving}
-          >
-            <X className="h-4 w-4" />
-          </Button>
-        </div>
-      ) : (
-        <div className="flex items-center">
-          <DropdownMenu>
-            <DropdownMenuTrigger asChild>
-              <Button variant="ghost" size="icon" className="opacity-100">
-                <MoreVertical className="h-4 w-4" />
-              </Button>
-            </DropdownMenuTrigger>
-            <DropdownMenuContent align="end">
-              <DropdownMenuItem onClick={startEditing}>
-                Edit Name
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                onClick={handleDuplicate}
-                disabled={isDuplicating}
-              >
-                {isDuplicating ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Duplicating...
-                  </>
-                ) : (
-                  <>Duplicate</>
-                )}
-              </DropdownMenuItem>
-              <DropdownMenuItem
-                className="text-destructive"
-                onClick={handleDelete}
-                disabled={isDeleting}
-              >
-                {isDeleting ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    Deleting...
-                  </>
-                ) : (
-                  <>Delete</>
-                )}
-              </DropdownMenuItem>
-            </DropdownMenuContent>
-          </DropdownMenu>
-        </div>
-      )}
-    </div>
+    </Link>
   );
 }
