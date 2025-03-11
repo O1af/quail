@@ -111,10 +111,7 @@ export async function loadDashboard(
 }
 
 /**
- * Create a new dashboard
- *
- * @param dashboard - The dashboard data to create
- * @returns A promise that resolves to the created dashboard
+ * Create a new dashboard with proper default chart layout
  */
 export async function createDashboard(
   dashboard: Omit<Dashboard, "_id" | "createdAt" | "updatedAt">
@@ -123,10 +120,37 @@ export async function createDashboard(
     await connectToMongo();
     const collection = getDashboardsCollection();
 
+    // Generate default layouts for any charts that don't have layout specified
+    const existingLayoutIds = new Set(
+      dashboard.layout?.map((item) => item.i) || []
+    );
+    const chartsWithoutLayout = dashboard.charts.filter(
+      (chartId) => !existingLayoutIds.has(chartId)
+    );
+
+    // Create layout for charts without layout items
+    const newLayouts = chartsWithoutLayout.map((chartId, index) => {
+      const row = Math.floor(index / 2); // Position in a 2-column grid
+      const col = index % 2;
+      return {
+        i: chartId,
+        x: col * 6, // 6 units wide in a 2-column layout
+        y: row * 9, // 9 units high
+        w: 6, // Half of the 12-unit grid
+        h: 9, // Default height
+        minW: 3,
+        minH: 3,
+      };
+    });
+
+    // Combine existing and new layouts
+    const finalLayout = [...(dashboard.layout || []), ...newLayouts];
+
     const now = new Date();
     const newDashboard: Dashboard = {
       _id: new ObjectId().toString(),
       ...dashboard,
+      layout: finalLayout,
       createdAt: now,
       updatedAt: now,
     };

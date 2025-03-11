@@ -131,7 +131,7 @@ export default function Page({
     setIsEditing(false);
   }, [dashboard]);
 
-  // Chart management handler - updated to handle apply/cancel
+  // Chart management handler - updated to handle apply/cancel and add default layout positions
   const handleChartsChange = useCallback(
     (newCharts: string[], apply: boolean) => {
       console.log(
@@ -141,12 +141,49 @@ export default function Page({
       );
 
       if (apply) {
+        // Create a set of existing chart IDs for quick lookup
+        const existingChartIds = new Set(tempChartsRef.current);
+
+        // Find any new charts that were added
+        const addedCharts = newCharts.filter(
+          (chartId) => !existingChartIds.has(chartId)
+        );
+
+        // Update charts reference
         tempChartsRef.current = newCharts;
 
         // Clean up layouts to remove any charts that were removed
         tempLayoutsRef.current = tempLayoutsRef.current.filter((item) =>
           newCharts.includes(item.i)
         );
+
+        // Add default layout items for new charts
+        if (addedCharts.length > 0) {
+          // Find the maximum y-coordinate to place new charts below existing ones
+          const maxY =
+            tempLayoutsRef.current.length > 0
+              ? Math.max(
+                  ...tempLayoutsRef.current.map((item) => item.y + item.h)
+                )
+              : 0;
+
+          // Add default layout items for each new chart
+          const newLayoutItems = addedCharts.map((chartId, index) => ({
+            i: chartId,
+            x: 0, // Start at the left edge
+            y: maxY + index * 4, // Stack vertically, spaced 4 units apart
+            w: 12, // Full width (12 columns)
+            h: 9, // Default height of 9 units
+            minW: 3, // Minimum width
+            minH: 3, // Minimum height
+          }));
+
+          // Add the new layout items to the layouts
+          tempLayoutsRef.current = [
+            ...tempLayoutsRef.current,
+            ...newLayoutItems,
+          ];
+        }
       } else {
         // If canceled, don't do anything - keep the original charts
         console.log("Chart changes canceled, keeping original charts");

@@ -1,7 +1,7 @@
 import React from "react";
 import { Grip, BarChart } from "lucide-react";
 import { ChartDocument } from "@/lib/types/stores/chart";
-import ChartPreviewPane from "@/components/BI/Charts/Editor/ChartPreviewPane";
+import DashboardChartRenderer from "@/components/BI/Charts/DashboardChartRenderer";
 
 interface ChartItemProps {
   chartId: string;
@@ -25,33 +25,29 @@ export function ChartItem({ chartId, chartData, isEditing }: ChartItemProps) {
         } overflow-hidden`}
       >
         {chartData?.data ? (
-          // Make chart preview pane take full width and height
-          <div className="h-full w-full">
-            <ChartPreviewPane
-              jsxCode={chartData?.data?.chartJsx || ""}
-              data={chartData?.data?.data || null}
-              className="w-full h-full" // Add className prop
-            />
-          </div>
+          // Pass the description to DashboardChartRenderer
+          <DashboardChartRenderer
+            jsxCode={chartData?.data?.chartJsx || ""}
+            data={chartData?.data?.data || null}
+            title={chartData.title || "Untitled Chart"}
+            description={chartData.description}
+            className="w-full h-full"
+          />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">
-            <div className="bg-muted/50 p-8 rounded-lg w-full flex flex-col items-center">
-              <BarChart className="h-16 w-16 text-muted-foreground mb-4" />
-              <h3 className="text-lg font-medium text-foreground">
+            <div className="bg-muted/30 p-4 sm:p-6 rounded-lg w-full flex flex-col items-center">
+              <BarChart className="h-10 w-10 text-muted-foreground mb-2" />
+              <h3 className="text-sm font-medium text-foreground">
                 {chartData?.title || "Untitled Chart"}
               </h3>
-              <p className="text-sm text-muted-foreground mt-2">
-                No visualization data available for this chart
+              <p className="text-xs text-muted-foreground mt-1">
+                No visualization data available
               </p>
-              <div className="mt-6 text-xs text-muted-foreground bg-background/50 p-3 rounded-md w-full max-w-sm">
-                <p className="font-medium mb-1">Chart ID: {chartId}</p>
-                <p className="mb-1">
-                  Created: {chartData?.createdAt?.toLocaleString()}
+              {chartData?.description && (
+                <p className="text-xs text-muted-foreground mt-3 max-w-xs">
+                  {chartData.description}
                 </p>
-                <p className="mb-1">
-                  Updated: {chartData?.updatedAt?.toLocaleString()}
-                </p>
-              </div>
+              )}
             </div>
           </div>
         )}

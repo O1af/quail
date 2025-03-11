@@ -171,7 +171,26 @@ export function ManageChartsModal({
         <DialogHeader>
           <DialogTitle>Manage Dashboard Charts</DialogTitle>
           <DialogDescription>
-            Add or remove charts from your dashboard.
+            Add or remove charts from your dashboard.{" "}
+            {hasChanges && (
+              <span className="text-primary">
+                {tempDashboardCharts.length - currentCharts.length > 0
+                  ? `(Adding ${
+                      tempDashboardCharts.length - currentCharts.length
+                    } chart${
+                      tempDashboardCharts.length - currentCharts.length !== 1
+                        ? "s"
+                        : ""
+                    })`
+                  : `(Removing ${
+                      currentCharts.length - tempDashboardCharts.length
+                    } chart${
+                      currentCharts.length - tempDashboardCharts.length !== 1
+                        ? "s"
+                        : ""
+                    })`}
+              </span>
+            )}
           </DialogDescription>
         </DialogHeader>
 

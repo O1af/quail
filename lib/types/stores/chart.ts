@@ -13,4 +13,5 @@ export interface ChartDocument {
   createdAt: Date;
   updatedAt: Date;
   data: ChartData;
+  description: string;
 }
