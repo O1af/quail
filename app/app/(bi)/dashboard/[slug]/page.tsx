@@ -39,6 +39,7 @@ export default function Page({
   const [isManageChartsOpen, setIsManageChartsOpen] = useState(false);
   // State for title editing
   const [tempTitle, setTempTitle] = useState("");
+  const [tempDescription, setTempDescription] = useState(""); // Added state for description
 
   useEffect(() => {
     setHeaderContent(
@@ -47,12 +48,17 @@ export default function Page({
           <TitleEditor
             isEditing={isEditing}
             title={dashboard?.title || "Dashboard"}
+            description={dashboard?.description || ""} // Pass description
             tempTitle={tempTitle}
+            tempDescription={tempDescription} // Pass temp description
             onTitleChange={handleTitleChange}
+            onDescriptionChange={handleDescriptionChange} // New handler
           />
-          <p className="text-sm text-muted-foreground">
-            {dashboard?.description || "No description available"}
-          </p>
+          {/* {!isEditing && (
+            <p className="text-sm text-muted-foreground">
+              {dashboard?.description || "No description available"}
+            </p>
+          )} */}
         </div>
         <div className="w-full ml-4 max-w-lg mr-4"></div>
       </div>
@@ -65,7 +71,14 @@ export default function Page({
       setHeaderContent(null);
       setHeaderButtons(null);
     };
-  }, [setHeaderContent, setHeaderButtons, tempTitle, dashboard, isEditing]);
+  }, [
+    setHeaderContent,
+    setHeaderButtons,
+    tempTitle,
+    tempDescription,
+    dashboard,
+    isEditing,
+  ]);
 
   // Use ref for layouts to prevent re-rendering
   const tempLayoutsRef = useRef<any[]>([]);
@@ -83,6 +96,14 @@ export default function Page({
     []
   );
 
+  // Add description change handler
+  const handleDescriptionChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setTempDescription(e.target.value);
+    },
+    []
+  );
+
   const handleEdit = useCallback(() => {
     // Initialize tempLayouts with current dashboard layout when editing starts
     if (dashboard?.layout) {
@@ -92,8 +113,9 @@ export default function Page({
     if (dashboard?.charts) {
       tempChartsRef.current = [...dashboard.charts];
     }
-    // Set the temporary title when entering edit mode
+    // Set the temporary title and description when entering edit mode
     setTempTitle(dashboard?.title || "Dashboard");
+    setTempDescription(dashboard?.description || "");
     setIsEditing(true);
   }, [dashboard]);
 
@@ -101,12 +123,14 @@ export default function Page({
     if (!dashboard || !user) return;
 
     const trimmedTitle = tempTitle.trim() || "Dashboard";
+    const trimmedDescription = tempDescription.trim();
 
     setIsLoading(true);
     try {
-      // Save title, layout and charts changes
+      // Save title, description, layout and charts changes
       await updateDashboard(slug, user.id, {
         title: trimmedTitle,
+        description: trimmedDescription,
         layout: tempLayoutsRef.current,
         charts: tempChartsRef.current,
       });
@@ -117,6 +141,7 @@ export default function Page({
         return {
           ...prev,
           title: trimmedTitle,
+          description: trimmedDescription,
           layout: tempLayoutsRef.current,
           charts: tempChartsRef.current,
         };
@@ -149,13 +174,14 @@ export default function Page({
       setIsLoading(false);
       setIsEditing(false);
     }
-  }, [dashboard, user, slug, tempTitle, chartData]);
+  }, [dashboard, user, slug, tempTitle, tempDescription, chartData]);
 
   const handleCancel = useCallback(() => {
     // Reset temporary values when cancelling
     tempLayoutsRef.current = dashboard?.layout || [];
     tempChartsRef.current = dashboard?.charts || [];
     setTempTitle(dashboard?.title || "Dashboard");
+    setTempDescription(dashboard?.description || "");
     setIsEditing(false);
   }, [dashboard]);
 

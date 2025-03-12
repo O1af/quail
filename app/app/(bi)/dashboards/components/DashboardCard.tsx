@@ -3,6 +3,7 @@ import Link from "next/link";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
+import { Textarea } from "@/components/ui/textarea";
 import { toast } from "sonner";
 import {
   DropdownMenu,
@@ -48,11 +49,13 @@ export function DashboardCard({
 }: DashboardCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(dashboard.title);
+  const [description, setDescription] = useState(dashboard.description || "");
   const [isSaving, setIsSaving] = useState(false);
   const [isDuplicating, setIsDuplicating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const [currentUser, setCurrentUser] = useState<any>(null);
   const inputRef = useRef<HTMLInputElement>(null);
+  const descriptionRef = useRef<HTMLTextAreaElement>(null);
   const supabase = createClient();
   const router = useRouter();
 
@@ -131,9 +134,10 @@ export function DashboardCard({
     try {
       await updateDashboard(dashboard._id, currentUser.id, {
         title: title.trim() || "Dashboard",
+        description: description.trim(),
       });
 
-      toast.success("Dashboard title updated");
+      toast.success("Dashboard updated successfully");
       setIsEditing(false);
 
       // Refresh the dashboard list
@@ -141,8 +145,8 @@ export function DashboardCard({
         onRefresh();
       }
     } catch (error) {
-      console.error("Failed to update dashboard title:", error);
-      toast.error("Failed to update dashboard title");
+      console.error("Failed to update dashboard:", error);
+      toast.error("Failed to update dashboard");
     } finally {
       setIsSaving(false);
     }
@@ -178,7 +182,8 @@ export function DashboardCard({
   };
 
   const handleCancel = () => {
-    setTitle(dashboard.title); // Reset to original title
+    setTitle(dashboard.title);
+    setDescription(dashboard.description || "");
     setIsEditing(false);
   };
 
@@ -210,23 +215,35 @@ export function DashboardCard({
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <div className="flex items-center space-x-2 flex-grow">
-              <LayoutDashboard className="h-4 w-4 flex-shrink-0" />
+              {/* <LayoutDashboard className="h-4 w-4 flex-shrink-0" /> */}
               {isEditing ? (
-                <Input
-                  ref={inputRef}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  className="h-7 py-0 px-2 text-sm font-medium"
-                  disabled={isSaving}
-                  onClick={handleControlClick}
-                  onKeyDown={(e) => {
-                    if (e.key === "Enter" && !isSaving) {
-                      handleSave();
-                    } else if (e.key === "Escape") {
-                      handleCancel();
-                    }
-                  }}
-                />
+                <div className="w-full space-y-2">
+                  <Input
+                    ref={inputRef}
+                    value={title}
+                    onChange={(e) => setTitle(e.target.value)}
+                    className="h-7 py-0 px-2 text-sm font-medium w-full"
+                    disabled={isSaving}
+                    placeholder="Dashboard title"
+                    onClick={handleControlClick}
+                    onKeyDown={(e) => {
+                      if (e.key === "Enter" && !isSaving) {
+                        handleSave();
+                      } else if (e.key === "Escape") {
+                        handleCancel();
+                      }
+                    }}
+                  />
+                  <Textarea
+                    ref={descriptionRef}
+                    value={description}
+                    onChange={(e) => setDescription(e.target.value)}
+                    className="min-h-[60px] text-xs resize-none"
+                    disabled={isSaving}
+                    placeholder="Description (optional)"
+                    onClick={handleControlClick}
+                  />
+                </div>
               ) : (
                 <div className="flex items-center gap-1 flex-grow">
                   <CardTitle className="text-sm font-medium">{title}</CardTitle>
@@ -282,7 +299,7 @@ export function DashboardCard({
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     <DropdownMenuItem onClick={startEditing}>
-                      Edit Title
+                      Edit Dashboard
                     </DropdownMenuItem>
                     <DropdownMenuItem
                       onClick={handleDuplicate}
@@ -317,6 +334,11 @@ export function DashboardCard({
             )}
           </CardHeader>
           <CardContent>
+            {/* {!isEditing && dashboard.description && (
+              <p className="text-xs text-muted-foreground mb-2">
+                {dashboard.description}
+              </p>
+            )} */}
             <div className="flex items-center space-x-2 text-xs text-muted-foreground">
               <div>
                 {dashboard.charts?.length || 0} chart
@@ -346,21 +368,33 @@ export function DashboardCard({
           <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
           <div className="flex-grow">
             {isEditing ? (
-              <Input
-                ref={inputRef}
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                className="h-7 py-0 px-2 text-sm font-medium"
-                disabled={isSaving}
-                onClick={handleControlClick}
-                onKeyDown={(e) => {
-                  if (e.key === "Enter" && !isSaving) {
-                    handleSave();
-                  } else if (e.key === "Escape") {
-                    handleCancel();
-                  }
-                }}
-              />
+              <div className="space-y-2">
+                <Input
+                  ref={inputRef}
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  className="h-7 py-0 px-2 text-sm font-medium"
+                  disabled={isSaving}
+                  placeholder="Dashboard title"
+                  onClick={handleControlClick}
+                  onKeyDown={(e) => {
+                    if (e.key === "Enter" && !isSaving) {
+                      handleSave();
+                    } else if (e.key === "Escape") {
+                      handleCancel();
+                    }
+                  }}
+                />
+                <Textarea
+                  ref={descriptionRef}
+                  value={description}
+                  onChange={(e) => setDescription(e.target.value)}
+                  className="min-h-[60px] text-xs resize-none"
+                  disabled={isSaving}
+                  placeholder="Description (optional)"
+                  onClick={handleControlClick}
+                />
+              </div>
             ) : (
               <>
                 <div className="flex items-center gap-1">
@@ -424,7 +458,7 @@ export function DashboardCard({
               </DropdownMenuTrigger>
               <DropdownMenuContent align="end">
                 <DropdownMenuItem onClick={startEditing}>
-                  Edit Name
+                  Edit Dashboard
                 </DropdownMenuItem>
                 <DropdownMenuItem
                   onClick={handleDuplicate}
