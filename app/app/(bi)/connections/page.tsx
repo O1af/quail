@@ -1,10 +1,10 @@
 "use client";
-import { Connections } from "@/components/BI/Connections/connections";
+import { Connections } from "@/components/BI/connections/ConnectionsPage";
 import { useHeader } from "@/components/header/header-context";
 import { useEffect } from "react";
 import { Button } from "@/components/ui/button";
 import { PlusCircle } from "lucide-react";
-import { useConnectionsState } from "@/hooks/useConnectionsState";
+import { useConnectionsState } from "@/lib/hooks/useConnectionsState";
 
 export default function ConnectionsPage() {
   const { setHeaderContent, setHeaderButtons } = useHeader();

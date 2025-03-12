@@ -18,7 +18,7 @@ import { DataVisQuery } from "./DataVisQuery";
 import { Button } from "@/components/ui/button";
 import { useRouter } from "next/navigation";
 import { useState, useMemo, memo, useCallback, useEffect } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { createClient } from "@/utils/supabase/client";
 import { saveChart } from "@/components/stores/chart_store";
 import { ChartData } from "@/lib/types/stores/chart";

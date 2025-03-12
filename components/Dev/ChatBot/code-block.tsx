@@ -4,7 +4,7 @@ import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Copy, Repeat } from "lucide-react";
 import { useCopyToClipboard } from "usehooks-ts";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useEditorStore } from "@/components/stores/editor_store";
 import {
   Tooltip,
@@ -104,7 +104,7 @@ export function CodeBlock({
         const regex = new RegExp(`\\b${word}\\b`, "gi");
         formattedSql = formattedSql.replace(
           regex,
-          `<span class='text-${color}-500 font-semibold'>${word}</span>`,
+          `<span class='text-${color}-500 font-semibold'>${word}</span>`
         );
       });
     });

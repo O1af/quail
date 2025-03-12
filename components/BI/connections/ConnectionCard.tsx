@@ -2,7 +2,7 @@ import { useState, memo } from "react";
 import { DatabaseConfig } from "@/lib/types/stores/dbConnections";
 import { queryMetadata } from "@/components/stores/utils/query";
 import { useTableStore } from "@/components/stores/table_store";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useDbStore } from "@/components/stores/db_mongo_client";
 import {
   Card,

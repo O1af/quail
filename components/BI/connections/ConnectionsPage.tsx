@@ -4,8 +4,8 @@ import { useState, useCallback, memo, useEffect } from "react";
 import { useDbStore } from "@/components/stores/db_mongo_client";
 import { ConnectionsList } from "./ConnectionsList";
 import { ConnectionForm } from "./ConnectionForm";
-import { useToast } from "@/hooks/use-toast";
-import { useConnectionsState } from "@/hooks/useConnectionsState";
+import { useToast } from "@/lib/hooks/use-toast";
+import { useConnectionsState } from "@/lib/hooks/useConnectionsState";
 
 export const Connections = memo(function Connections() {
   const [isDbLoading, setIsDbLoading] = useState(true);

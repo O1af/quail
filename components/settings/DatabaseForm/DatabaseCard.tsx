@@ -8,7 +8,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useState, memo } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { queryMetadata } from "../../stores/utils/query";
 import { useTableStore } from "../../stores/table_store"; // Add this import
 

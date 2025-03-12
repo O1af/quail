@@ -10,7 +10,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useEditorStore } from "../stores/editor_store";
 import { shallow } from "zustand/shallow";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 // Separate button component to prevent unnecessary re-renders
 const ExecuteButton = React.memo(function ExecuteButton({

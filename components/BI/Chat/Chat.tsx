@@ -8,7 +8,7 @@ import { useRouter } from "next/navigation";
 import { ChatSkeleton } from "./ChatSkeleton";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Welcome } from "./Welcome";
-import { useInitializeChat } from "@/hooks/useInitializeChat";
+import { useInitializeChat } from "@/lib/hooks/useInitializeChat";
 import { loadChat } from "@/components/stores/chat_store";
 import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
 import { useDatabaseStructure } from "@/components/stores/table_store";

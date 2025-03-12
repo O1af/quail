@@ -18,7 +18,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { useCopyToClipboard } from "usehooks-ts";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 import { useEditorStore } from "@/components/stores/editor_store";
 import { Copy, Repeat } from "lucide-react";
 

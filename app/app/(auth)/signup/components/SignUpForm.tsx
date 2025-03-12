@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast"; // Import the toast hook
+import { useToast } from "@/lib/hooks/use-toast"; // Import the toast hook
 import { useTheme } from "next-themes";
 
 import { signup } from "@/lib/auth-actions";

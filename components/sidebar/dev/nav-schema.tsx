@@ -8,7 +8,7 @@ import {
   BoxSelect,
   RefreshCw,
 } from "lucide-react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 import {
   Collapsible,

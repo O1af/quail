@@ -15,7 +15,7 @@ import {
 } from "@/components/ui/card";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { useToast } from "@/hooks/use-toast"; // Import the toast hook
+import { useToast } from "@/lib/hooks/use-toast"; // Import the toast hook
 import { ToastAction } from "@/components/ui/toast"; // Import the ToastAction component
 import { resetPassword } from "@/lib/auth-actions"; // Replace with your actual resetPassword function
 import Routes from "@/components/routes";
