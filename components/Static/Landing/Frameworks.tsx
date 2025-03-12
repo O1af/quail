@@ -1,45 +1,139 @@
-import { Card } from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
 import { useState, useCallback, useEffect, memo } from "react";
-import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
+import { SiSupabase } from "react-icons/si";
 import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
+import Image from "next/image";
 
+// Use img tags to render SVGs
 const NeonLogo = () => {
   const { resolvedTheme } = useTheme();
-  const logoSrc =
-    resolvedTheme === "dark"
-      ? "https://neon.tech/brand/neon-logomark-dark-color.svg"
-      : "https://neon.tech/brand/neon-logomark-light-color.svg";
+  const isDarkTheme = resolvedTheme === "dark";
 
-  return <img src={logoSrc} alt="Neon" className="w-full h-full" />;
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src={isDarkTheme ? "/logos/neon-dark.svg" : "/logos/neon-light.svg"}
+        alt="Neon Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
+};
+
+const PostgresLogo = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src="/logos/postgres.svg"
+        alt="PostgreSQL Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
+};
+
+const MySQLLogo = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src="/logos/mysql.svg"
+        alt="PostgreSQL Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
+};
+
+const AzureLogo = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src="/logos/azure.svg"
+        alt="Azure Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
+};
+const GCPCloudSQLLogo = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src="/logos/gcp_cloud_sql.svg"
+        alt="GCP Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
+};
+const AWSLogo = () => {
+  return (
+    <div className="w-full h-full flex items-center justify-center">
+      <Image
+        src="/logos/aws.svg"
+        alt="AWS Logo"
+        className="w-full h-full"
+        width={40}
+        height={40}
+      />
+    </div>
+  );
 };
 
 const frameworks = [
   {
     name: "PostgreSQL",
-    href: "/docs/guides/getting-started/quickstarts/postgresql",
-    icon: SiPostgresql,
+    href: "#",
+    icon: PostgresLogo,
     color: "#336791",
   },
   {
     name: "MySQL",
-    href: "/docs/guides/getting-started/quickstarts/mysql",
-    icon: SiMysql,
+    href: "#",
+    icon: MySQLLogo,
     color: "#00758F",
   },
   {
     name: "Supabase",
-    href: "/docs/guides/getting-started/quickstarts/elasticsearch",
+    href: "#",
     icon: SiSupabase,
     color: "#3ECF8E",
   },
   {
     name: "Neon.tech",
-    href: "/docs/guides/getting-started/quickstarts/neon",
+    href: "#",
     icon: NeonLogo,
     color: "#00E699",
+  },
+  {
+    name: "AWS RDS",
+    href: "#",
+    icon: AWSLogo,
+    color: "#FF9900",
+  },
+  {
+    name: "Azure",
+    href: "#",
+    icon: AzureLogo,
+    color: "#0078D4",
+  },
+  {
+    name: "Cloud SQL",
+    href: "#",
+    icon: GCPCloudSQLLogo,
+    color: "#4285F4",
   },
 ];
 
@@ -81,20 +175,20 @@ function FrameworksSection() {
   };
 
   return (
-    <section className="py-12 md:py-24">
+    <section className="py-8 md:py-14">
       <Container>
         <motion.div
-          className="flex flex-col xl:flex-row gap-8 items-center justify-between"
+          className="flex flex-col xl:flex-row gap-12 items-center justify-center" // Increased gap from 8 to 12
           initial="hidden"
           whileInView="visible"
           viewport={{ once: true }}
           variants={containerVariants}
         >
           <motion.div
-            className="text-center xl:text-left"
+            className="text-center xl:text-left" // Removed xl:mr-7
             variants={itemVariants}
           >
-            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl text-foreground/90">
+            <h2 className="font-heading text-3xl font-bold tracking-tight sm:text-4xl text-foreground/90 xl:max-w-xs">
               Use Quail With
               <div className="mt-2">
                 <div
@@ -121,8 +215,12 @@ function FrameworksSection() {
               </div>
             </h2>
           </motion.div>
+
+          {/* Added a spacer div for extra separation on non-xl screens */}
+          <div className="hidden xl:block w-12"></div>
+
           <motion.div
-            className="grid grid-cols-4 gap-4 md:grid-cols-4"
+            className="grid grid-cols-4 gap-4 md:grid-cols-4" // Removed xl:ml-7
             onMouseLeave={handleMouseLeave}
             variants={containerVariants}
           >

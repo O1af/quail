@@ -26,7 +26,7 @@ export function CTA() {
 
   return (
     <motion.div
-      className="flex flex-col items-center justify-center min-h-[400px] bg-background text-foreground p-8"
+      className="flex flex-col items-center justify-center py-12 md:py-16 bg-background text-foreground"
       initial="hidden"
       whileInView="visible"
       viewport={{ once: true }}

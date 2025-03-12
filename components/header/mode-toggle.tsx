@@ -10,10 +10,10 @@ import {
 } from "@/components/ui/tooltip";
 
 export function ModeToggle() {
-  const { theme, setTheme } = useTheme();
+  const { resolvedTheme, setTheme } = useTheme();
 
   const toggleTheme = () => {
-    setTheme(theme === "dark" ? "light" : "dark");
+    setTheme(resolvedTheme === "dark" ? "light" : "dark");
   };
 
   return (
@@ -21,7 +21,7 @@ export function ModeToggle() {
       <Tooltip>
         <TooltipTrigger asChild>
           <Button variant="outline" size="icon" onClick={toggleTheme}>
-            {theme === "dark" ? (
+            {resolvedTheme === "dark" ? (
               <Sun className="h-[1.2rem] w-[1.2rem]" />
             ) : (
               <Moon className="h-[1.2rem] w-[1.2rem]" />
