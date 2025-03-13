@@ -45,23 +45,14 @@ export function transformData(
   const { labelColumn, valueColumns, colors, seriesColumn } = options;
   const rows = data.rows;
 
-  // Extract and sort labels
-  const uniqueLabels = Array.from(new Set(rows.map((row) => row[labelColumn])));
-  const containsDates =
-    data.types.find((t) => t.colName === labelColumn)?.jsType === "Date";
-
-  const sortedLabels = uniqueLabels.sort((a, b) => {
-    if (containsDates) {
-      return new Date(a).getTime() - new Date(b).getTime();
-    }
-    return String(a).localeCompare(String(b));
-  });
+  // Extract labels while preserving original order
+  const uniqueLabels = getOrderedUniqueValues(data, labelColumn);
 
   // Generate colors based on what we're visualizing
   const colorCount = seriesColumn
     ? getUniqueValues(data, seriesColumn).length
     : valueColumns.length === 1
-    ? sortedLabels.length
+    ? uniqueLabels.length
     : valueColumns.length;
 
   const generatedColors = generateColors(colorCount, colors.colorScale, {
@@ -74,7 +65,7 @@ export function transformData(
   if (seriesColumn) {
     return createSeriesBasedDatasets(
       rows,
-      sortedLabels,
+      uniqueLabels,
       valueColumns[0],
       seriesColumn,
       labelColumn,
@@ -84,12 +75,19 @@ export function transformData(
 
   // Handle single dataset visualization (like pie/doughnut)
   if (valueColumns.length === 1) {
+    // Create a mapping from labels to their corresponding values
+    const labelToValueMap = new Map();
+    rows.forEach((row) => {
+      labelToValueMap.set(row[labelColumn], row[valueColumns[0]]);
+    });
+
+    // Use the map to ensure data matches the label order
     return {
-      labels: sortedLabels,
+      labels: uniqueLabels,
       datasets: [
         {
           label: valueColumns[0],
-          data: rows.map((row) => row[valueColumns[0]]),
+          data: uniqueLabels.map((label) => labelToValueMap.get(label)),
           backgroundColor: generatedColors,
         },
       ],
@@ -97,13 +95,22 @@ export function transformData(
   }
 
   // Handle multi-dataset charts (like bar/line with multiple metrics)
+  // Create a mapping from labels to their corresponding rows
+  const labelToRowMap = new Map();
+  rows.forEach((row) => {
+    labelToRowMap.set(row[labelColumn], row);
+  });
+
   return {
-    labels: sortedLabels,
+    labels: uniqueLabels,
     datasets: valueColumns.map((column, index) => {
       const color = generatedColors[index % generatedColors.length];
       return {
         label: column,
-        data: rows.map((row) => row[column]),
+        data: uniqueLabels.map((label) => {
+          const row = labelToRowMap.get(label);
+          return row ? row[column] : null;
+        }),
         backgroundColor: color,
         borderColor: color,
       };
@@ -161,4 +168,27 @@ export function getUniqueValues(data: PostgresResponse, column: string): any[] {
       data.rows.map((row) => row[column]).filter((val) => val !== undefined)
     )
   );
+}
+
+/**
+ * Helper function to extract unique values from a column while preserving original order
+ */
+export function getOrderedUniqueValues(
+  data: PostgresResponse,
+  column: string
+): any[] {
+  if (!data || !data.rows || data.rows.length === 0) return [];
+
+  // Use a Set to track which values we've seen
+  const seen = new Set();
+
+  // Filter rows to keep only the first occurrence of each value
+  return data.rows
+    .map((row) => row[column])
+    .filter((value) => {
+      if (value === undefined) return false;
+      if (seen.has(value)) return false;
+      seen.add(value);
+      return true;
+    });
 }
