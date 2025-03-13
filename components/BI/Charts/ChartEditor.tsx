@@ -119,7 +119,7 @@ export default function ChartEditor({
           onLayout={handleResize}
         >
           <ResizablePanel
-            defaultSize={50}
+            defaultSize={55}
             minSize={30}
             className="overflow-hidden w-0"
           >
@@ -129,7 +129,7 @@ export default function ChartEditor({
           <ResizableHandle withHandle />
 
           <ResizablePanel
-            defaultSize={50}
+            defaultSize={45}
             minSize={30}
             className="overflow-hidden w-0"
           >
