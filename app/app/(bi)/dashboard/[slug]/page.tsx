@@ -6,7 +6,7 @@ import {
   Dashboard,
   updateDashboard,
 } from "@/components/stores/dashboard_store";
-import { Loader2, PencilRuler, LayoutGrid } from "lucide-react";
+import { Loader2, PencilRuler, LayoutGrid, Share2 } from "lucide-react";
 import { loadChart } from "@/components/stores/chart_store"; // Updated import
 import { Button } from "@/components/ui/button";
 import { ChartDocument } from "@/lib/types/stores/chart"; // Added import for ChartDocument
@@ -15,6 +15,7 @@ import { DashboardGrid } from "@/app/app/(bi)/dashboard/[slug]/components/Dashbo
 import { TitleEditor } from "./components/TitleEditor";
 import { ManageChartsModal } from "./components/ManageChartsModal";
 import { useHeader } from "@/components/header/header-context";
+import { ShareDialog } from "./components/ShareDialog"; // Add import for ShareDialog
 
 export default function Page({
   params,
@@ -40,6 +41,8 @@ export default function Page({
   // State for title editing
   const [tempTitle, setTempTitle] = useState("");
   const [tempDescription, setTempDescription] = useState(""); // Added state for description
+  // State for share dialog
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
 
   useEffect(() => {
     setHeaderContent(
@@ -64,7 +67,20 @@ export default function Page({
       </div>
     );
 
-    setHeaderButtons(<div className="flex items-center gap-2"></div>);
+    setHeaderButtons(
+      <div className="flex items-center gap-2">
+        {dashboard && user && (
+          <Button
+            variant="outline"
+            size="sm"
+            onClick={() => setIsShareModalOpen(true)}
+          >
+            <Share2 className="h-4 w-4 mr-2" />
+            Share
+          </Button>
+        )}
+      </div>
+    );
 
     return () => {
       // Clean up by resetting header when component unmounts
@@ -78,6 +94,7 @@ export default function Page({
     tempDescription,
     dashboard,
     isEditing,
+    user, // Add user to dependency array
   ]);
 
   // Use ref for layouts to prevent re-rendering
@@ -330,6 +347,37 @@ export default function Page({
     [isEditing]
   );
 
+  // Handle updating dashboard permissions
+  const handleUpdatePermissions = useCallback(
+    async (newPermissions: Dashboard["permissions"]) => {
+      if (!dashboard || !user) return;
+
+      setIsLoading(true);
+      try {
+        await updateDashboard(slug, user.id, {
+          permissions: newPermissions,
+        });
+
+        // Update the local dashboard state
+        setDashboard((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            permissions: newPermissions,
+          };
+        });
+
+        console.log("Dashboard permissions updated successfully");
+      } catch (err) {
+        console.error("Failed to update dashboard permissions:", err);
+        throw err; // Re-throw to be handled by the ShareDialog component
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [dashboard, user, slug]
+  );
+
   // Show loading state
   if (isLoading) {
     return (
@@ -431,6 +479,16 @@ export default function Page({
           userId={user.id}
           currentCharts={tempChartsRef.current}
           onChartsChange={handleChartsChange}
+        />
+      )}
+
+      {/* Add Share Dialog */}
+      {user && dashboard && (
+        <ShareDialog
+          open={isShareModalOpen}
+          onOpenChange={setIsShareModalOpen}
+          dashboard={dashboard}
+          onUpdatePermissions={handleUpdatePermissions}
         />
       )}
     </div>

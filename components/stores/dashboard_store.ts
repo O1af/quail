@@ -15,6 +15,11 @@ export interface Dashboard {
   layout: LayoutItem[];
   createdAt: Date;
   updatedAt: Date;
+  permissions: {
+    publicView: boolean;
+    viewers: string[];
+    editors: string[];
+  };
 }
 
 export interface LayoutItem {
