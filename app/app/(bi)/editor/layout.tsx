@@ -1,0 +1,11 @@
+"use client";
+import Loading from "@/components/Dev/Loading/Loading";
+import { useAuth } from "@/lib/context/AuthContext";
+
+export default function Layout({ children }: { children: React.ReactNode }) {
+  const { user, loading } = useAuth();
+  if (loading) {
+    return <Loading />;
+  }
+  return children;
+}

@@ -6,9 +6,10 @@ import { useRouter } from "next/navigation";
 import { createClient } from "@/utils/supabase/client";
 
 import { NavUser } from "@/components/sidebar/nav-user";
-import { NavChats } from "@/components/sidebar/bi/dash-chats";
-import { DashNav } from "@/components/sidebar/bi/dash-nav";
-import { DashSidebarHeader } from "@/components/sidebar/bi/dash-header";
+import { NavChats } from "@/components/sidebar/dash-chats";
+import { DashNav } from "@/components/sidebar/dash-nav";
+import { DashSidebarHeader } from "@/components/sidebar/dash-header";
+import { NavSchema } from "@/components/sidebar/nav-schema";
 import {
   Sidebar,
   SidebarContent,
@@ -17,12 +18,15 @@ import {
   SidebarRail,
 } from "@/components/ui/sidebar";
 
-export function DashSidebar({
-  ...props
-}: React.ComponentProps<typeof Sidebar>) {
+interface UnifiedSidebarProps extends React.ComponentProps<typeof Sidebar> {
+  mode: "dash" | "dev";
+}
+
+export function UnifiedSidebar({ mode, ...props }: UnifiedSidebarProps) {
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
   const router = useRouter();
+
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -46,11 +50,17 @@ export function DashSidebar({
   };
 
   return (
-    <Sidebar collapsible="icon" {...props}>
-      <DashSidebarHeader />
-      <SidebarContent>
+    <Sidebar
+      collapsible="icon"
+      className="h-screen max-h-screen overflow-hidden"
+      {...props}
+    >
+      <SidebarHeader>
+        <DashSidebarHeader />
+      </SidebarHeader>
+      <SidebarContent className="flex flex-col overflow-hidden">
         <DashNav />
-        <NavChats />
+        {mode === "dash" ? <NavChats /> : <NavSchema />}
       </SidebarContent>
       <SidebarFooter>
         <NavUser user={supabaseData.user} />

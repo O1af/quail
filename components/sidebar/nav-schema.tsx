@@ -32,12 +32,12 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { useDatabaseStructure } from "../../stores/table_store";
-import { queryMetadata, handleQuery } from "../../stores/utils/query";
+import { useDatabaseStructure } from "@/components/stores/table_store";
+import { queryMetadata } from "@/components/stores/utils/query";
 import { useState } from "react";
-import { useDbStoreWithAutoLoad } from "../../stores/db_mongo_client";
-import { useEditorStore } from "../../stores/editor_store";
-import { match } from "assert";
+import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
+import { useEditorStore } from "@/components/stores/editor_store";
+
 export function NavSchema() {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
