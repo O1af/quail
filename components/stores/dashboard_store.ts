@@ -100,14 +100,11 @@ export async function loadUserDashboards(
  * @param userId - The ID of the user
  * @returns A promise that resolves to the dashboard or null if not found
  */
-export async function loadDashboard(
-  id: string,
-  userId: string
-): Promise<Dashboard | null> {
+export async function loadDashboard(id: string): Promise<Dashboard | null> {
   try {
     await connectToMongo();
     const collection = getDashboardsCollection();
-    const dashboard = await collection.findOne({ _id: id, userId });
+    const dashboard = await collection.findOne({ _id: id });
     return dashboard;
   } catch (error) {
     console.error("Failed to load dashboard:", error);
