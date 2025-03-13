@@ -81,7 +81,12 @@ export function ShareDialog({
       return;
     }
 
-    if (!newEmail.includes("@")) {
+    const isValidEmail = (email: string) => {
+      return /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email);
+    };
+
+    // Usage
+    if (!isValidEmail(newEmail)) {
       setEmailError("Please enter a valid email address");
       return;
     }
