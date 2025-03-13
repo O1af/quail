@@ -35,7 +35,7 @@ export default function DashboardsPage() {
   const [isLoading, setIsLoading] = useState(true);
   const [user, setUser] = useState<any>(null);
   const { setHeaderContent, setHeaderButtons } = useHeader();
-  
+
   // Create dashboard dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
 

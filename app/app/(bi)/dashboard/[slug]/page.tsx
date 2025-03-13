@@ -45,7 +45,7 @@ export default function Page({
   const [isShareModalOpen, setIsShareModalOpen] = useState(false);
   // Add a state to track user permission level
   const [userPermission, setUserPermission] = useState<
-    "owner" | "editor" | "viewer" | "public" | null
+    "owner" | "editor" | "viewer" | "public" | "anonymous" | null
   >(null);
 
   useEffect(() => {
@@ -281,16 +281,14 @@ export default function Page({
           data: { user },
         } = await supabase.auth.getUser();
 
-        if (!user) {
-          window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
-          return;
-        }
-
+        // Store user (might be null for anonymous viewers)
         setUser(user);
+
+        // For anonymous users, we'll check the dashboard's public status
+        // in the fetchDashboard function instead of redirecting
       } catch (err) {
         console.error("Error fetching user:", err);
-        setError("Failed to authenticate user");
-        setIsLoading(false);
+        // Don't set error yet - wait to see if the dashboard is public
       }
     };
 
@@ -299,22 +297,28 @@ export default function Page({
 
   /**
    * Checks the user's permission level for the dashboard
-   * @returns 'owner', 'editor', 'viewer', 'public', or null if no access
+   * @returns 'owner', 'editor', 'viewer', 'public', 'anonymous', or null if no access
    */
   const checkUserPermissions = useCallback(
-    (dashboard: Dashboard, userEmail: string, userId: string) => {
+    (dashboard: Dashboard, userEmail?: string, userId?: string) => {
+      // If no user (anonymous), check if dashboard is public
+      if (!userId) {
+        return dashboard.permissions?.publicView ? "anonymous" : null;
+      }
+
+      // For logged in users, check permissions as before
       // Check if user is owner
       if (dashboard.userId === userId) {
         return "owner";
       }
 
       // Check if user is in editors list
-      if (dashboard.permissions?.editors?.includes(userEmail)) {
+      if (userEmail && dashboard.permissions?.editors?.includes(userEmail)) {
         return "editor";
       }
 
       // Check if user is in viewers list
-      if (dashboard.permissions?.viewers?.includes(userEmail)) {
+      if (userEmail && dashboard.permissions?.viewers?.includes(userEmail)) {
         return "viewer";
       }
 
@@ -329,11 +333,9 @@ export default function Page({
     []
   );
 
-  // Fetch dashboard and chart data when user is loaded
+  // Fetch dashboard and chart data when user is loaded (or immediately if user is null)
   useEffect(() => {
     const fetchDashboard = async () => {
-      if (!user) return;
-
       try {
         setIsLoading(true);
         const dashboardData = await loadDashboard(slug);
@@ -347,11 +349,18 @@ export default function Page({
         // Check if the user has permissions to view this dashboard
         const permissionLevel = checkUserPermissions(
           dashboardData,
-          user.email,
-          user.id
+          user?.email,
+          user?.id
         );
 
-        if (!permissionLevel) {
+        // If anonymous user and dashboard isn't public, redirect to login
+        if (!user && permissionLevel === null) {
+          window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
+          return;
+        }
+
+        // If logged in user but no permission, show access error
+        if (user && permissionLevel === null) {
           setError("You don't have permission to view this dashboard");
           setIsLoading(false);
           return;
@@ -367,7 +376,7 @@ export default function Page({
         if (permissionLevel === "owner" || permissionLevel === "editor") {
           // We'll handle the Edit button visibility separately
         } else {
-          // For viewers and public access, ensure edit mode is off
+          // For viewers, public, and anonymous access, ensure edit mode is off
           setIsEditing(false);
         }
 
@@ -402,9 +411,8 @@ export default function Page({
       }
     };
 
-    if (user) {
-      fetchDashboard();
-    }
+    // Always try to fetch the dashboard, even for anonymous users
+    fetchDashboard();
   }, [slug, user, checkUserPermissions]);
 
   // Update layouts ref when dashboard changes
@@ -478,7 +486,7 @@ export default function Page({
       <div className="justify-between items-center mb-6">
         <div className="flex gap-2">
           {!isEditing ? (
-            // Only show Edit button to owners and editors
+            // Only show Edit button to owners and editors when logged in
             (userPermission === "owner" || userPermission === "editor") && (
               <Button
                 variant="secondary"
@@ -505,7 +513,7 @@ export default function Page({
         </div>
       </div>
 
-      {/* Show permission indicator for non-owners */}
+      {/* Show permission indicator for non-owners, including anonymous users */}
       {userPermission && userPermission !== "owner" && (
         <div className="mb-4 bg-muted/30 p-2 rounded-md text-sm text-muted-foreground flex items-center">
           {userPermission === "editor" && (
@@ -514,8 +522,23 @@ export default function Page({
           {userPermission === "viewer" && (
             <>You have view-only access to this dashboard</>
           )}
-          {userPermission === "public" && (
-            <>This is a publicly shared dashboard</>
+          {(userPermission === "public" || userPermission === "anonymous") && (
+            <>
+              This is a publicly shared dashboard
+              {!user && (
+                <>
+                  {" "}
+                  -{" "}
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_APP_URL}/login`}
+                    className="text-primary ml-1"
+                  >
+                    Log in
+                  </a>{" "}
+                  to edit or share
+                </>
+              )}
+            </>
           )}
         </div>
       )}
