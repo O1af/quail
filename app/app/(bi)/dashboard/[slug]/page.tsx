@@ -6,7 +6,7 @@ import {
   Dashboard,
   updateDashboard,
 } from "@/components/stores/dashboard_store";
-import { Loader2, PencilRuler, LayoutGrid } from "lucide-react";
+import { Loader2, PencilRuler, LayoutGrid, Share2 } from "lucide-react";
 import { loadChart } from "@/components/stores/chart_store"; // Updated import
 import { Button } from "@/components/ui/button";
 import { ChartDocument } from "@/lib/types/stores/chart"; // Added import for ChartDocument
@@ -15,6 +15,7 @@ import { DashboardGrid } from "@/app/app/(bi)/dashboard/[slug]/components/Dashbo
 import { TitleEditor } from "./components/TitleEditor";
 import { ManageChartsModal } from "./components/ManageChartsModal";
 import { useHeader } from "@/components/header/header-context";
+import { ShareDialog } from "./components/ShareDialog"; // Add import for ShareDialog
 
 export default function Page({
   params,
@@ -40,6 +41,12 @@ export default function Page({
   // State for title editing
   const [tempTitle, setTempTitle] = useState("");
   const [tempDescription, setTempDescription] = useState(""); // Added state for description
+  // State for share dialog
+  const [isShareModalOpen, setIsShareModalOpen] = useState(false);
+  // Add a state to track user permission level
+  const [userPermission, setUserPermission] = useState<
+    "owner" | "editor" | "viewer" | "public" | "anonymous" | null
+  >(null);
 
   useEffect(() => {
     setHeaderContent(
@@ -64,7 +71,25 @@ export default function Page({
       </div>
     );
 
-    setHeaderButtons(<div className="flex items-center gap-2"></div>);
+    setHeaderButtons(
+      <div className="flex items-center gap-2">
+        {dashboard && user && (
+          <>
+            {/* Only show Share button to owners */}
+            {userPermission === "owner" && (
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => setIsShareModalOpen(true)}
+              >
+                <Share2 className="h-4 w-4 mr-2" />
+                Share
+              </Button>
+            )}
+          </>
+        )}
+      </div>
+    );
 
     return () => {
       // Clean up by resetting header when component unmounts
@@ -78,6 +103,8 @@ export default function Page({
     tempDescription,
     dashboard,
     isEditing,
+    user, // Add user to dependency array
+    userPermission, // Add userPermission to the dependency array
   ]);
 
   // Use ref for layouts to prevent re-rendering
@@ -128,7 +155,7 @@ export default function Page({
     setIsLoading(true);
     try {
       // Save title, description, layout and charts changes
-      await updateDashboard(slug, user.id, {
+      await updateDashboard(slug, dashboard.userId, {
         title: trimmedTitle,
         description: trimmedDescription,
         layout: tempLayoutsRef.current,
@@ -254,59 +281,128 @@ export default function Page({
           data: { user },
         } = await supabase.auth.getUser();
 
-        if (!user) {
-          window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
-          return;
-        }
-
+        // Store user (might be null for anonymous viewers)
         setUser(user);
+
+        // For anonymous users, we'll check the dashboard's public status
+        // in the fetchDashboard function instead of redirecting
       } catch (err) {
         console.error("Error fetching user:", err);
-        setError("Failed to authenticate user");
-        setIsLoading(false);
+        // Don't set error yet - wait to see if the dashboard is public
       }
     };
 
     fetchUser();
   }, [supabase]);
 
-  // Fetch dashboard and chart data when user is loaded
+  /**
+   * Checks the user's permission level for the dashboard
+   * @returns 'owner', 'editor', 'viewer', 'public', 'anonymous', or null if no access
+   */
+  const checkUserPermissions = useCallback(
+    (dashboard: Dashboard, userEmail?: string, userId?: string) => {
+      // If no user (anonymous), check if dashboard is public
+      if (!userId) {
+        return dashboard.permissions?.publicView ? "anonymous" : null;
+      }
+
+      // For logged in users, check permissions as before
+      // Check if user is owner
+      if (dashboard.userId === userId) {
+        return "owner";
+      }
+
+      // Check if user is in editors list
+      if (userEmail && dashboard.permissions?.editors?.includes(userEmail)) {
+        return "editor";
+      }
+
+      // Check if user is in viewers list
+      if (userEmail && dashboard.permissions?.viewers?.includes(userEmail)) {
+        return "viewer";
+      }
+
+      // Check if dashboard is public
+      if (dashboard.permissions?.publicView) {
+        return "public";
+      }
+
+      // No access
+      return null;
+    },
+    []
+  );
+
+  // Fetch dashboard and chart data when user is loaded (or immediately if user is null)
   useEffect(() => {
     const fetchDashboard = async () => {
-      if (!user) return;
-
       try {
         setIsLoading(true);
-        const dashboardData = await loadDashboard(slug, user.id);
-        setDashboard(dashboardData);
+        const dashboardData = await loadDashboard(slug);
 
         if (!dashboardData) {
-          setError("Dashboard not found or you don't have access");
-        } else {
-          const chartDataMap = new Map<string, ChartDocument | null>();
-
-          // Load charts in parallel to improve performance
-          const chartPromises = dashboardData.charts.map(async (chartId) => {
-            try {
-              const chart = await loadChart(chartId, user.id);
-              return { chartId, chart };
-            } catch (err) {
-              console.error(`Error loading chart ${chartId}:`, err);
-              return { chartId, chart: null };
-            }
-          });
-
-          // Wait for all chart data to be fetched
-          const chartResults = await Promise.all(chartPromises);
-
-          // Populate the map
-          chartResults.forEach(({ chartId, chart }) => {
-            chartDataMap.set(chartId, chart);
-          });
-
-          console.log("Chart data loaded:", chartDataMap);
-          setChartData(chartDataMap);
+          setError("Dashboard not found");
+          setIsLoading(false);
+          return;
         }
+
+        // Check if the user has permissions to view this dashboard
+        const permissionLevel = checkUserPermissions(
+          dashboardData,
+          user?.email,
+          user?.id
+        );
+
+        // If anonymous user and dashboard isn't public, redirect to login
+        if (!user && permissionLevel === null) {
+          window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
+          return;
+        }
+
+        // If logged in user but no permission, show access error
+        if (user && permissionLevel === null) {
+          setError("You don't have permission to view this dashboard");
+          setIsLoading(false);
+          return;
+        }
+
+        // Update permission state
+        setUserPermission(permissionLevel);
+
+        // Set dashboard data
+        setDashboard(dashboardData);
+
+        // Only allow editing if the user is owner or editor
+        if (permissionLevel === "owner" || permissionLevel === "editor") {
+          // We'll handle the Edit button visibility separately
+        } else {
+          // For viewers, public, and anonymous access, ensure edit mode is off
+          setIsEditing(false);
+        }
+
+        const chartDataMap = new Map<string, ChartDocument | null>();
+
+        // Load charts in parallel to improve performance
+        const chartPromises = dashboardData.charts.map(async (chartId) => {
+          try {
+            const chart = await loadChart(chartId, dashboardData.userId);
+            return { chartId, chart };
+          } catch (err) {
+            console.error(`Error loading chart ${chartId}:`, err);
+            return { chartId, chart: null };
+          }
+        });
+
+        // Wait for all chart data to be fetched
+        const chartResults = await Promise.all(chartPromises);
+
+        // Populate the map
+        chartResults.forEach(({ chartId, chart }) => {
+          chartDataMap.set(chartId, chart);
+        });
+
+        console.log("Chart data loaded:", chartDataMap);
+        setChartData(chartDataMap);
       } catch (err) {
         console.error("Error loading dashboard:", err);
         setError("Failed to load dashboard");
@@ -315,10 +411,9 @@ export default function Page({
       }
     };
 
-    if (user) {
-      fetchDashboard();
-    }
-  }, [slug, user]);
+    // Always try to fetch the dashboard, even for anonymous users
+    fetchDashboard();
+  }, [slug, user, checkUserPermissions]);
 
   // Update layouts ref when dashboard changes
   const handleLayoutChange = useCallback(
@@ -328,6 +423,37 @@ export default function Page({
       }
     },
     [isEditing]
+  );
+
+  // Handle updating dashboard permissions
+  const handleUpdatePermissions = useCallback(
+    async (newPermissions: Dashboard["permissions"]) => {
+      if (!dashboard || !user) return;
+
+      setIsLoading(true);
+      try {
+        await updateDashboard(slug, user.id, {
+          permissions: newPermissions,
+        });
+
+        // Update the local dashboard state
+        setDashboard((prev) => {
+          if (!prev) return null;
+          return {
+            ...prev,
+            permissions: newPermissions,
+          };
+        });
+
+        console.log("Dashboard permissions updated successfully");
+      } catch (err) {
+        console.error("Failed to update dashboard permissions:", err);
+        throw err; // Re-throw to be handled by the ShareDialog component
+      } finally {
+        setIsLoading(false);
+      }
+    },
+    [dashboard, user, slug]
   );
 
   // Show loading state
@@ -358,23 +484,18 @@ export default function Page({
   return (
     <div className="p-4 py-2 pb-2">
       <div className="justify-between items-center mb-6">
-        {/* <div className="flex-1 max-w-md">
-          <TitleEditor
-            isEditing={isEditing}
-            title={dashboard?.title || "Dashboard"}
-            tempTitle={tempTitle}
-            onTitleChange={handleTitleChange}
-          />
-        </div> */}
         <div className="flex gap-2">
           {!isEditing ? (
-            <Button
-              variant="secondary"
-              onClick={handleEdit}
-              className="ml-auto"
-            >
-              <PencilRuler className="mr-2 h-4 w-4" /> Edit
-            </Button>
+            // Only show Edit button to owners and editors when logged in
+            (userPermission === "owner" || userPermission === "editor") && (
+              <Button
+                variant="secondary"
+                onClick={handleEdit}
+                className="ml-auto"
+              >
+                <PencilRuler className="mr-2 h-4 w-4" /> Edit
+              </Button>
+            )
           ) : (
             <div className="space-x-2 ml-auto">
               <Button
@@ -391,6 +512,36 @@ export default function Page({
           )}
         </div>
       </div>
+
+      {/* Show permission indicator for non-owners, including anonymous users */}
+      {userPermission && userPermission !== "owner" && (
+        <div className="mb-4 bg-muted/30 p-2 rounded-md text-sm text-muted-foreground flex items-center">
+          {userPermission === "editor" && (
+            <>You have editor access to this dashboard</>
+          )}
+          {userPermission === "viewer" && (
+            <>You have view-only access to this dashboard</>
+          )}
+          {(userPermission === "public" || userPermission === "anonymous") && (
+            <>
+              This is a publicly shared dashboard
+              {!user && (
+                <>
+                  {" "}
+                  -{" "}
+                  <a
+                    href={`${process.env.NEXT_PUBLIC_APP_URL}/login`}
+                    className="text-primary ml-1"
+                  >
+                    Log in
+                  </a>{" "}
+                  to edit or share
+                </>
+              )}
+            </>
+          )}
+        </div>
+      )}
 
       {dashboard?.charts &&
       (isEditing
@@ -431,6 +582,16 @@ export default function Page({
           userId={user.id}
           currentCharts={tempChartsRef.current}
           onChartsChange={handleChartsChange}
+        />
+      )}
+
+      {/* Add Share Dialog */}
+      {user && dashboard && (
+        <ShareDialog
+          open={isShareModalOpen}
+          onOpenChange={setIsShareModalOpen}
+          dashboard={dashboard}
+          onUpdatePermissions={handleUpdatePermissions}
         />
       )}
     </div>

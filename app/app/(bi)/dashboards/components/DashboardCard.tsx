@@ -40,12 +40,14 @@ interface DashboardCardProps {
   dashboard: Dashboard;
   viewMode: "grid" | "list";
   onRefresh?: () => void;
+  isShared?: boolean; // New prop to indicate if this dashboard is shared with the user
 }
 
 export function DashboardCard({
   dashboard,
   viewMode,
   onRefresh,
+  isShared = false,
 }: DashboardCardProps) {
   const [isEditing, setIsEditing] = useState(false);
   const [title, setTitle] = useState(dashboard.title);
@@ -205,6 +207,48 @@ export function DashboardCard({
     return formatDistanceToNow(new Date(date), { addSuffix: true });
   };
 
+  // Determine user's permission level for this dashboard
+  const getUserPermission = () => {
+    // Check if currentUser is available
+    if (!currentUser) {
+      return "loading"; // Return a loading state if user data isn't available yet
+    }
+
+    if (isShared) {
+      const { permissions } = dashboard;
+      if (permissions?.editors?.includes(currentUser.email)) {
+        return "editor";
+      }
+      return "viewer";
+    }
+    return "owner";
+  };
+
+  const permissionLevel = currentUser ? getUserPermission() : "loading";
+
+  // Update the component to handle 'loading' permission state
+  const renderPermissionBadge = () => {
+    if (permissionLevel === "loading") {
+      return null; // Don't show any badge while loading
+    }
+
+    if (isShared) {
+      return (
+        <span
+          className={`text-xs px-2 py-0.5 rounded ${
+            permissionLevel === "editor"
+              ? "bg-blue-100 text-blue-800 dark:bg-blue-900/30 dark:text-blue-300"
+              : "bg-gray-100 text-gray-800 dark:bg-gray-800/50 dark:text-gray-300"
+          }`}
+        >
+          {permissionLevel === "editor" ? "Editor" : "Viewer"}
+        </span>
+      );
+    }
+
+    return null;
+  };
+
   if (viewMode === "grid") {
     return (
       <Link
@@ -261,6 +305,7 @@ export function DashboardCard({
                       </Tooltip>
                     </TooltipProvider>
                   )}
+                  {renderPermissionBadge()}
                 </div>
               )}
             </div>
@@ -413,6 +458,7 @@ export function DashboardCard({
                       </Tooltip>
                     </TooltipProvider>
                   )}
+                  {renderPermissionBadge()}
                 </div>
                 <p className="text-xs text-muted-foreground">
                   {dashboard.charts?.length || 0} chart
