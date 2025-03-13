@@ -5,6 +5,7 @@ import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
 import {
   loadUserDashboards,
+  loadSharedDashboards,
   Dashboard,
 } from "@/components/stores/dashboard_store";
 
@@ -12,9 +13,17 @@ import {
 import { Button } from "@/components/ui/button";
 import { SearchBar } from "@/components/header/dashboard-search-bar";
 import { useHeader } from "@/components/header/header-context";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 
 // Icons
-import { Grid, LayoutDashboard, List, Search, CirclePlus } from "lucide-react";
+import {
+  Grid,
+  LayoutDashboard,
+  List,
+  Search,
+  CirclePlus,
+  Share2,
+} from "lucide-react";
 
 // Local components
 import { EmptyState } from "@/app/app/(bi)/dashboards/components/EmptyState";
@@ -32,9 +41,12 @@ export default function DashboardsPage() {
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Grid);
   const [searchQuery, setSearchQuery] = useState("");
   const [dashboards, setDashboards] = useState<Dashboard[]>([]);
+  const [sharedDashboards, setSharedDashboards] = useState<Dashboard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
+  const [isLoadingShared, setIsLoadingShared] = useState(true);
   const [user, setUser] = useState<any>(null);
   const { setHeaderContent, setHeaderButtons } = useHeader();
+  const [activeTab, setActiveTab] = useState("my-dashboards");
 
   // Create dashboard dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
@@ -122,6 +134,7 @@ export default function DashboardsPage() {
   useEffect(() => {
     if (user?.id) {
       fetchData();
+      fetchSharedData();
     }
   }, [user]);
 
@@ -140,24 +153,41 @@ export default function DashboardsPage() {
     }
   };
 
+  // Fetch shared dashboards
+  const fetchSharedData = async () => {
+    if (!user?.email) return;
+
+    setIsLoadingShared(true);
+    try {
+      const fetchedDashboards = await loadSharedDashboards(user.email);
+      setSharedDashboards(fetchedDashboards);
+    } catch (error) {
+      console.error("Error refreshing shared dashboards:", error);
+    } finally {
+      setIsLoadingShared(false);
+    }
+  };
+
   // Filter dashboards based on search query
-  const getFilteredDashboards = () => {
+  const getFilteredDashboards = (dashboardList: Dashboard[]) => {
     if (searchQuery.trim() !== "") {
-      const fuse = new Fuse(dashboards, {
+      const fuse = new Fuse(dashboardList, {
         keys: ["title", "description"],
         threshold: 0.5,
       });
       return fuse.search(searchQuery).map((res) => res.item);
     }
-    return dashboards;
+    return dashboardList;
   };
 
-  const filteredDashboards = getFilteredDashboards();
+  const filteredDashboards = getFilteredDashboards(dashboards);
+  const filteredSharedDashboards = getFilteredDashboards(sharedDashboards);
 
   // Handle dashboard duplication event
   useEffect(() => {
     const handleDashboardDuplicated = () => {
       fetchData();
+      fetchSharedData();
     };
 
     // Subscribe to events from dashboard cards
@@ -176,11 +206,11 @@ export default function DashboardsPage() {
     }
   }, []);
 
-  // Render the main content based on loading state
-  const renderContent = () => {
+  // Render the dashboard content based on loading state
+  const renderDashboardContent = () => {
     if (isLoading) {
       return (
-        <div className="flex w-full items-center justify-center">
+        <div className="flex w-full items-center justify-center py-8">
           <div className="flex flex-col items-center space-y-4">
             <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-12 w-12" />
             <p className="text-gray-500 dark:text-gray-400">Loading...</p>
@@ -235,11 +265,91 @@ export default function DashboardsPage() {
     );
   };
 
+  // Render the shared dashboard content based on loading state
+  const renderSharedDashboardContent = () => {
+    if (isLoadingShared) {
+      return (
+        <div className="flex w-full items-center justify-center py-8">
+          <div className="flex flex-col items-center space-y-4">
+            <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-12 w-12" />
+            <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+          </div>
+        </div>
+      );
+    }
+
+    // If there's a search query but no results found
+    if (searchQuery.trim() !== "" && filteredSharedDashboards.length === 0) {
+      return (
+        <EmptyState
+          title="No results found"
+          description={`No shared dashboards match your search for "${searchQuery}"`}
+          actionText="Clear search"
+          icon={<Search className="h-10 w-10 mb-2 text-muted-foreground" />}
+          onAction={() => setSearchQuery("")}
+        />
+      );
+    }
+
+    // Display shared dashboards
+    return sharedDashboards.length > 0 &&
+      filteredSharedDashboards.length > 0 ? (
+      <div
+        className={
+          viewMode === ViewMode.Grid
+            ? "grid gap-4 md:grid-cols-2 lg:grid-cols-3"
+            : "space-y-3"
+        }
+      >
+        {filteredSharedDashboards.map((dashboard) => (
+          <DashboardCard
+            key={dashboard._id}
+            dashboard={dashboard}
+            viewMode={viewMode}
+            onRefresh={fetchSharedData}
+            isShared={true}
+          />
+        ))}
+      </div>
+    ) : (
+      <EmptyState
+        title="No shared dashboards"
+        description="Dashboards shared with you will appear here."
+        icon={<Share2 className="h-10 w-10 mb-2 text-muted-foreground" />}
+      />
+    );
+  };
+
   return (
     <div className="flex min-h-screen flex-col bg-background">
       <div className="flex-1">
-        {/* Dashboard content */}
-        <div className="space-y-6">{renderContent()}</div>
+        {/* Tabs for My Dashboards and Shared Dashboards */}
+        <Tabs
+          defaultValue="my-dashboards"
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="mb-6"
+        >
+          <TabsList>
+            <TabsTrigger value="my-dashboards">My Dashboards</TabsTrigger>
+            <TabsTrigger value="shared-dashboards">
+              Shared With Me
+              {sharedDashboards.length > 0 && (
+                <span className="ml-2 bg-primary/20 text-xs rounded-full px-2 py-0.5">
+                  {sharedDashboards.length}
+                </span>
+              )}
+            </TabsTrigger>
+          </TabsList>
+
+          <TabsContent value="my-dashboards" className="space-y-6">
+            {renderDashboardContent()}
+          </TabsContent>
+
+          <TabsContent value="shared-dashboards" className="space-y-6">
+            {renderSharedDashboardContent()}
+          </TabsContent>
+        </Tabs>
       </div>
 
       {/* Create Dashboard Dialog */}

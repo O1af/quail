@@ -94,6 +94,55 @@ export async function loadUserDashboards(
 }
 
 /**
+ * Load dashboards shared with a user (where they have viewer or editor access)
+ *
+ * @param userEmail - The email of the user to check permissions for
+ * @param options - Optional parameters for pagination and sorting
+ * @returns A promise that resolves to an array of shared dashboards
+ */
+export async function loadSharedDashboards(
+  userEmail: string,
+  options: {
+    limit?: number;
+    skip?: number;
+    sort?: { [key: string]: 1 | -1 };
+  } = {}
+): Promise<Dashboard[]> {
+  try {
+    await connectToMongo();
+    const collection = getDashboardsCollection();
+
+    // Set default options for pagination and sorting
+    const skip = options.skip || 0;
+    const sort = options.sort || { updatedAt: -1 }; // Default to most recently updated
+    const limit = options.limit || 0; // 0 means no limit
+
+    // Query dashboards where user is either a viewer or editor
+    const sharedDashboards = await collection
+      .find({
+        $or: [
+          { "permissions.viewers": userEmail },
+          { "permissions.editors": userEmail },
+        ],
+      })
+      .sort(sort)
+      .skip(skip)
+      .limit(limit)
+      .toArray();
+
+    return sharedDashboards.map((dashboard) => ({
+      ...dashboard,
+      _id: dashboard._id,
+      createdAt: dashboard.createdAt,
+      updatedAt: dashboard.updatedAt,
+    }));
+  } catch (error) {
+    console.error("Failed to load shared dashboards:", error);
+    return [];
+  }
+}
+
+/**
  * Load a specific dashboard by ID
  *
  * @param id - The ID of the dashboard
