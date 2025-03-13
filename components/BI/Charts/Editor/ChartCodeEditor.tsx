@@ -3,40 +3,46 @@ import Editor, { OnMount } from "@monaco-editor/react";
 import { useEffect, useState, useRef, useCallback } from "react";
 import type * as Monaco from "monaco-editor";
 import { Keyboard, Save } from "lucide-react";
+import useChartEditorStore from "@/components/stores/chartEditor_store";
 
 interface ChartCodeEditorProps {
-  jsxCode: string;
-  onChange?: (value: string) => void;
   showStatus?: boolean;
 }
 
 export default function ChartCodeEditor({
-  jsxCode,
-  onChange,
   showStatus = true,
 }: ChartCodeEditorProps) {
   const { resolvedTheme } = useTheme();
   const editorRef = useRef<Monaco.editor.IStandaloneCodeEditor | null>(null);
-  const [localCode, setLocalCode] = useState(jsxCode);
   const [isSaved, setIsSaved] = useState(true);
+
+  // Get everything directly from the store
+  const { currJsx, newJsx, isStreaming, setCurrJsx } = useChartEditorStore();
+
+  // Keep a local copy of the code for tracking unsaved changes
+  const [localCode, setLocalCode] = useState(currJsx);
 
   const editorTheme = resolvedTheme === "dark" ? "vs-dark" : "light";
 
+  // Determine what code to display in the editor
+  const displayCode = isStreaming && newJsx ? newJsx : currJsx;
+
+  // Handle saving changes to the store
   const handleEditorSave = useCallback(() => {
-    if (!editorRef.current || !onChange) return;
+    if (!editorRef.current) return;
 
     const currentValue = editorRef.current.getValue();
     setLocalCode(currentValue);
-    onChange(currentValue);
+    setCurrJsx(currentValue);
     setIsSaved(true);
-  }, [onChange]);
+  }, [setCurrJsx]);
 
   // Handle editor mount - setup editor reference and events
   const handleEditorDidMount: OnMount = useCallback(
     (editor, monaco) => {
       editorRef.current = editor;
 
-      // Track local changes without saving to parent state
+      // Track local changes without saving to store immediately
       editor.onDidChangeModelContent(() => {
         setLocalCode(editor.getValue());
         setIsSaved(false);
@@ -67,17 +73,25 @@ export default function ChartCodeEditor({
     [handleEditorSave]
   );
 
-  // Update editor content when jsxCode prop changes from outside
+  // Update editor content when store state changes
   useEffect(() => {
-    if (editorRef.current && jsxCode !== localCode && isSaved) {
-      editorRef.current.setValue(jsxCode);
-      setLocalCode(jsxCode);
+    if (editorRef.current) {
+      // When streaming, show the newJsx if available
+      if (isStreaming && newJsx) {
+        editorRef.current.setValue(newJsx);
+        setLocalCode(newJsx);
+      }
+      // When not streaming and displayCode is different from local
+      else if (displayCode !== localCode && isSaved) {
+        editorRef.current.setValue(displayCode);
+        setLocalCode(displayCode);
+      }
     }
-  }, [jsxCode, localCode, isSaved]);
+  }, [currJsx, newJsx, localCode, isSaved, isStreaming, displayCode]);
 
   const isMac =
     typeof navigator !== "undefined"
-      ? navigator.platform.includes("Mac")
+      ? navigator.userAgent.includes("Mac")
       : false;
   const saveShortcut = isMac ? "⌘+S" : "Ctrl+S";
 
@@ -87,7 +101,7 @@ export default function ChartCodeEditor({
         <Editor
           height="100%"
           language="javascript"
-          value={jsxCode}
+          value={displayCode}
           theme={editorTheme}
           onMount={handleEditorDidMount}
           options={{
@@ -101,12 +115,13 @@ export default function ChartCodeEditor({
             quickSuggestions: true,
             lineNumbersMinChars: 3,
             lineDecorationsWidth: 0,
+            readOnly: isStreaming,
           }}
         />
       </div>
 
       {showStatus && (
-        <div className="py-2 px-3 text-xs text-muted-foreground flex items-center gap-2 border-t bg-muted/20">
+        <div className="py-2 px-3 text-xs flex items-center gap-2 border-t bg-muted/20 justify-between">
           <div className="flex items-center">
             <Keyboard className="h-3 w-3 mr-1" />
             <span className="font-mono">{saveShortcut}</span>

@@ -2,9 +2,9 @@ import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 import DynamicChartRenderer from "../../AgentResult/DynamicChartRenderer";
 import { BarChart3 } from "lucide-react";
 import { useEffect, useRef, memo, useMemo } from "react";
+import useChartEditorStore from "@/components/stores/chartEditor_store";
 
 interface ChartPreviewPaneProps {
-  jsxCode: string;
   data: PostgresResponse | null;
   className?: string;
 }
@@ -73,10 +73,11 @@ const NoDataFallback = () => (
 );
 
 export default function ChartPreviewPane({
-  jsxCode,
   data,
+  className,
 }: ChartPreviewPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
+  const { isStreaming, newJsx, showDiffView, currJsx } = useChartEditorStore();
 
   // Add resize observer to handle container size changes
   useEffect(() => {
@@ -91,23 +92,37 @@ export default function ChartPreviewPane({
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Generate a stable key that changes when jsxCode changes
-  // This forces a re-mount of the error boundary when the jsx changes significantly
-  const errorBoundaryKey = useMemo(() => {
-    return `error-boundary-${jsxCode.length}-${data ? data.rows.length : 0}`;
-  }, [jsxCode, data]);
+  // Determine which JSX to display based on current state
+  const displayJsx = useMemo(() => {
+    // During streaming, show streaming content
+    if (isStreaming && newJsx) return newJsx;
+    // After streaming, in diff view, show newJsx
+    if (!isStreaming && showDiffView && newJsx) return newJsx;
+    // Otherwise show current JSX
+    return currJsx;
+  }, [currJsx, isStreaming, showDiffView]);
+
+  // Showing modified state when viewing the new JSX in diff view mode but not streaming
+  const isShowingNewJsx = !isStreaming && showDiffView && newJsx !== null;
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
-      <div className="border-b p-3 flex items-center shrink-0">
-        <BarChart3 className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
-        <div className="min-w-0 overflow-hidden">
-          <h2 className="text-base font-medium leading-tight truncate">
-            Chart Preview
-          </h2>
-          <p className="text-xs text-muted-foreground truncate">
-            Live visualization of your data
-          </p>
+      <div className="border-b p-3 flex items-center justify-between shrink-0">
+        <div className="flex items-center">
+          <BarChart3 className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
+          <div className="min-w-0 overflow-hidden">
+            <h2 className="text-base font-medium leading-tight truncate">
+              {isStreaming ? "Generating Chart..." : "Chart Preview"}
+              {isShowingNewJsx ? " (Modified)" : ""}
+            </h2>
+            <p className="text-xs text-muted-foreground truncate">
+              {isStreaming
+                ? "Applying your requested changes..."
+                : isShowingNewJsx
+                ? "Preview of modified visualization"
+                : "Live visualization of your data"}
+            </p>
+          </div>
         </div>
       </div>
 
@@ -118,9 +133,9 @@ export default function ChartPreviewPane({
         <div className="w-full h-full max-w-full max-h-full">
           {data ? (
             <MemoizedChart
-              jsxString={jsxCode}
+              jsxString={displayJsx}
               data={data}
-              className="w-full h-full"
+              className={className || "w-full h-full"}
             />
           ) : (
             <NoDataFallback />

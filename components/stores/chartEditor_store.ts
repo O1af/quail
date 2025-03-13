@@ -2,49 +2,58 @@ import { create } from "zustand";
 import { ChartData } from "@/lib/types/stores/chart";
 import { loadChart, saveChart } from "./chart_store";
 import { createClient } from "@/utils/supabase/client";
+import { tryCatch } from "@/lib/trycatch";
 
 interface ChartEditorState {
-  // State
+  // Core data
   chartId: string | null;
   chartData: ChartData | null;
-  jsxCode: string;
-  naturalLanguagePrompt: string;
+  currJsx: string; // Current JSX code displayed in editor
+  newJsx: string | null; // New JSX code from streaming
   title: string;
-  isProcessingPrompt: boolean;
-  isSaving: boolean;
+
+  // UI state
   isLoading: boolean;
+  isSaving: boolean;
   hasUnsavedChanges: boolean;
   error: string | null;
-  showUnsavedDialog: boolean;
+
+  // Natural language processing state
+  isStreaming: boolean;
+  showDiffView: boolean; // Controls diff view visibility
 
   // Actions
   setChartId: (id: string) => void;
-  setJsxCode: (code: string) => void;
-  setNaturalLanguagePrompt: (prompt: string) => void;
+  setCurrJsx: (code: string) => void;
+  setNewJsx: (code: string | null) => void;
   setTitle: (title: string) => void;
   setHasUnsavedChanges: (hasChanges: boolean) => void;
-  setShowUnsavedDialog: (show: boolean) => void;
+  setIsStreaming: (streaming: boolean) => void;
+  setShowDiffView: (show: boolean) => void;
   clearError: () => void;
+  processIncomingMessage: (message: string) => void;
+  acceptChanges: () => void;
+  rejectChanges: () => void;
 
   // Operations
   loadChartData: (chartId: string) => Promise<void>;
   saveChanges: () => Promise<void>;
-  processNaturalLanguagePrompt: () => Promise<void>;
   resetEditor: () => void;
 }
 
 const initialState = {
   chartId: null,
   chartData: null,
-  jsxCode: "",
-  naturalLanguagePrompt: "",
+  currJsx: "",
+  newJsx: null,
   title: "Untitled Chart",
-  isProcessingPrompt: false,
-  isSaving: false,
   isLoading: true,
+  isSaving: false,
   hasUnsavedChanges: false,
   error: null,
   showUnsavedDialog: false,
+  isStreaming: false,
+  showDiffView: false,
 };
 
 const useChartEditorStore = create<ChartEditorState>((set, get) => ({
@@ -54,164 +63,205 @@ const useChartEditorStore = create<ChartEditorState>((set, get) => ({
   // Basic setters
   setChartId: (id) => set({ chartId: id }),
 
-  setJsxCode: (code) =>
+  setCurrJsx: (code) =>
     set((state) => {
       const originalJsx = state.chartData?.chartJsx || "";
       const originalTitle = state.title || "Untitled Chart";
 
+      // Only update if code actually changed to prevent unnecessary renders
+      if (code === state.currJsx) return {};
+
       return {
-        jsxCode: code,
+        currJsx: code,
         hasUnsavedChanges:
           code !== originalJsx || state.title !== originalTitle,
       };
     }),
 
-  setNaturalLanguagePrompt: (prompt) => set({ naturalLanguagePrompt: prompt }),
+  setNewJsx: (code) => set({ newJsx: code }),
 
   setTitle: (title) =>
     set((state) => {
       const originalTitle = state.title || "Untitled Chart";
       const originalJsx = state.chartData?.chartJsx || "";
 
+      // Only update if title actually changed
+      if (title === state.title) return {};
+
       return {
         title,
         hasUnsavedChanges:
-          title !== originalTitle || state.jsxCode !== originalJsx,
+          title !== originalTitle || state.currJsx !== originalJsx,
       };
     }),
 
-  setHasUnsavedChanges: (hasChanges) => set({ hasUnsavedChanges: hasChanges }),
+  setHasUnsavedChanges: (hasChanges) => {
+    // Avoid re-render when setting to the same value
+    if (hasChanges === get().hasUnsavedChanges) return;
+    set({ hasUnsavedChanges: hasChanges });
+  },
 
-  setShowUnsavedDialog: (show) => set({ showUnsavedDialog: show }),
+  setIsStreaming: (streaming) => {
+    set((state) => {
+      if (streaming) {
+        // When starting to stream, don't show diff view yet, just start streaming
+        return {
+          isStreaming: streaming,
+          // Don't change showDiffView here - keep it as is
+        };
+      }
+
+      // When streaming completes and we have newJsx, show diff view
+      if (!streaming && state.isStreaming && state.newJsx !== null) {
+        return {
+          isStreaming: streaming,
+          showDiffView: true, // Enable diff view when streaming completes
+        };
+      }
+
+      // When stopping streaming but no changes were made
+      if (!streaming && state.isStreaming && state.newJsx === null) {
+        return {
+          isStreaming: streaming,
+          showDiffView: false, // Hide diff view if no new content
+        };
+      }
+
+      return { isStreaming: streaming };
+    });
+  },
+
+  setShowDiffView: (show) => set({ showDiffView: show }),
 
   clearError: () => set({ error: null }),
 
-  // Complex operations
+  processIncomingMessage: (message) => {
+    set({ newJsx: message });
+
+    // Log to check values
+    console.log("Updated newJsx:", {
+      currJsx: get().currJsx,
+      newJsx: message,
+    });
+  },
+
+  acceptChanges: () => {
+    const { newJsx } = get();
+    if (!newJsx) return;
+
+    // Accept changes: update currJsx with newJsx and exit diff view
+    set({
+      currJsx: newJsx,
+      newJsx: null,
+      showDiffView: false,
+      hasUnsavedChanges: true,
+    });
+  },
+
+  rejectChanges: () => {
+    // Reject changes: discard newJsx and exit diff view
+    set({
+      newJsx: null,
+      showDiffView: false,
+    });
+  },
+
+  // Complex operations with tryCatch
   loadChartData: async (chartId) => {
-    const supabase = createClient();
     set({ isLoading: true, error: null, chartId });
+    const supabase = createClient();
 
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    // Get current user
+    const userResult = await tryCatch(supabase.auth.getUser());
 
-      if (!user) {
-        set({ error: "Not authenticated", isLoading: false });
-        return;
-      }
-
-      const chartDoc = await loadChart(chartId, user.id);
-
-      if (chartDoc) {
-        set({
-          chartData: chartDoc.data,
-          jsxCode: chartDoc.data.chartJsx,
-          title: chartDoc.title,
-          isLoading: false,
-          hasUnsavedChanges: false,
-        });
-      } else {
-        set({ error: "Chart not found", isLoading: false });
-      }
-    } catch (error) {
-      console.error("Error loading chart:", error);
+    if (userResult.error || !userResult.data?.data?.user) {
       set({
-        error: "Failed to load chart data",
+        error: userResult.error?.message || "Not authenticated",
         isLoading: false,
       });
+      return;
     }
+
+    // Load chart data
+    const userId = userResult.data.data.user.id;
+    const chartResult = await tryCatch(loadChart(chartId, userId));
+
+    if (chartResult.error || !chartResult.data) {
+      set({
+        error: chartResult.error?.message || "Chart not found",
+        isLoading: false,
+      });
+      return;
+    }
+
+    // Update state with loaded data
+    const chartDoc = chartResult.data;
+    set({
+      chartData: chartDoc.data,
+      currJsx: chartDoc.data.chartJsx,
+      title: chartDoc.title || "Untitled Chart",
+      isLoading: false,
+      hasUnsavedChanges: false,
+      newJsx: null,
+      showDiffView: false,
+    });
   },
 
   saveChanges: async () => {
-    const { chartId, chartData, jsxCode, title } = get();
+    const { chartId, chartData, currJsx, title } = get();
 
-    if (!chartId || !chartData) return;
+    if (!chartId || !chartData) {
+      set({ error: "No chart data to save" });
+      return;
+    }
 
+    // Only set isSaving true to trigger minimum re-renders
+    set({ isSaving: true });
     const supabase = createClient();
-    set({ isSaving: true, error: null });
 
-    try {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
+    // Get current user
+    const userResult = await tryCatch(supabase.auth.getUser());
 
-      if (!user) {
-        set({ error: "Not authenticated", isSaving: false });
-        return;
-      }
-
-      await saveChart(
-        { ...chartData, chartJsx: jsxCode },
-        user.id,
-        title,
-        chartId
-      );
-
+    if (userResult.error || !userResult.data?.data?.user) {
       set({
-        isSaving: false,
-        hasUnsavedChanges: false,
-        chartData: { ...chartData, chartJsx: jsxCode },
-      });
-    } catch (error) {
-      console.error("Error saving chart:", error);
-      set({
-        error: "Failed to save changes",
+        error: userResult.error?.message || "Not authenticated",
         isSaving: false,
       });
+      return;
     }
-  },
 
-  processNaturalLanguagePrompt: async () => {
-    const { naturalLanguagePrompt, jsxCode, chartData } = get();
+    // Save chart data
+    const userId = userResult.data.data.user.id;
+    const updatedChartData = { ...chartData, chartJsx: currJsx, title };
 
-    if (!naturalLanguagePrompt.trim() || !chartData) return;
+    const saveResult = await tryCatch(
+      saveChart(updatedChartData, userId, title, chartId)
+    );
 
-    set({ isProcessingPrompt: true, error: null });
-
-    try {
-      const response = await fetch("/api/chart/update-with-prompt", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({
-          prompt: naturalLanguagePrompt,
-          currentJsx: jsxCode,
-          data: chartData.data,
-          query: chartData.query,
-        }),
-      });
-
-      if (!response.ok) {
-        const errorData = await response.json().catch(() => ({}));
-        throw new Error(errorData.message || "Failed to process prompt");
-      }
-
-      const result = await response.json();
+    if (saveResult.error) {
       set({
-        jsxCode: result.updatedJsx,
-        isProcessingPrompt: false,
-        hasUnsavedChanges: true,
+        error: saveResult.error.message || "Failed to save changes",
+        isSaving: false,
       });
-    } catch (error) {
-      console.error("Error processing prompt:", error);
-      set({
-        error:
-          error instanceof Error ? error.message : "Failed to process prompt",
-        isProcessingPrompt: false,
-      });
+      return;
     }
+
+    // When successful, update only the necessary state
+    set({
+      isSaving: false,
+      hasUnsavedChanges: false,
+      chartData: updatedChartData,
+    });
   },
 
   resetEditor: () => {
-    // Instead of setting all state at once, just clear the critical parts
-    // that won't cause rendering issues during unmounting
+    // Reset only essential state for cleanup
     set({
       error: null,
-      showUnsavedDialog: false,
+      isStreaming: false,
+      showDiffView: false,
+      newJsx: null,
     });
-
-    // Skip setting other state values during cleanup to prevent infinite loops
-    // Full resets will happen when the component mounts again
   },
 }));
 
