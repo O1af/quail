@@ -149,22 +149,22 @@ export function ManageChartsModal({
   };
 
   // Helper function to get chart type icon based on visualization type
-  const getChartTypeIcon = (chart: ChartDocument) => {
-    const chartType = (
-      chart.data?.chartType || chart.data?.type
-    )?.toLowerCase();
+  // const getChartTypeIcon = (chart: ChartDocument) => {
+  //   const chartType = (
+  //     chart.data?.chartType || chart.data?.type
+  //   )?.toLowerCase();
 
-    switch (chartType) {
-      case "bar":
-        return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
-      case "line":
-        return <LineChart className="h-4 w-4 text-muted-foreground" />;
-      case "pie":
-        return <PieChart className="h-4 w-4 text-muted-foreground" />;
-      default:
-        return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
-    }
-  };
+  //   switch (chartType) {
+  //     case "bar":
+  //       return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
+  //     case "line":
+  //       return <LineChart className="h-4 w-4 text-muted-foreground" />;
+  //     case "pie":
+  //       return <PieChart className="h-4 w-4 text-muted-foreground" />;
+  //     default:
+  //       return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
+  //   }
+  // };
 
   // Track if any changes have been made
   const hasChanges =
@@ -259,7 +259,7 @@ export function ManageChartsModal({
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        {getChartTypeIcon(chart)}
+                        {/* {getChartTypeIcon(chart)} */}
                         <div>
                           <div className="flex items-center gap-1.5">
                             <p className="font-medium">{chart.title}</p>
@@ -352,7 +352,7 @@ export function ManageChartsModal({
                       )}
                     >
                       <div className="flex items-center gap-3">
-                        {getChartTypeIcon(chart)}
+                        {/* {getChartTypeIcon(chart)} */}
                         <div>
                           <p className="font-medium">{chart.title}</p>
                           <p className="text-xs text-muted-foreground">

@@ -1,5 +1,11 @@
 "use client";
-import React, { useState, useEffect, useCallback, useRef } from "react";
+import React, {
+  useState,
+  useEffect,
+  useCallback,
+  useRef,
+  useMemo,
+} from "react";
 import { createClient } from "@/utils/supabase/client";
 import {
   loadDashboard,
@@ -103,6 +109,9 @@ export default function Page({
 
   // Added hasUnsavedChanges state to track modifications
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
+
+  // Add a state variable to track chart updates to force re-renders when needed
+  const [chartUpdateCounter, setChartUpdateCounter] = useState(0);
 
   useEffect(() => {
     setHeaderContent(
@@ -348,12 +357,32 @@ export default function Page({
             ...tempLayoutsRef.current,
             ...newLayoutItems,
           ];
+
+          // Load data for the newly added charts
+          const loadNewChartData = async () => {
+            const newChartDataMap = new Map(chartData);
+            for (const chartId of addedCharts) {
+              try {
+                const chart = await loadChart(chartId);
+                newChartDataMap.set(chartId, chart);
+              } catch (err) {
+                console.error(`Failed to load chart ${chartId}:`, err);
+                newChartDataMap.set(chartId, null);
+              }
+            }
+            setChartData(newChartDataMap);
+          };
+
+          loadNewChartData();
         }
+
+        // Increment the chart update counter to force a re-render
+        setChartUpdateCounter((prev) => prev + 1);
 
         // Notify user about changes
         const addedCount = addedCharts.length;
         const removedCount =
-          tempChartsRef.current.length - newCharts.length + addedCount;
+          existingChartIds.size - (newCharts.length - addedCharts.length);
 
         if (addedCount > 0 || removedCount > 0) {
           let message = "";
@@ -376,7 +405,7 @@ export default function Page({
         }
       }
     },
-    [toast]
+    [chartData, toast]
   );
 
   // Fetch user data
@@ -526,10 +555,26 @@ export default function Page({
     (layout: any) => {
       if (isEditing) {
         tempLayoutsRef.current = layout;
+        setHasUnsavedChanges(true);
       }
     },
     [isEditing]
   );
+
+  // Memoize the dashboard object for DashboardGrid to prevent re-renders
+  // Add chartUpdateCounter as dependency to ensure re-render when charts change
+  const dashboardForGrid = useMemo(() => {
+    if (!dashboard) return null;
+
+    return {
+      ...dashboard,
+      charts: isEditing ? tempChartsRef.current : dashboard.charts,
+      layout: isEditing ? tempLayoutsRef.current : dashboard.layout,
+    };
+  }, [dashboard, isEditing, chartUpdateCounter]);
+
+  // Memoize chart data to prevent re-renders
+  const memoizedChartData = useMemo(() => chartData, [chartData]);
 
   // Handle updating dashboard permissions
   const handleUpdatePermissions = useCallback(
@@ -709,17 +754,11 @@ export default function Page({
           ? tempChartsRef.current.length > 0
           : dashboard.charts.length > 0) ? (
           <DashboardGrid
-            dashboard={{
-              ...dashboard,
-              charts: isEditing ? tempChartsRef.current : dashboard.charts,
-              layout: isEditing ? tempLayoutsRef.current : dashboard.layout,
-            }}
-            chartData={chartData}
+            key={`grid-${isEditing ? "edit" : "view"}-${chartUpdateCounter}`}
+            dashboard={dashboardForGrid}
+            chartData={memoizedChartData}
             isEditing={isEditing}
-            onLayoutChange={(layout) => {
-              handleLayoutChange(layout);
-              setHasUnsavedChanges(true);
-            }}
+            onLayoutChange={handleLayoutChange}
           />
         ) : (
           <div className="text-center py-16 bg-muted/50 rounded-lg border border-dashed border-muted">

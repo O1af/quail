@@ -1,4 +1,4 @@
-import React, { memo, useRef } from "react";
+import React, { memo, useEffect, useMemo } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { Dashboard } from "@/components/stores/dashboard_store";
 import { ChartItem } from "@/app/app/(bi)/dashboards/[slug]/components/ChartItem";
@@ -13,10 +13,28 @@ interface DashboardGridProps {
   onLayoutChange: (layout: any) => void;
 }
 
+// Initialize the WidthProvider outside the component to avoid re-creation
+const ResponsiveGridLayout = WidthProvider(Responsive);
+
 export const DashboardGrid = memo(
   ({ dashboard, chartData, isEditing, onLayoutChange }: DashboardGridProps) => {
-    const ResponsiveGridLayout = WidthProvider(Responsive);
-    console.log("Grid layout rendering");
+    // Use useMemo for layouts to prevent recreating the object on every render
+    const layouts = useMemo(
+      () => ({
+        lg: dashboard?.layout || [],
+      }),
+      [dashboard?.layout]
+    );
+
+    // Log only when the component actually renders
+    useEffect(() => {
+      console.log("DashboardGrid rendered");
+    });
+
+    // Only render if dashboard is available
+    if (!dashboard) {
+      return <div>Loading dashboard...</div>;
+    }
 
     return (
       <div className="relative">
@@ -29,16 +47,13 @@ export const DashboardGrid = memo(
           isDraggable={isEditing}
           isResizable={isEditing}
           onLayoutChange={onLayoutChange}
-          layouts={{
-            lg: dashboard.layout,
-          }}
+          layouts={layouts}
           compactType="vertical"
           preventCollision={false}
           allowOverlap={false}
           useCSSTransforms={true}
           verticalCompact={true}
           resizeHandles={isEditing ? ["se"] : []}
-          //add bottom right icon expand lucide
           resizeHandle={
             <span className="absolute right-2 bottom-2 cursor-pointer">
               <Expand className="w-4 h-4" />
@@ -65,14 +80,31 @@ export const DashboardGrid = memo(
       </div>
     );
   },
-  // Custom equality function to prevent unnecessary rerenders
+  // Improved custom equality function with deep comparison
   (prevProps, nextProps) => {
-    // Only rerender if these props change
-    return (
-      prevProps.isEditing === nextProps.isEditing &&
-      prevProps.dashboard === nextProps.dashboard &&
-      prevProps.chartData === nextProps.chartData
+    // Check if editing state changed
+    if (prevProps.isEditing !== nextProps.isEditing) return false;
+
+    // Check if charts array changed
+    const prevCharts = prevProps.dashboard?.charts || [];
+    const nextCharts = nextProps.dashboard?.charts || [];
+    if (prevCharts.length !== nextCharts.length) return false;
+
+    // Check if any chart IDs changed
+    const chartsChanged = prevCharts.some(
+      (id, index) => id !== nextCharts[index]
     );
+    if (chartsChanged) return false;
+
+    // Check if layout changed (simple reference check, the actual comparison is expensive)
+    if (prevProps.dashboard?.layout !== nextProps.dashboard?.layout)
+      return false;
+
+    // Check if chart data map reference changed
+    if (prevProps.chartData !== nextProps.chartData) return false;
+
+    // If we got here, props are considered equal
+    return true;
   }
 );
 
