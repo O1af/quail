@@ -32,27 +32,31 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { useDatabaseStructure } from "../../stores/table_store";
-import { queryMetadata, handleQuery } from "../../stores/utils/query";
+import { useDatabaseStructure } from "@/components/stores/table_store";
+import { queryMetadata } from "@/components/stores/utils/query";
 import { useState } from "react";
-import { useDbStoreWithAutoLoad } from "../../stores/db_mongo_client";
-import { useEditorStore } from "../../stores/editor_store";
-import { match } from "assert";
+import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
+import { useEditorStore } from "@/components/stores/editor_store";
+
 export function NavSchema() {
   const { toast } = useToast();
   const [refreshing, setRefreshing] = useState(false);
   const dbStore = useDbStoreWithAutoLoad();
   const getCurrentDatabase = dbStore.getCurrentDatabase;
+  const isLoading = dbStore.isLoading;
   const databaseStructure = useDatabaseStructure();
   const executeQuery = useEditorStore((state) => state.executeQuery);
   const setValue = useEditorStore((state) => state.setValue);
 
   useEffect(() => {
-    const currentDb = getCurrentDatabase();
-    if (currentDb) {
-      handleRefresh();
+    // Only run refresh when loading is complete and we have a database
+    if (!isLoading) {
+      const currentDb = getCurrentDatabase();
+      if (currentDb) {
+        handleRefresh();
+      }
     }
-  }, []); // Empty dependency array means it only runs once on mount
+  }, [isLoading, getCurrentDatabase]); // Re-run when loading state changes
 
   const handleRefresh = async () => {
     const currentDb = getCurrentDatabase();
@@ -111,10 +115,12 @@ export function NavSchema() {
                   <button
                     onClick={handleRefresh}
                     className="p-1 hover:bg-accent rounded-sm"
-                    disabled={refreshing}
+                    disabled={refreshing || isLoading}
                   >
                     <RefreshCw
-                      className={`h-4 w-4 ${refreshing ? "animate-spin" : ""}`}
+                      className={`h-4 w-4 ${
+                        refreshing || isLoading ? "animate-spin" : ""
+                      }`}
                     />
                   </button>
                 </TooltipTrigger>

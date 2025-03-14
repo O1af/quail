@@ -20,6 +20,8 @@ import {
   Database,
   ArrowRightCircle,
   Loader2,
+  ServerOff,
+  Server,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -38,6 +40,8 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
+import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
+import Image from "next/image";
 
 interface ConnectionCardProps {
   connection: DatabaseConfig;
@@ -45,6 +49,52 @@ interface ConnectionCardProps {
   onUpdate: (id: number) => void;
   onRemove: (id: number, name: string) => void;
 }
+
+// Helper function to determine database icon based on connection details
+const getDatabaseIcon = (connection: DatabaseConfig) => {
+  // Check connection type
+  if (connection.type === "postgres") {
+    // Check if it's a special service
+    if (connection.connectionString?.includes("neon.tech")) {
+      return (
+        <div className="w-6 h-6">
+          <Image
+            src="/logos/neon-light.svg"
+            alt="Neon Database"
+            width={24}
+            height={24}
+            className="dark:hidden"
+          />
+          <Image
+            src="/logos/neon-dark.svg"
+            alt="Neon Database"
+            width={24}
+            height={24}
+            className="hidden dark:block"
+          />
+        </div>
+      );
+    } else if (connection.connectionString?.includes("supabase")) {
+      return <SiSupabase className="h-6 w-6 text-[#3ECF8E]" />;
+    } else if (
+      connection.connectionString?.includes("aws") ||
+      connection.connectionString?.includes("rds")
+    ) {
+      return (
+        <div className="w-6 h-6">
+          <Image src="/logos/aws.svg" alt="AWS RDS" width={24} height={24} />
+        </div>
+      );
+    }
+    // Default PostgreSQL icon
+    return <SiPostgresql className="h-6 w-6 text-[#336791]" />;
+  } else if (connection.type === "mysql") {
+    return <SiMysql className="h-6 w-6 text-[#00758F]" />;
+  }
+
+  // Fallback database icon
+  return <Database className="h-6 w-6" />;
+};
 
 export const ConnectionCard = memo(function ConnectionCard({
   connection,
@@ -83,14 +133,15 @@ export const ConnectionCard = memo(function ConnectionCard({
   };
 
   const dbTypeLabel = connection.type === "postgres" ? "PostgreSQL" : "MySQL";
+  const DatabaseIcon = getDatabaseIcon(connection);
 
   return (
     <>
       <Card
         className={`transition-all ${
           isActive
-            ? "border-primary bg-primary/5 shadow-sm"
-            : "hover:border-muted-foreground/20"
+            ? "border-primary bg-primary/5 shadow-md"
+            : "hover:border-muted-foreground/20 hover:shadow-sm"
         }`}
       >
         <CardContent className="p-6">
@@ -101,22 +152,20 @@ export const ConnectionCard = memo(function ConnectionCard({
                   isActive ? "bg-primary/20" : "bg-muted"
                 }`}
               >
-                <Database
-                  className={`h-5 w-5 ${
-                    isActive ? "text-primary" : "text-muted-foreground"
-                  }`}
-                />
+                {DatabaseIcon}
               </div>
               <div className="min-w-0 overflow-hidden">
                 <div className="flex items-center gap-2 mb-0.5">
                   <h3 className="font-medium truncate">{connection.name}</h3>
                   {isActive && (
-                    <Badge className="flex-shrink-0 bg-primary/10 text-primary border-primary/20">
-                      Active
+                    <Badge className="flex gap-1 flex-shrink-0 bg-primary/10 text-primary border-primary/20">
+                      <CheckCircle className="h-3 w-3" />
+                      <span>Active</span>
                     </Badge>
                   )}
                 </div>
-                <CardDescription className="truncate">
+                <CardDescription className="truncate flex items-center gap-1">
+                  <Server className="h-3 w-3 opacity-70" />
                   {dbTypeLabel} database
                 </CardDescription>
               </div>
@@ -124,9 +173,13 @@ export const ConnectionCard = memo(function ConnectionCard({
 
             <div className="flex items-center gap-2 shrink-0 ml-auto">
               <Button
-                variant={isActive ? "secondary" : "outline"}
+                variant={isActive ? "secondary" : "default"}
                 size="sm"
-                className={isActive ? "pointer-events-none opacity-90" : ""}
+                className={`transition-all duration-200 ${
+                  isActive
+                    ? "pointer-events-none opacity-90"
+                    : "hover:scale-[1.02]"
+                }`}
                 disabled={activating}
                 onClick={handleSetActive}
               >
@@ -149,20 +202,23 @@ export const ConnectionCard = memo(function ConnectionCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-full flex-shrink-0"
+                    className="h-8 w-8 rounded-full flex-shrink-0 hover:bg-muted"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                     <span className="sr-only">Open menu</span>
                   </Button>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent align="end">
-                  <DropdownMenuItem onClick={() => onUpdate(connection.id)}>
+                  <DropdownMenuItem
+                    onClick={() => onUpdate(connection.id)}
+                    className="cursor-pointer"
+                  >
                     <Edit className="mr-2 h-4 w-4" />
                     Edit connection
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
-                    className="text-destructive"
+                    className="text-destructive cursor-pointer"
                     onClick={() => setIsDeleting(true)}
                   >
                     <Trash2 className="mr-2 h-4 w-4" />
@@ -176,8 +232,13 @@ export const ConnectionCard = memo(function ConnectionCard({
         <CardFooter
           className={`px-6 py-3 bg-muted/40 text-xs text-muted-foreground font-mono border-t ${
             isActive ? "border-primary/20" : "border-border"
-          } truncate`}
+          } truncate flex items-center gap-1.5`}
         >
+          {isActive ? (
+            <CheckCircle className="h-3.5 w-3.5 text-primary/70" />
+          ) : (
+            <ServerOff className="h-3.5 w-3.5 opacity-50" />
+          )}
           {formatConnectionString(connection.connectionString)}
         </CardFooter>
       </Card>
