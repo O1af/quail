@@ -90,6 +90,7 @@ export default function Page({
   const [user, setUser] = useState<any>(null);
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
   const [isLoading, setIsLoading] = useState(true);
+  const [isAuthLoading, setIsAuthLoading] = useState(true); // Add auth loading state
   const [isSaving, setIsSaving] = useState(false); // Add a separate state for save operation
   const [error, setError] = useState<string | null>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -411,6 +412,7 @@ export default function Page({
   // Fetch user data
   useEffect(() => {
     const fetchUser = async () => {
+      setIsAuthLoading(true); // Set auth loading to true when starting
       try {
         const {
           data: { user },
@@ -418,12 +420,10 @@ export default function Page({
 
         // Store user (might be null for anonymous viewers)
         setUser(user);
-
-        // For anonymous users, we'll check the dashboard's public status
-        // in the fetchDashboard function instead of redirecting
       } catch (err) {
         console.error("Error fetching user:", err);
-        // Don't set error yet - wait to see if the dashboard is public
+      } finally {
+        setIsAuthLoading(false); // Set auth loading to false when completed
       }
     };
 
@@ -432,16 +432,16 @@ export default function Page({
 
   /**
    * Checks the user's permission level for the dashboard
-   * @returns 'owner', 'editor', 'viewer', 'public', 'anonymous', or null if no access
+   * @returns 'owner', 'editor', 'viewer', 'public', or null if no access
    */
   const checkUserPermissions = useCallback(
     (dashboard: Dashboard, userEmail?: string, userId?: string) => {
-      // If no user (anonymous), check if dashboard is public
+      // If no user (anonymous), no access regardless of dashboard visibility
       if (!userId) {
-        return dashboard.permissions?.publicView ? "anonymous" : null;
+        return null; // Changed: No longer return "anonymous" for public dashboards
       }
 
-      // For logged in users, check permissions as before
+      // For logged in users, check permissions
       // Check if user is owner
       if (dashboard.userId === userId) {
         return "owner";
@@ -457,7 +457,7 @@ export default function Page({
         return "viewer";
       }
 
-      // Check if dashboard is public
+      // Check if dashboard is public - only for logged in users
       if (dashboard.permissions?.publicView) {
         return "public";
       }
@@ -468,11 +468,22 @@ export default function Page({
     []
   );
 
-  // Fetch dashboard and chart data when user is loaded (or immediately if user is null)
+  // Fetch dashboard and chart data when user authentication is completed
   useEffect(() => {
+    // Only proceed if user auth loading is complete
+    if (isAuthLoading) return;
+
     const fetchDashboard = async () => {
       try {
         setIsLoading(true);
+
+        // Require user to be logged in before attempting to load dashboard
+        if (!user) {
+          console.log("No user logged in, redirecting to login");
+          window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
+          return;
+        }
+
         const dashboardData = await loadDashboard(slug);
 
         if (!dashboardData) {
@@ -484,18 +495,12 @@ export default function Page({
         // Check if the user has permissions to view this dashboard
         const permissionLevel = checkUserPermissions(
           dashboardData,
-          user?.email,
-          user?.id
+          user.email,
+          user.id
         );
 
-        // If anonymous user and dashboard isn't public, redirect to login
-        if (!user && permissionLevel === null) {
-          window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
-          return;
-        }
-
         // If logged in user but no permission, show access error
-        if (user && permissionLevel === null) {
+        if (permissionLevel === null) {
           setError("You don't have permission to view this dashboard");
           setIsLoading(false);
           return;
@@ -505,13 +510,14 @@ export default function Page({
         setUserPermission(permissionLevel);
 
         // Set dashboard data
+
         setDashboard(dashboardData);
 
         // Only allow editing if the user is owner or editor
         if (permissionLevel === "owner" || permissionLevel === "editor") {
           // We'll handle the Edit button visibility separately
         } else {
-          // For viewers, public, and anonymous access, ensure edit mode is off
+          // For viewers and public access, ensure edit mode is off
           setIsEditing(false);
         }
 
@@ -546,9 +552,8 @@ export default function Page({
       }
     };
 
-    // Always try to fetch the dashboard, even for anonymous users
     fetchDashboard();
-  }, [slug, user, checkUserPermissions]);
+  }, [slug, user, checkUserPermissions, isAuthLoading]); // Add isAuthLoading as a dependency
 
   // Update layouts ref when dashboard changes
   const handleLayoutChange = useCallback(
@@ -607,13 +612,22 @@ export default function Page({
     [dashboard, user, slug]
   );
 
-  // Show loading state with improved UI
-  if (isLoading) {
+  // Show loading state with improved UI and different messages based on what's loading
+  if (isAuthLoading || isLoading) {
     return (
       <div className="flex items-center justify-center min-h-screen">
         <div className="flex flex-col items-center gap-3 bg-card/50 p-8 rounded-lg shadow-sm">
           <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-base font-medium">Loading dashboard...</p>
+          <p className="text-base font-medium">
+            {isAuthLoading
+              ? "Checking authentication..."
+              : "Loading dashboard..."}
+          </p>
+          {isAuthLoading && (
+            <p className="text-sm text-muted-foreground">
+              We're verifying your access to this dashboard
+            </p>
+          )}
         </div>
       </div>
     );
@@ -723,23 +737,10 @@ export default function Page({
                   to request edit permissions.
                 </p>
               )}
-              {(userPermission === "public" ||
-                userPermission === "anonymous") && (
+              {userPermission === "public" && (
                 <p>
-                  This is a publicly shared dashboard
-                  {!user && (
-                    <>
-                      {" "}
-                      -{" "}
-                      <a
-                        href={`${process.env.NEXT_PUBLIC_APP_URL}/login`}
-                        className="text-primary font-medium hover:underline ml-1"
-                      >
-                        Log in
-                      </a>{" "}
-                      to edit or share
-                    </>
-                  )}
+                  This is a publicly shared dashboard with all authenticated
+                  users.
                 </p>
               )}
             </div>
