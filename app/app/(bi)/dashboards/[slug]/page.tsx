@@ -36,6 +36,11 @@ import { TitleEditor } from "./components/TitleEditor";
 import { ManageChartsModal } from "./components/ManageChartsModal";
 import { useHeader } from "@/components/header/header-context";
 import { ShareDialog } from "./components/ShareDialog";
+import { DashboardHeader } from "./components/DashboardHeader";
+import { PermissionIndicator } from "./components/PermissionIndicator";
+import { LoadingState } from "./components/LoadingState";
+import { ErrorState } from "./components/ErrorState";
+import { EmptyDashboardPlaceholder } from "./components/EmptyDashboardPlaceholder";
 
 // Component to show permission badge with appropriate styling
 const PermissionBadge = ({ permission }: { permission: string }) => {
@@ -614,139 +619,31 @@ export default function Page({
 
   // Show loading state with improved UI and different messages based on what's loading
   if (isAuthLoading || isLoading) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="flex flex-col items-center gap-3 bg-card/50 p-8 rounded-lg shadow-sm">
-          <Loader2 className="h-10 w-10 animate-spin text-primary" />
-          <p className="text-base font-medium">
-            {isAuthLoading
-              ? "Checking authentication..."
-              : "Loading dashboard..."}
-          </p>
-          {isAuthLoading && (
-            <p className="text-sm text-muted-foreground">
-              We're verifying your access to this dashboard
-            </p>
-          )}
-        </div>
-      </div>
-    );
+    return <LoadingState isAuthLoading={isAuthLoading} />;
   }
 
   // Show error state with improved UI
   if (error) {
-    return (
-      <div className="flex items-center justify-center min-h-screen">
-        <div className="bg-destructive/10 text-destructive p-8 rounded-lg max-w-lg mx-auto text-center shadow">
-          <h1 className="text-2xl font-bold mb-3">Error</h1>
-          <p className="mb-4">{error}</p>
-          <Button
-            variant="outline"
-            onClick={() => (window.location.href = "/dashboards")}
-          >
-            Back to Dashboards
-          </Button>
-        </div>
-      </div>
-    );
+    return <ErrorState error={error} />;
   }
 
   // Show dashboard content with improved UI
   return (
     <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden pb-4">
-      <div className="flex-none p-4 pb-2">
-        <div className="flex justify-end items-center mb-4">
-          {!isEditing ? (
-            // Only show Edit button to owners and editors when logged in
-            (userPermission === "owner" || userPermission === "editor") && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button variant="secondary" onClick={handleEdit}>
-                      <PencilRuler className="mr-2 h-4 w-4" /> Edit Dashboard
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Edit dashboard title, description and layout</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
-            )
-          ) : (
-            <div className="space-x-2">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      onClick={() => setIsManageChartsOpen(true)}
-                      className="border-dashed"
-                    >
-                      <LayoutGrid className="mr-2 h-4 w-4" /> Manage Charts
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Add or remove charts from this dashboard</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+      <DashboardHeader
+        isEditing={isEditing}
+        userPermission={userPermission}
+        handleEdit={handleEdit}
+        handleCancel={handleCancel}
+        handleSave={handleSave}
+        isSaving={isSaving}
+        hasUnsavedChanges={hasUnsavedChanges}
+        setIsManageChartsOpen={setIsManageChartsOpen}
+      />
 
-              <Button variant="outline" onClick={handleCancel}>
-                <X className="mr-2 h-4 w-4" /> Cancel
-              </Button>
-
-              <Button
-                onClick={handleSave}
-                disabled={isSaving}
-                className={hasUnsavedChanges ? "animate-pulse" : ""}
-              >
-                {isSaving ? (
-                  <>
-                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                  </>
-                ) : (
-                  <>
-                    <Save className="mr-2 h-4 w-4" /> Save Changes
-                  </>
-                )}
-              </Button>
-            </div>
-          )}
-        </div>
-
-        {/* Show permission indicator for non-owners with improved styling */}
-        {userPermission && userPermission !== "owner" && (
-          <div className="mb-4 bg-muted/30 p-3 rounded-md border border-muted/30 text-sm flex items-center gap-2">
-            <div className="bg-primary/10 p-1 rounded">
-              {userPermission === "editor" ? (
-                <PencilRuler className="h-4 w-4 text-primary" />
-              ) : (
-                <Share2 className="h-4 w-4 text-primary" />
-              )}
-            </div>
-            <div>
-              {userPermission === "editor" && (
-                <p>
-                  You have editor access to this dashboard. You can make changes
-                  and add charts.
-                </p>
-              )}
-              {userPermission === "viewer" && (
-                <p>
-                  You have view-only access to this dashboard. Contact the owner
-                  to request edit permissions.
-                </p>
-              )}
-              {userPermission === "public" && (
-                <p>
-                  This is a publicly shared dashboard with all authenticated
-                  users.
-                </p>
-              )}
-            </div>
-          </div>
-        )}
-      </div>
+      {userPermission && userPermission !== "owner" && (
+        <PermissionIndicator userPermission={userPermission} user={user} />
+      )}
 
       {/* Make the main content area scrollable */}
       <div className="flex-grow overflow-y-auto p-4 pt-0">
@@ -762,19 +659,10 @@ export default function Page({
             onLayoutChange={handleLayoutChange}
           />
         ) : (
-          <div className="text-center py-16 bg-muted/50 rounded-lg border border-dashed border-muted">
-            <p className="text-lg text-muted-foreground mb-3">
-              This dashboard doesn't have any charts yet
-            </p>
-            {isEditing && (
-              <Button
-                className="mt-2"
-                onClick={() => setIsManageChartsOpen(true)}
-              >
-                <LayoutGrid className="mr-2 h-4 w-4" /> Add Charts
-              </Button>
-            )}
-          </div>
+          <EmptyDashboardPlaceholder
+            isEditing={isEditing}
+            setIsManageChartsOpen={setIsManageChartsOpen}
+          />
         )}
       </div>
 
