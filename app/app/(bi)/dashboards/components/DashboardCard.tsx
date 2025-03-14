@@ -252,7 +252,7 @@ export function DashboardCard({
   if (viewMode === "grid") {
     return (
       <Link
-        href={`/dashboard/${dashboard._id}`}
+        href={`/dashboards/${dashboard._id}`}
         onClick={handleCardClick}
         className="block"
       >
@@ -404,7 +404,7 @@ export function DashboardCard({
   // List view
   return (
     <Link
-      href={`/dashboard/${dashboard._id}`}
+      href={`/dashboards/${dashboard._id}`}
       onClick={handleCardClick}
       className="block"
     >

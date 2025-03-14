@@ -1,7 +1,7 @@
 import React, { memo, useRef } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { Dashboard } from "@/components/stores/dashboard_store";
-import { ChartItem } from "@/app/app/(bi)/dashboard/[slug]/components/ChartItem";
+import { ChartItem } from "@/app/app/(bi)/dashboards/[slug]/components/ChartItem";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { Expand } from "lucide-react";

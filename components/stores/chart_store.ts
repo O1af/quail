@@ -7,16 +7,21 @@ const getCollection = () => getDatabase().collection<ChartDocument>("charts");
 
 export async function loadChart(
   chart_id: string,
-  userId: string
+  userId?: string
 ): Promise<ChartDocument | null> {
   try {
     await connectToMongo();
     const collection = getCollection();
-    const chart = await collection.findOne({ _id: chart_id, userId });
+
+    // Create query based on whether userId is provided
+    const query = userId ? { _id: chart_id, userId } : { _id: chart_id };
+
+    const chart = await collection.findOne(query);
+
     if (!chart) {
-      // error no chart found
       throw new Error("Chart not found");
     }
+
     return chart;
   } catch (error) {
     console.error("Failed to load chart:", error);

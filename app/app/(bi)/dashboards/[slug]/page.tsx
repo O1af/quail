@@ -11,7 +11,7 @@ import { loadChart } from "@/components/stores/chart_store"; // Updated import
 import { Button } from "@/components/ui/button";
 import { ChartDocument } from "@/lib/types/stores/chart"; // Added import for ChartDocument
 
-import { DashboardGrid } from "@/app/app/(bi)/dashboard/[slug]/components/DashboardGrid";
+import { DashboardGrid } from "@/app/app/(bi)/dashboards/[slug]/components/DashboardGrid";
 import { TitleEditor } from "./components/TitleEditor";
 import { ManageChartsModal } from "./components/ManageChartsModal";
 import { useHeader } from "@/components/header/header-context";
@@ -184,7 +184,7 @@ export default function Page({
         const newChartDataMap = new Map(chartData);
         for (const chartId of newChartIds) {
           try {
-            const chart = await loadChart(chartId, user.id);
+            const chart = await loadChart(chartId);
             newChartDataMap.set(chartId, chart);
           } catch (err) {
             console.error(`Failed to load chart ${chartId}:`, err);
@@ -385,7 +385,7 @@ export default function Page({
         // Load charts in parallel to improve performance
         const chartPromises = dashboardData.charts.map(async (chartId) => {
           try {
-            const chart = await loadChart(chartId, dashboardData.userId);
+            const chart = await loadChart(chartId);
             return { chartId, chart };
           } catch (err) {
             console.error(`Error loading chart ${chartId}:`, err);

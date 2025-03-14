@@ -8,6 +8,7 @@ import {
   loadSharedDashboards,
   Dashboard,
 } from "@/components/stores/dashboard_store";
+import { useAuthCheck } from "@/hooks/useAuthCheck";
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -44,14 +45,12 @@ export default function DashboardsPage() {
   const [sharedDashboards, setSharedDashboards] = useState<Dashboard[]>([]);
   const [isLoading, setIsLoading] = useState(true);
   const [isLoadingShared, setIsLoadingShared] = useState(true);
-  const [user, setUser] = useState<any>(null);
+  const { user } = useAuthCheck({ redirectPath: "/login" });
   const { setHeaderContent, setHeaderButtons } = useHeader();
   const [activeTab, setActiveTab] = useState("my-dashboards");
 
   // Create dashboard dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
-
-  const supabase = createClient();
 
   // Function to handle search updates
   const handleSearch = (query: string) => {
@@ -111,24 +110,6 @@ export default function DashboardsPage() {
       setHeaderButtons(null);
     };
   }, [setHeaderContent, setHeaderButtons, searchQuery, viewMode]);
-
-  // Fetch user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-
-      if (!user) {
-        window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
-        return;
-      }
-
-      setUser(user);
-    };
-
-    fetchUser();
-  }, [supabase]);
 
   // Fetch dashboards when user is loaded
   useEffect(() => {
