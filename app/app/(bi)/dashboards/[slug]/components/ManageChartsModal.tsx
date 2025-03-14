@@ -21,7 +21,7 @@ import {
   PieChart,
   ArrowDown,
 } from "lucide-react";
-import { listCharts } from "@/components/stores/chart_store";
+import { listCharts, loadChart } from "@/components/stores/chart_store";
 import { ChartDocument } from "@/lib/types/stores/chart";
 import { cn } from "@/lib/utils";
 
@@ -40,7 +40,10 @@ export function ManageChartsModal({
   currentCharts,
   onChartsChange,
 }: ManageChartsModalProps) {
-  const [allCharts, setAllCharts] = useState<ChartDocument[]>([]);
+  // State for user-owned charts (available to add)
+  const [userOwnedCharts, setUserOwnedCharts] = useState<ChartDocument[]>([]);
+  // State for dashboard charts (may include charts not owned by user)
+  const [dashboardCharts, setDashboardCharts] = useState<ChartDocument[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [recentlyModified, setRecentlyModified] = useState<string[]>([]);
@@ -54,17 +57,36 @@ export function ManageChartsModal({
     setTempDashboardCharts([...currentCharts]);
   }, [currentCharts, open]);
 
-  // Fetch all of the user's charts
+  // Fetch all user-owned charts and dashboard charts
   useEffect(() => {
-    const loadCharts = async () => {
+    const loadAllCharts = async () => {
       if (!open) return; // Only fetch when modal is open
 
       try {
         setLoading(true);
-        const charts = await listCharts(userId);
-        setAllCharts(charts as ChartDocument[]);
-        console.log("All charts:", charts);
-        console.log("Current charts in dashboard:", currentCharts);
+
+        // Get user-owned charts
+        const userCharts = await listCharts(userId);
+        setUserOwnedCharts(userCharts as ChartDocument[]);
+
+        // Load dashboard charts - we need to fetch each chart separately
+        // since some might not be owned by the current user
+        const dashboardChartsData: ChartDocument[] = [];
+        const dashboardChartsPromises = currentCharts.map((chartId) =>
+          loadChart(chartId)
+            .then((chart) => {
+              if (chart) dashboardChartsData.push(chart);
+              return chart;
+            })
+            .catch((err) => {
+              console.error(`Error loading chart ${chartId}:`, err);
+              return null;
+            })
+        );
+
+        await Promise.all(dashboardChartsPromises);
+        setDashboardCharts(dashboardChartsData);
+
         setError(null);
       } catch (err) {
         console.error("Error loading charts:", err);
@@ -75,24 +97,35 @@ export function ManageChartsModal({
     };
 
     if (userId && open) {
-      loadCharts();
+      loadAllCharts();
     }
-  }, [userId, open]);
+  }, [userId, open, currentCharts]);
+
+  // Get available charts (user-owned charts not in dashboard)
+  const availableCharts = userOwnedCharts.filter(
+    (chart) => !tempDashboardCharts.includes(chart._id)
+  );
 
   // Enhanced action handlers with visual feedback
   const handleAddChart = (chartId: string) => {
-    // ...existing add chart code...
     setRecentlyModified((prev) => [...prev, chartId]);
     setTempDashboardCharts((prev) => [...prev, chartId]);
+
+    // Find the chart in userOwnedCharts and add it to dashboardCharts
+    const chartToAdd = userOwnedCharts.find((chart) => chart._id === chartId);
+    if (chartToAdd) {
+      setDashboardCharts((prev) => [...prev, chartToAdd]);
+    }
+
     setTimeout(() => {
       setRecentlyModified((prev) => prev.filter((id) => id !== chartId));
     }, 1000);
   };
 
   const handleRemoveChart = (chartId: string) => {
-    // ...existing remove chart code...
     setRecentlyModified((prev) => [...prev, chartId]);
     setTempDashboardCharts((prev) => prev.filter((id) => id !== chartId));
+
     setTimeout(() => {
       setRecentlyModified((prev) => prev.filter((id) => id !== chartId));
     }, 1000);
@@ -100,7 +133,6 @@ export function ManageChartsModal({
 
   // Function to handle applying changes
   const handleApplyChanges = () => {
-    // ...existing apply changes code...
     if (onChartsChange) {
       onChartsChange(tempDashboardCharts, true);
     }
@@ -109,7 +141,6 @@ export function ManageChartsModal({
 
   // Function to handle canceling changes
   const handleCancel = () => {
-    // ...existing cancel code...
     setTempDashboardCharts([...currentCharts]);
     if (onChartsChange) {
       onChartsChange(currentCharts, false);
@@ -118,34 +149,32 @@ export function ManageChartsModal({
   };
 
   // Helper function to get chart type icon based on visualization type
-  // const getChartTypeIcon = (chart: ChartDocument) => {
-  //   // Try to determine chart type from data structure
-  //   const chartType = (chart.data?.chartType || chart.data?.type)?.toLowerCase();
+  const getChartTypeIcon = (chart: ChartDocument) => {
+    const chartType = (
+      chart.data?.chartType || chart.data?.type
+    )?.toLowerCase();
 
-  //   switch (chartType) {
-  //     case "bar":
-  //       return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
-  //     case "line":
-  //       return <LineChart className="h-4 w-4 text-muted-foreground" />;
-  //     case "pie":
-  //       return <PieChart className="h-4 w-4 text-muted-foreground" />;
-  //     default:
-  //       return <BarChart3 className="h-4 w-4 text-muted-foreground" />; // Default icon
-  //   }
-  // };
-
-  // // Get chart type text for display
-  // const getChartTypeText = (chart: ChartDocument) => {
-  //   const chartType = chart.data?.chartType || chart.data?.type;
-  //   return chartType
-  //     ? chartType.charAt(0).toUpperCase() + chartType.slice(1)
-  //     : "Chart";
-  // };
+    switch (chartType) {
+      case "bar":
+        return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
+      case "line":
+        return <LineChart className="h-4 w-4 text-muted-foreground" />;
+      case "pie":
+        return <PieChart className="h-4 w-4 text-muted-foreground" />;
+      default:
+        return <BarChart3 className="h-4 w-4 text-muted-foreground" />;
+    }
+  };
 
   // Track if any changes have been made
   const hasChanges =
     JSON.stringify(tempDashboardCharts.sort()) !==
     JSON.stringify(currentCharts.sort());
+
+  // Get current dashboard charts for display
+  const currentDashboardCharts = dashboardCharts.filter((chart) =>
+    tempDashboardCharts.includes(chart._id)
+  );
 
   return (
     <Dialog
@@ -218,24 +247,66 @@ export function ManageChartsModal({
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {allCharts
-                    .filter((chart) => tempDashboardCharts.includes(chart._id))
-                    .map((chart) => (
+                  {currentDashboardCharts.map((chart) => (
+                    <div
+                      key={chart._id}
+                      className={cn(
+                        "flex items-center justify-between border rounded-md p-3 transition-all duration-200",
+                        "hover:border-red-200 dark:hover:border-red-800",
+                        recentlyModified.includes(chart._id) &&
+                          "animate-pulse bg-red-50 dark:bg-red-950/20",
+                        chart.userId !== userId && "border-dashed" // Visual indicator for charts not owned by user
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        {getChartTypeIcon(chart)}
+                        <div>
+                          <div className="flex items-center gap-1.5">
+                            <p className="font-medium">{chart.title}</p>
+                            {chart.userId !== userId && (
+                              <Badge
+                                variant="secondary"
+                                className="text-[10px] h-4 px-1"
+                              >
+                                Shared
+                              </Badge>
+                            )}
+                          </div>
+                          <p className="text-xs text-muted-foreground">
+                            Last updated:{" "}
+                            {new Date(chart.updatedAt).toLocaleDateString()}
+                          </p>
+                        </div>
+                      </div>
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-950/50"
+                        onClick={() => handleRemoveChart(chart._id)}
+                      >
+                        <Trash2 className="h-4 w-4 mr-1.5" />
+                        Remove
+                      </Button>
+                    </div>
+                  ))}
+
+                  {/* Show error state for any charts in tempDashboardCharts but missing from dashboardCharts */}
+                  {tempDashboardCharts
+                    .filter(
+                      (id) => !dashboardCharts.some((chart) => chart._id === id)
+                    )
+                    .map((missingId) => (
                       <div
-                        key={chart._id}
-                        className={cn(
-                          "flex items-center justify-between border rounded-md p-3 transition-all duration-200",
-                          "hover:border-red-200 dark:hover:border-red-800",
-                          recentlyModified.includes(chart._id) &&
-                            "animate-pulse bg-red-50 dark:bg-red-950/20"
-                        )}
+                        key={missingId}
+                        className="flex items-center justify-between border border-dashed border-yellow-300 dark:border-yellow-800 bg-yellow-50 dark:bg-yellow-950/20 rounded-md p-3"
                       >
                         <div className="flex items-center gap-3">
-                          {/* {getChartTypeIcon(chart)} */}
                           <div>
-                            <p className="font-medium">{chart.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {/* {getChartTypeText(chart)} */}
+                            <p className="font-medium text-yellow-700 dark:text-yellow-500">
+                              Chart ID: {missingId.substring(0, 8)}...
+                            </p>
+                            <p className="text-xs text-yellow-600 dark:text-yellow-400">
+                              This chart could not be loaded
                             </p>
                           </div>
                         </div>
@@ -243,7 +314,7 @@ export function ManageChartsModal({
                           variant="ghost"
                           size="sm"
                           className="text-red-600 hover:text-red-700 hover:bg-red-50 dark:text-red-500 dark:hover:bg-red-950/50"
-                          onClick={() => handleRemoveChart(chart._id)}
+                          onClick={() => handleRemoveChart(missingId)}
                         >
                           <Trash2 className="h-4 w-4 mr-1.5" />
                           Remove
@@ -257,58 +328,50 @@ export function ManageChartsModal({
 
               <div className="flex items-center justify-between">
                 <h3 className="font-medium text-sm text-muted-foreground">
-                  Available Charts
+                  Your Available Charts
                 </h3>
                 <Badge variant="outline" className="text-xs">
-                  {
-                    allCharts.filter(
-                      (chart) => !tempDashboardCharts.includes(chart._id)
-                    ).length
-                  }{" "}
-                  available
+                  {availableCharts.length} available
                 </Badge>
               </div>
 
-              {allCharts.filter(
-                (chart) => !tempDashboardCharts.includes(chart._id)
-              ).length === 0 ? (
+              {availableCharts.length === 0 ? (
                 <p className="text-sm text-muted-foreground italic">
                   No additional charts available
                 </p>
               ) : (
                 <div className="space-y-2">
-                  {allCharts
-                    .filter((chart) => !tempDashboardCharts.includes(chart._id))
-                    .map((chart) => (
-                      <div
-                        key={chart._id}
-                        className={cn(
-                          "flex items-center justify-between border rounded-md p-3 transition-all duration-200",
-                          "hover:border-green-200 dark:hover:border-green-800",
-                          recentlyModified.includes(chart._id) &&
-                            "animate-pulse bg-green-50 dark:bg-green-950/20"
-                        )}
-                      >
-                        <div className="flex items-center gap-3">
-                          {/* {getChartTypeIcon(chart)} */}
-                          <div>
-                            <p className="font-medium">{chart.title}</p>
-                            <p className="text-xs text-muted-foreground">
-                              {/* {getChartTypeText(chart)} */}
-                            </p>
-                          </div>
+                  {availableCharts.map((chart) => (
+                    <div
+                      key={chart._id}
+                      className={cn(
+                        "flex items-center justify-between border rounded-md p-3 transition-all duration-200",
+                        "hover:border-green-200 dark:hover:border-green-800",
+                        recentlyModified.includes(chart._id) &&
+                          "animate-pulse bg-green-50 dark:bg-green-950/20"
+                      )}
+                    >
+                      <div className="flex items-center gap-3">
+                        {getChartTypeIcon(chart)}
+                        <div>
+                          <p className="font-medium">{chart.title}</p>
+                          <p className="text-xs text-muted-foreground">
+                            Last updated:{" "}
+                            {new Date(chart.updatedAt).toLocaleDateString()}
+                          </p>
                         </div>
-                        <Button
-                          variant="ghost"
-                          size="sm"
-                          className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-500 dark:hover:bg-green-950/50"
-                          onClick={() => handleAddChart(chart._id)}
-                        >
-                          <Plus className="h-4 w-4 mr-1.5" />
-                          Add
-                        </Button>
                       </div>
-                    ))}
+                      <Button
+                        variant="ghost"
+                        size="sm"
+                        className="text-green-600 hover:text-green-700 hover:bg-green-50 dark:text-green-500 dark:hover:bg-green-950/50"
+                        onClick={() => handleAddChart(chart._id)}
+                      >
+                        <Plus className="h-4 w-4 mr-1.5" />
+                        Add
+                      </Button>
+                    </div>
+                  ))}
                 </div>
               )}
             </div>

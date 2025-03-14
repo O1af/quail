@@ -594,144 +594,149 @@ export default function Page({
 
   // Show dashboard content with improved UI
   return (
-    <div className="p-4 py-2 pb-2">
-      <div className="flex justify-end items-center mb-6">
-        {!isEditing ? (
-          // Only show Edit button to owners and editors when logged in
-          (userPermission === "owner" || userPermission === "editor") && (
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button variant="secondary" onClick={handleEdit}>
-                    <PencilRuler className="mr-2 h-4 w-4" /> Edit Dashboard
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Edit dashboard title, description and layout</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
-          )
-        ) : (
-          <div className="space-x-2">
-            <TooltipProvider>
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <Button
-                    variant="outline"
-                    onClick={() => setIsManageChartsOpen(true)}
-                    className="border-dashed"
-                  >
-                    <LayoutGrid className="mr-2 h-4 w-4" /> Manage Charts
-                  </Button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Add or remove charts from this dashboard</p>
-                </TooltipContent>
-              </Tooltip>
-            </TooltipProvider>
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden pb-4">
+      <div className="flex-none p-4 pb-2">
+        <div className="flex justify-end items-center mb-4">
+          {!isEditing ? (
+            // Only show Edit button to owners and editors when logged in
+            (userPermission === "owner" || userPermission === "editor") && (
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button variant="secondary" onClick={handleEdit}>
+                      <PencilRuler className="mr-2 h-4 w-4" /> Edit Dashboard
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Edit dashboard title, description and layout</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            )
+          ) : (
+            <div className="space-x-2">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <Button
+                      variant="outline"
+                      onClick={() => setIsManageChartsOpen(true)}
+                      className="border-dashed"
+                    >
+                      <LayoutGrid className="mr-2 h-4 w-4" /> Manage Charts
+                    </Button>
+                  </TooltipTrigger>
+                  <TooltipContent>
+                    <p>Add or remove charts from this dashboard</p>
+                  </TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
 
-            <Button variant="outline" onClick={handleCancel}>
-              <X className="mr-2 h-4 w-4" /> Cancel
-            </Button>
+              <Button variant="outline" onClick={handleCancel}>
+                <X className="mr-2 h-4 w-4" /> Cancel
+              </Button>
 
-            <Button
-              onClick={handleSave}
-              disabled={isSaving}
-              className={hasUnsavedChanges ? "animate-pulse" : ""}
-            >
-              {isSaving ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
-                </>
+              <Button
+                onClick={handleSave}
+                disabled={isSaving}
+                className={hasUnsavedChanges ? "animate-pulse" : ""}
+              >
+                {isSaving ? (
+                  <>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Saving...
+                  </>
+                ) : (
+                  <>
+                    <Save className="mr-2 h-4 w-4" /> Save Changes
+                  </>
+                )}
+              </Button>
+            </div>
+          )}
+        </div>
+
+        {/* Show permission indicator for non-owners with improved styling */}
+        {userPermission && userPermission !== "owner" && (
+          <div className="mb-4 bg-muted/30 p-3 rounded-md border border-muted/30 text-sm flex items-center gap-2">
+            <div className="bg-primary/10 p-1 rounded">
+              {userPermission === "editor" ? (
+                <PencilRuler className="h-4 w-4 text-primary" />
               ) : (
-                <>
-                  <Save className="mr-2 h-4 w-4" /> Save Changes
-                </>
+                <Share2 className="h-4 w-4 text-primary" />
               )}
-            </Button>
+            </div>
+            <div>
+              {userPermission === "editor" && (
+                <p>
+                  You have editor access to this dashboard. You can make changes
+                  and add charts.
+                </p>
+              )}
+              {userPermission === "viewer" && (
+                <p>
+                  You have view-only access to this dashboard. Contact the owner
+                  to request edit permissions.
+                </p>
+              )}
+              {(userPermission === "public" ||
+                userPermission === "anonymous") && (
+                <p>
+                  This is a publicly shared dashboard
+                  {!user && (
+                    <>
+                      {" "}
+                      -{" "}
+                      <a
+                        href={`${process.env.NEXT_PUBLIC_APP_URL}/login`}
+                        className="text-primary font-medium hover:underline ml-1"
+                      >
+                        Log in
+                      </a>{" "}
+                      to edit or share
+                    </>
+                  )}
+                </p>
+              )}
+            </div>
           </div>
         )}
       </div>
 
-      {/* Show permission indicator for non-owners with improved styling */}
-      {userPermission && userPermission !== "owner" && (
-        <div className="mb-4 bg-muted/30 p-3 rounded-md border border-muted/30 text-sm flex items-center gap-2">
-          <div className="bg-primary/10 p-1 rounded">
-            {userPermission === "editor" ? (
-              <PencilRuler className="h-4 w-4 text-primary" />
-            ) : (
-              <Share2 className="h-4 w-4 text-primary" />
+      {/* Make the main content area scrollable */}
+      <div className="flex-grow overflow-y-auto p-4 pt-0">
+        {dashboard?.charts &&
+        (isEditing
+          ? tempChartsRef.current.length > 0
+          : dashboard.charts.length > 0) ? (
+          <DashboardGrid
+            dashboard={{
+              ...dashboard,
+              charts: isEditing ? tempChartsRef.current : dashboard.charts,
+              layout: isEditing ? tempLayoutsRef.current : dashboard.layout,
+            }}
+            chartData={chartData}
+            isEditing={isEditing}
+            onLayoutChange={(layout) => {
+              handleLayoutChange(layout);
+              setHasUnsavedChanges(true);
+            }}
+          />
+        ) : (
+          <div className="text-center py-16 bg-muted/50 rounded-lg border border-dashed border-muted">
+            <p className="text-lg text-muted-foreground mb-3">
+              This dashboard doesn't have any charts yet
+            </p>
+            {isEditing && (
+              <Button
+                className="mt-2"
+                onClick={() => setIsManageChartsOpen(true)}
+              >
+                <LayoutGrid className="mr-2 h-4 w-4" /> Add Charts
+              </Button>
             )}
           </div>
-          <div>
-            {userPermission === "editor" && (
-              <p>
-                You have editor access to this dashboard. You can make changes
-                and add charts.
-              </p>
-            )}
-            {userPermission === "viewer" && (
-              <p>
-                You have view-only access to this dashboard. Contact the owner
-                to request edit permissions.
-              </p>
-            )}
-            {(userPermission === "public" ||
-              userPermission === "anonymous") && (
-              <p>
-                This is a publicly shared dashboard
-                {!user && (
-                  <>
-                    {" "}
-                    -{" "}
-                    <a
-                      href={`${process.env.NEXT_PUBLIC_APP_URL}/login`}
-                      className="text-primary font-medium hover:underline ml-1"
-                    >
-                      Log in
-                    </a>{" "}
-                    to edit or share
-                  </>
-                )}
-              </p>
-            )}
-          </div>
-        </div>
-      )}
-
-      {dashboard?.charts &&
-      (isEditing
-        ? tempChartsRef.current.length > 0
-        : dashboard.charts.length > 0) ? (
-        <DashboardGrid
-          dashboard={{
-            ...dashboard,
-            charts: isEditing ? tempChartsRef.current : dashboard.charts,
-            layout: isEditing ? tempLayoutsRef.current : dashboard.layout,
-          }}
-          chartData={chartData}
-          isEditing={isEditing}
-          onLayoutChange={(layout) => {
-            handleLayoutChange(layout);
-            setHasUnsavedChanges(true);
-          }}
-        />
-      ) : (
-        <div className="text-center py-16 bg-muted/50 rounded-lg border border-dashed border-muted">
-          <p className="text-lg text-muted-foreground mb-3">
-            This dashboard doesn't have any charts yet
-          </p>
-          {isEditing && (
-            <Button
-              className="mt-2"
-              onClick={() => setIsManageChartsOpen(true)}
-            >
-              <LayoutGrid className="mr-2 h-4 w-4" /> Add Charts
-            </Button>
-          )}
-        </div>
-      )}
+        )}
+      </div>
 
       {/* Modals */}
       {user && dashboard && (
