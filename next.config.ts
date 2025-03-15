@@ -10,14 +10,6 @@ const nextConfig: NextConfig = {
     optimizeCss: false,
     optimizePackageImports: ["react-icons", "recharts"],
   },
-  async rewrites() {
-    return [
-      {
-        source: "/um.js",
-        destination: "https://umami-sage-iota.vercel.app/script.js",
-      },
-    ];
-  },
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
