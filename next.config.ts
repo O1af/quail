@@ -13,23 +13,8 @@ const nextConfig: NextConfig = {
   async rewrites() {
     return [
       {
-        source: "/analytics.js",
+        source: "/um.js",
         destination: "https://cloud.umami.is/script.js",
-      },
-    ];
-  },
-  // Add scripts properly to your CSP
-  async headers() {
-    return [
-      {
-        source: "/(.*)",
-        headers: [
-          {
-            key: "Content-Security-Policy",
-            value:
-              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is; connect-src 'self' https://cloud.umami.is;",
-          },
-        ],
       },
     ];
   },

@@ -56,13 +56,6 @@ export default function RootLayout({
           href="https://fonts.gstatic.com"
           crossOrigin="anonymous"
         />
-        {process.env.NODE_ENV === "production" && (
-          <script
-            defer
-            src="https://cloud.umami.is/script.js"
-            data-website-id="b4e773e1-0632-4b83-b0d9-46548dc71a37"
-          ></script>
-        )}
       </head>
       <body
         className={`${geistSans.variable} ${geistMono.variable} antialiased`}
@@ -76,6 +69,13 @@ export default function RootLayout({
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
         <Toaster />
+        {process.env.NODE_ENV === "production" && (
+          <Script
+            src="/um.js"
+            data-website-id="b4e773e1-0632-4b83-b0d9-46548dc71a37"
+            strategy="afterInteractive"
+          />
+        )}
       </body>
     </html>
   );
