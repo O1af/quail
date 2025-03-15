@@ -96,10 +96,10 @@ export default function ChartPage() {
     // Set back button and save button in header
     setHeaderButtons(
       <div className="flex gap-2">
-        <Button variant="outline" size="sm" asChild>
+        <Button variant="ghost" size="sm" asChild>
           <Link href="/charts" className="flex items-center gap-2">
             <ArrowLeft className="h-4 w-4" />
-            Back to Charts
+            Charts
           </Link>
         </Button>
 

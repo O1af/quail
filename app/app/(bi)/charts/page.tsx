@@ -22,7 +22,7 @@ export default function Charts() {
 
     // Set page-specific button
     setHeaderButtons(
-      <Button className="gap-2" asChild>
+      <Button className="gap-2" asChild variant="outline">
         <Link href="/charts/new">
           <PlusCircle className="h-4 w-4" />
           Create New Chart

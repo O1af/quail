@@ -7,6 +7,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import { Info } from "lucide-react";
 
 interface TitleEditorProps {
   isEditing: boolean;
@@ -53,28 +54,13 @@ export const TitleEditor: React.FC<TitleEditorProps> = ({
       ) : (
         // View mode - title with description tooltip
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-medium">{title}</h1>
+          <h1 className="text-xl font-bold">{title}</h1>
           {description && (
             <TooltipProvider>
               <Tooltip>
                 <TooltipTrigger asChild>
                   <div className="inline-flex items-center">
-                    <svg
-                      xmlns="http://www.w3.org/2000/svg"
-                      width="16"
-                      height="16"
-                      viewBox="0 0 24 24"
-                      fill="none"
-                      stroke="currentColor"
-                      strokeWidth="2"
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      className="text-muted-foreground"
-                    >
-                      <circle cx="12" cy="12" r="10" />
-                      <path d="M12 16v-4" />
-                      <path d="M12 8h.01" />
-                    </svg>
+                    <Info className="h-4 w-4 text-muted-foreground" />
                   </div>
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">

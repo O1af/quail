@@ -1,5 +1,13 @@
 import React, { useEffect } from "react";
-import { Share2, PencilRuler, Save, X, LayoutGrid } from "lucide-react";
+import Link from "next/link";
+import {
+  Share2,
+  PencilRuler,
+  Save,
+  X,
+  LayoutGrid,
+  ArrowLeft,
+} from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -68,85 +76,98 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
     );
 
     setHeaderButtons(
-      <div className="flex items-center gap-2">
-        {dashboard && user && (
-          <>
-            {/* Edit Mode Controls */}
-            {isEditing ? (
+      <div className="flex items-center justify-between">
+        {/* Back button */}
+        <div className="flex items-center">
+          <Link href="/dashboards" passHref>
+            <Button variant="ghost" size="sm" className="mr-2">
+              <ArrowLeft className="h-4 w-4 mr-1" />
+              Dashboards
+            </Button>
+          </Link>
+
+          {/* Existing title and editing controls */}
+          <div className="flex items-center gap-2">
+            {dashboard && user && (
               <>
-                <TooltipProvider>
-                  <Tooltip>
-                    <TooltipTrigger asChild>
-                      <Button
-                        variant="outline"
-                        size="sm"
-                        onClick={() => setIsManageChartsOpen(true)}
-                      >
-                        <LayoutGrid className="h-4 w-4 mr-2" />
-                        Charts
+                {/* Edit Mode Controls */}
+                {isEditing ? (
+                  <>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <Button
+                            variant="outline"
+                            size="sm"
+                            onClick={() => setIsManageChartsOpen(true)}
+                          >
+                            <LayoutGrid className="h-4 w-4 mr-2" />
+                            Charts
+                          </Button>
+                        </TooltipTrigger>
+                        <TooltipContent>
+                          <p>Add or remove charts</p>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+
+                    <Button variant="outline" size="sm" onClick={handleCancel}>
+                      <X className="h-4 w-4 mr-2" />
+                      Cancel
+                    </Button>
+
+                    <Button
+                      variant="default"
+                      size="sm"
+                      onClick={handleSave}
+                      disabled={isSaving}
+                    >
+                      {isSaving ? (
+                        <>Saving...</>
+                      ) : (
+                        <>
+                          <Save className="h-4 w-4 mr-2" />
+                          Save
+                        </>
+                      )}
+                    </Button>
+                  </>
+                ) : (
+                  <>
+                    {/* View Mode Controls */}
+                    {(userPermission === "owner" ||
+                      userPermission === "editor") && (
+                      <Button variant="outline" size="sm" onClick={handleEdit}>
+                        <PencilRuler className="h-4 w-4 mr-2" />
+                        Edit
                       </Button>
-                    </TooltipTrigger>
-                    <TooltipContent>
-                      <p>Add or remove charts</p>
-                    </TooltipContent>
-                  </Tooltip>
-                </TooltipProvider>
+                    )}
 
-                <Button variant="outline" size="sm" onClick={handleCancel}>
-                  <X className="h-4 w-4 mr-2" />
-                  Cancel
-                </Button>
-
-                <Button
-                  variant="default"
-                  size="sm"
-                  onClick={handleSave}
-                  disabled={isSaving}
-                >
-                  {isSaving ? (
-                    <>Saving...</>
-                  ) : (
-                    <>
-                      <Save className="h-4 w-4 mr-2" />
-                      Save {hasUnsavedChanges && "*"}
-                    </>
-                  )}
-                </Button>
-              </>
-            ) : (
-              <>
-                {/* View Mode Controls */}
-                {(userPermission === "owner" ||
-                  userPermission === "editor") && (
-                  <Button variant="outline" size="sm" onClick={handleEdit}>
-                    <PencilRuler className="h-4 w-4 mr-2" />
-                    Edit
-                  </Button>
-                )}
-
-                {userPermission === "owner" && (
-                  <TooltipProvider>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <Button
-                          variant="outline"
-                          size="sm"
-                          onClick={() => setIsShareModalOpen(true)}
-                        >
-                          <Share2 className="h-4 w-4 mr-2" />
-                          Share
-                        </Button>
-                      </TooltipTrigger>
-                      <TooltipContent>
-                        <p>Share this dashboard with others</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+                    {userPermission === "owner" && (
+                      <TooltipProvider>
+                        <Tooltip>
+                          <TooltipTrigger asChild>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setIsShareModalOpen(true)}
+                            >
+                              <Share2 className="h-4 w-4 mr-2" />
+                              Share
+                            </Button>
+                          </TooltipTrigger>
+                          <TooltipContent>
+                            <p>Share this dashboard with others</p>
+                          </TooltipContent>
+                        </Tooltip>
+                      </TooltipProvider>
+                    )}
+                  </>
                 )}
               </>
             )}
-          </>
-        )}
+          </div>
+        </div>
       </div>
     );
 

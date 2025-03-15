@@ -1,4 +1,4 @@
-import React, { useMemo } from "react";
+import React, { useMemo, useState, useCallback } from "react";
 import { Dashboard } from "@/components/stores/dashboard_store";
 import { ChartDocument } from "@/lib/types/stores/chart";
 import { DashboardGrid } from "./DashboardGrid";
@@ -13,18 +13,57 @@ interface DashboardContentProps {
   tempLayoutsRef: React.MutableRefObject<any[]>;
   setIsManageChartsOpen: (open: boolean) => void;
   onLayoutChange: (layout: any) => void;
+  userId: string;
+  onChartDataUpdate?: (chartId: string, updates: any) => void;
 }
 
 export const DashboardContent: React.FC<DashboardContentProps> = ({
   dashboard,
-  chartData,
+  chartData: initialChartData,
   isEditing,
   chartUpdateCounter,
   tempChartsRef,
   tempLayoutsRef,
   setIsManageChartsOpen,
   onLayoutChange,
+  userId,
+  onChartDataUpdate,
 }) => {
+  // Keep a local copy of chart data that can be updated
+  const [localChartData, setLocalChartData] =
+    useState<Map<string, ChartDocument | null>>(initialChartData);
+
+  // Update local chart data when the prop changes
+  React.useEffect(() => {
+    setLocalChartData(new Map(initialChartData));
+  }, [initialChartData]);
+
+  // Handle chart updates from child components
+  const handleChartDataChange = useCallback(
+    (chartId: string, updates: any) => {
+      // Update local state
+      setLocalChartData((prevData) => {
+        const newData = new Map(prevData);
+        const chartToUpdate = newData.get(chartId);
+
+        if (chartToUpdate) {
+          newData.set(chartId, {
+            ...chartToUpdate,
+            ...updates,
+          });
+        }
+
+        return newData;
+      });
+
+      // Propagate to parent if needed
+      if (onChartDataUpdate) {
+        onChartDataUpdate(chartId, updates);
+      }
+    },
+    [onChartDataUpdate]
+  );
+
   // Memoize the dashboard object to prevent re-renders
   const dashboardForGrid = useMemo(() => {
     if (!dashboard) return null;
@@ -36,9 +75,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
     };
   }, [dashboard, isEditing, chartUpdateCounter, tempChartsRef, tempLayoutsRef]);
 
-  // Memoize chart data to prevent re-renders
-  const memoizedChartData = useMemo(() => chartData, [chartData]);
-
+  // Rest of your component remains the same
   if (!dashboard?.charts) {
     return (
       <EmptyDashboardPlaceholder
@@ -75,9 +112,11 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
     <DashboardGrid
       key={`grid-${isEditing ? "edit" : "view"}-${chartUpdateCounter}`}
       dashboard={dashboardForGrid}
-      chartData={memoizedChartData}
+      chartData={localChartData}
       isEditing={isEditing}
       onLayoutChange={onLayoutChange}
+      userId={userId}
+      onChartDataChange={handleChartDataChange}
     />
   );
 };

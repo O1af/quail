@@ -95,26 +95,37 @@ export async function deleteChart(id: string, userId: string): Promise<void> {
 export async function renameChart(
   id: string,
   userId: string,
-  newTitle: string
+  newTitle: string,
+  description?: string // Add optional description parameter
 ): Promise<void> {
   try {
     await connectToMongo();
     const collection = getCollection();
+
+    // Create update object
+    const updateData: any = {
+      title: newTitle,
+      updatedAt: new Date(),
+    };
+
+    // Add description if provided
+    if (description !== undefined) {
+      updateData.description = description;
+    }
+
     const result = await collection.updateOne(
       { _id: id, userId },
       {
-        $set: {
-          title: newTitle,
-          updatedAt: new Date(),
-        },
+        $set: updateData,
       }
     );
+
     if (result.matchedCount === 0) {
       throw new Error("Chart not found or unauthorized");
     }
   } catch (error) {
-    console.error("Failed to rename chart:", error);
-    throw new Error("Failed to rename chart");
+    console.error("Failed to update chart:", error);
+    throw new Error("Failed to update chart");
   }
 }
 
