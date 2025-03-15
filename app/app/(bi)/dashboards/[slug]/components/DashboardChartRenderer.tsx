@@ -123,7 +123,7 @@ export default function DashboardChartRenderer({
         <div
           className={cn(
             "border-border/40 px-2 py-1.5 flex items-center shrink-0 relative",
-            isEditing && "bg-primary/10 rounded-t-sm drag-handle cursor-move"
+            isEditing && "bg-primary/5 rounded-t-sm drag-handle cursor-move"
           )}
         >
           <div className="w-full text-center">

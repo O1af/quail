@@ -1,5 +1,5 @@
-import React from "react";
-import { Grip, BarChart } from "lucide-react";
+import React, { useRef } from "react";
+import { BarChart } from "lucide-react";
 import { ChartDocument } from "@/lib/types/stores/chart";
 import DashboardChartRenderer from "./DashboardChartRenderer";
 
@@ -18,22 +18,48 @@ export function ChartItem({
   isSelected = false,
   onSelect,
 }: ChartItemProps) {
+  // Use refs to track click/drag behavior
+  const isDragging = useRef(false);
+  const mouseDownPos = useRef({ x: 0, y: 0 });
+
+  // Track mouse down to detect if this becomes a drag
+  const handleMouseDown = (e: React.MouseEvent) => {
+    if (!isEditing) return;
+
+    mouseDownPos.current = { x: e.clientX, y: e.clientY };
+
+    // We'll determine if this is a drag based on mouse movement
+    isDragging.current = false;
+  };
+
+  // Handle mouse move to detect drag action
+  const handleMouseMove = (e: React.MouseEvent) => {
+    if (!isEditing) return;
+
+    // If mouse has moved more than 5px in any direction, consider it a drag
+    const dx = Math.abs(e.clientX - mouseDownPos.current.x);
+    const dy = Math.abs(e.clientY - mouseDownPos.current.y);
+
+    if (dx > 5 || dy > 5) {
+      isDragging.current = true;
+    }
+  };
+
+  // Only trigger onSelect if we didn't drag
+  const handleClick = (e: React.MouseEvent) => {
+    if (isEditing && onSelect && !isDragging.current) {
+      e.stopPropagation();
+      onSelect();
+    }
+  };
+
   return (
     <div
       className="flex flex-col h-full"
-      onClick={(e) => {
-        if (isEditing && onSelect) {
-          e.stopPropagation();
-          onSelect();
-        }
-      }}
+      onClick={handleClick}
+      onMouseDown={handleMouseDown}
+      onMouseMove={handleMouseMove}
     >
-      {/* {isEditing && (
-        <div className="drag-handle bg-primary/10 text-xs p-1 text-center cursor-move">
-          <Grip className="inline-block mr-1" /> Drag to move
-        </div>
-      )} */}
-
       {/* Give the chart container full height minus the drag handle height if present */}
       <div
         className={`flex-1 ${

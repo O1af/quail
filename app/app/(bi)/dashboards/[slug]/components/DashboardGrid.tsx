@@ -22,6 +22,9 @@ export const DashboardGrid = memo(
     // Add state to track the selected chart
     const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
 
+    // Add state to track if a drag operation is in progress
+    const [isDragging, setIsDragging] = useState(false);
+
     // Use useMemo for layouts to prevent recreating the object on every render
     const layouts = useMemo(
       () => ({
@@ -53,7 +56,19 @@ export const DashboardGrid = memo(
       : null;
 
     // Determine if sidebar is open
-    const isSidebarOpen = isEditing && !!selectedChartId;
+    const isSidebarOpen = isEditing && !!selectedChartId && !isDragging;
+
+    // Customize onLayoutChange to detect drag operations
+    const handleLayoutChange = (layout: any) => {
+      // Call original handler
+      onLayoutChange(layout);
+
+      // If we're currently dragging, don't select charts
+      if (isDragging) {
+        // Clear selection after drag completes
+        setSelectedChartId(null);
+      }
+    };
 
     return (
       <div className="flex flex-row h-full">
@@ -72,7 +87,7 @@ export const DashboardGrid = memo(
             draggableHandle=".drag-handle"
             isDraggable={isEditing}
             isResizable={isEditing}
-            onLayoutChange={onLayoutChange}
+            onLayoutChange={handleLayoutChange}
             layouts={layouts}
             compactType="vertical"
             preventCollision={false}
@@ -88,6 +103,14 @@ export const DashboardGrid = memo(
             margin={[10, 10]}
             containerPadding={[5, 5]}
             width={isSidebarOpen ? window.innerWidth - 320 : window.innerWidth}
+            onDragStart={() => setIsDragging(true)}
+            onDragStop={() => {
+              // Reset dragging state after a brief delay to ensure
+              // it doesn't trigger chart selection
+              setTimeout(() => {
+                setIsDragging(false);
+              }, 100);
+            }}
           >
             {dashboard.charts.map((chartId) => (
               <div
