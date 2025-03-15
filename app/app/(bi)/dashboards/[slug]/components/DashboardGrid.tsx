@@ -2,6 +2,7 @@ import React, { memo, useEffect, useMemo, useState } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { Dashboard } from "@/components/stores/dashboard_store";
 import { ChartItem } from "@/app/app/(bi)/dashboards/[slug]/components/ChartItem";
+import { ChartEditSidebar } from "@/app/app/(bi)/dashboards/[slug]/components/ChartEditSidebar";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
 import { Expand } from "lucide-react";
@@ -29,6 +30,13 @@ export const DashboardGrid = memo(
       [dashboard?.layout]
     );
 
+    // Handle background click to deselect chart
+    const handleBackgroundClick = () => {
+      if (isEditing && selectedChartId) {
+        setSelectedChartId(null);
+      }
+    };
+
     // Log only when the component actually renders
     useEffect(() => {
       console.log("DashboardGrid rendered");
@@ -39,8 +47,13 @@ export const DashboardGrid = memo(
       return <div>Loading dashboard...</div>;
     }
 
+    // Get the selected chart data
+    const selectedChartData = selectedChartId
+      ? chartData.get(selectedChartId)
+      : null;
+
     return (
-      <div className="relative">
+      <div className="relative" onClick={handleBackgroundClick}>
         <ResponsiveGridLayout
           className="layout"
           breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
@@ -75,6 +88,7 @@ export const DashboardGrid = memo(
                   ? "border-primary/50 shadow-md border-dashed border-blue-400 border-1"
                   : ""
               }`}
+              onClick={(e) => e.stopPropagation()} // Prevent clicks inside charts from bubbling to background
             >
               <ChartItem
                 chartId={chartId}
@@ -86,6 +100,21 @@ export const DashboardGrid = memo(
             </div>
           ))}
         </ResponsiveGridLayout>
+
+        {/* Chart edit sidebar - shows when a chart is selected in edit mode */}
+        <ChartEditSidebar
+          chartData={selectedChartData}
+          isOpen={isEditing && !!selectedChartId}
+          onClose={() => setSelectedChartId(null)}
+        />
+
+        {/* Overlay that appears behind sidebar when open */}
+        {isEditing && selectedChartId && (
+          <div
+            className="fixed inset-0 bg-background/50 z-30 lg:hidden"
+            onClick={() => setSelectedChartId(null)}
+          />
+        )}
       </div>
     );
   },
