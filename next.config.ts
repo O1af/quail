@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/um.js",
-        destination: "https://analytics.umami.is/script.js",
+        destination: "https://umami-sage-iota.vercel.app/script.js",
       },
     ];
   },
