@@ -182,12 +182,12 @@ export function ManageChartsModal({
       onOpenChange={(newOpen) => {
         if (!newOpen && hasChanges) {
           // If closing with changes, confirm with user
-          const confirmed = window.confirm(
-            "You have unsaved chart changes. Are you sure you want to close without applying these changes?"
-          );
-          if (!confirmed) {
-            return;
-          }
+          // const confirmed = window.confirm(
+          //   "You have unsaved chart changes. Are you sure you want to close without applying these changes?"
+          // );
+          // if (!confirmed) {
+          //   return;
+          // }
           // If confirmed closing without saving, notify parent
           if (onChartsChange) {
             onChartsChange(currentCharts, false);

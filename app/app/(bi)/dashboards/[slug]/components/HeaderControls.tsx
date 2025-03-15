@@ -1,5 +1,5 @@
 import React, { useEffect } from "react";
-import { Share2 } from "lucide-react";
+import { Share2, PencilRuler, Save, X, LayoutGrid } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -19,9 +19,14 @@ interface HeaderControlsProps {
   userPermission: string | null;
   user: any;
   hasUnsavedChanges: boolean;
+  isSaving: boolean;
   handleTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDescriptionChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   setIsShareModalOpen: (open: boolean) => void;
+  setIsManageChartsOpen: (open: boolean) => void;
+  handleEdit: () => void;
+  handleSave: () => Promise<void>;
+  handleCancel: () => void;
 }
 
 export const HeaderControls: React.FC<HeaderControlsProps> = ({
@@ -32,9 +37,14 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
   userPermission,
   user,
   hasUnsavedChanges,
+  isSaving,
   handleTitleChange,
   handleDescriptionChange,
   setIsShareModalOpen,
+  setIsManageChartsOpen,
+  handleEdit,
+  handleSave,
+  handleCancel,
 }) => {
   const { setHeaderContent, setHeaderButtons } = useHeader();
 
@@ -64,24 +74,79 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
       <div className="flex items-center gap-2">
         {dashboard && user && (
           <>
-            {userPermission === "owner" && (
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => setIsShareModalOpen(true)}
-                    >
-                      <Share2 className="h-4 w-4 mr-2" />
-                      Share
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Share this dashboard with others</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+            {/* Edit Mode Controls */}
+            {isEditing ? (
+              <>
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => setIsManageChartsOpen(true)}
+                      >
+                        <LayoutGrid className="h-4 w-4 mr-2" />
+                        Charts
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent>
+                      <p>Add or remove charts</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+
+                <Button variant="outline" size="sm" onClick={handleCancel}>
+                  <X className="h-4 w-4 mr-2" />
+                  Cancel
+                </Button>
+
+                <Button
+                  variant="default"
+                  size="sm"
+                  onClick={handleSave}
+                  disabled={isSaving}
+                >
+                  {isSaving ? (
+                    <>Saving...</>
+                  ) : (
+                    <>
+                      <Save className="h-4 w-4 mr-2" />
+                      Save {hasUnsavedChanges && "*"}
+                    </>
+                  )}
+                </Button>
+              </>
+            ) : (
+              <>
+                {/* View Mode Controls */}
+                {(userPermission === "owner" ||
+                  userPermission === "editor") && (
+                  <Button variant="outline" size="sm" onClick={handleEdit}>
+                    <PencilRuler className="h-4 w-4 mr-2" />
+                    Edit
+                  </Button>
+                )}
+
+                {userPermission === "owner" && (
+                  <TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => setIsShareModalOpen(true)}
+                        >
+                          <Share2 className="h-4 w-4 mr-2" />
+                          Share
+                        </Button>
+                      </TooltipTrigger>
+                      <TooltipContent>
+                        <p>Share this dashboard with others</p>
+                      </TooltipContent>
+                    </Tooltip>
+                  </TooltipProvider>
+                )}
+              </>
             )}
           </>
         )}
@@ -102,10 +167,15 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
     userPermission,
     user,
     hasUnsavedChanges,
+    isSaving,
     handleTitleChange,
     handleDescriptionChange,
+    handleEdit,
+    handleSave,
+    handleCancel,
     setIsShareModalOpen,
+    setIsManageChartsOpen,
   ]);
 
-  return null; // This component only sets header content and doesn't render anything itself
+  return null;
 };

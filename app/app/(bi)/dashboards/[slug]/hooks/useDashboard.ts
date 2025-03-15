@@ -162,12 +162,12 @@ export function useDashboard(slug: string): UseDashboardReturn {
 
   // Cancel editing
   const handleCancel = useCallback(() => {
-    if (hasUnsavedChanges) {
-      const confirmed = window.confirm(
-        "You have unsaved changes. Are you sure you want to discard them?"
-      );
-      if (!confirmed) return;
-    }
+    // if (hasUnsavedChanges) {
+    //   const confirmed = window.confirm(
+    //     "You have unsaved changes. Are you sure you want to discard them?"
+    //   );
+    //   if (!confirmed) return;
+    // }
 
     tempLayoutsRef.current = dashboard?.layout || [];
     tempChartsRef.current = dashboard?.charts || [];
@@ -181,7 +181,7 @@ export function useDashboard(slug: string): UseDashboardReturn {
       description: "Your changes have been discarded.",
       duration: 3000,
     });
-  }, [dashboard, hasUnsavedChanges, toast]);
+  }, [dashboard, toast]);
 
   // Update layout
   const handleLayoutChange = useCallback(

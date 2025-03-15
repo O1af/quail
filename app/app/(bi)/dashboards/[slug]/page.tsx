@@ -2,7 +2,6 @@
 import React, { useState } from "react";
 import { useDashboard } from "./hooks/useDashboard";
 import { HeaderControls } from "./components/HeaderControls";
-import { DashboardHeader } from "./components/DashboardHeader";
 import { DashboardContent } from "./components/DashboardContent";
 import { LoadingState } from "./components/LoadingState";
 import { ErrorState } from "./components/ErrorState";
@@ -61,8 +60,8 @@ export default function Page({
   }
 
   return (
-    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden pb-4">
-      {/* Header controls for title, description, and sharing */}
+    <div className="flex flex-col h-[calc(100vh-4rem)] overflow-hidden">
+      {/* Header controls with all header buttons */}
       <HeaderControls
         dashboard={dashboard}
         isEditing={isEditing}
@@ -71,26 +70,19 @@ export default function Page({
         userPermission={userPermission}
         user={user}
         hasUnsavedChanges={hasUnsavedChanges}
+        isSaving={isSaving}
         handleTitleChange={handleTitleChange}
         handleDescriptionChange={handleDescriptionChange}
         setIsShareModalOpen={setIsShareModalOpen}
-      />
-
-      {/* Dashboard action buttons */}
-      <DashboardHeader
-        isEditing={isEditing}
-        userPermission={userPermission}
-        handleEdit={handleEdit}
-        handleCancel={handleCancel}
-        handleSave={handleSave}
-        isSaving={isSaving}
-        hasUnsavedChanges={hasUnsavedChanges}
         setIsManageChartsOpen={setIsManageChartsOpen}
+        handleEdit={handleEdit}
+        handleSave={handleSave}
+        handleCancel={handleCancel}
       />
 
       {/* Permission badge display - only show when not editing */}
       {userPermission && !isEditing && (
-        <div className="px-4 pt-2">
+        <div className="px-4">
           <PermissionBadgeDisplay
             permission={userPermission}
             userName={user?.user_metadata?.name}

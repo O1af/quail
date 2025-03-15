@@ -37,26 +37,18 @@ export const PermissionBadgeDisplay: React.FC<PermissionBadgeDisplayProps> = ({
   };
 
   return (
-    <div className="flex items-center mb-4 bg-muted/20 px-3 py-2 rounded-md shadow-sm">
+    <div className="flex items-center mb-4 px-3 py-2">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
-            <div className="flex items-center gap-2 cursor-help">
-              <InfoIcon className="h-4 w-4 text-muted-foreground" />
+            <div className="flex items-center gap-2">
               <div className="flex items-center gap-2">
                 <PermissionBadge permission={permission} />
-                <span className="text-sm text-muted-foreground">
-                  {getPermissionDescription()}
-                </span>
               </div>
             </div>
           </TooltipTrigger>
           <TooltipContent side="right" align="start">
-            <p>
-              {userName || userEmail
-                ? `Signed in as ${userName || userEmail}`
-                : "Access information"}
-            </p>
+            {getPermissionDescription()}
           </TooltipContent>
         </Tooltip>
       </TooltipProvider>
