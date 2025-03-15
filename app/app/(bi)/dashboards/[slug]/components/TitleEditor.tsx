@@ -22,31 +22,34 @@ export const TitleEditor: React.FC<TitleEditorProps> = ({
   onDescriptionChange,
 }) => {
   return (
-    <div className="flex flex-col w-full overflow-hidden">
+    <div className="w-full">
       {isEditing ? (
-        <>
-          <Input
-            value={tempTitle}
-            onChange={onTitleChange}
-            placeholder="Dashboard Title"
-            className="border-none pl-0 text-xl font-medium bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-          />
-          <Textarea
-            value={tempDescription}
-            onChange={onDescriptionChange}
-            placeholder="Add a description (optional)"
-            className="border-none resize-none pl-0 text-sm text-muted-foreground bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
-          />
-        </>
+        // Edit mode - horizontal layout
+        <div className="flex flex-col md:flex-row gap-3 w-full">
+          <div className="md:w-1/3 min-w-[200px]">
+            <Input
+              value={tempTitle}
+              onChange={onTitleChange}
+              placeholder="Dashboard Title"
+              className="text-xl font-medium px-2 border shadow-sm focus-visible:ring-1 bg-background hover:bg-muted/10 rounded-md"
+            />
+          </div>
+          <div className="flex-1">
+            <Textarea
+              value={tempDescription}
+              onChange={onDescriptionChange}
+              placeholder="Add a description (optional)"
+              rows={1}
+              className="min-h-[38px] resize-none text-sm text-muted-foreground px-2 border shadow-sm focus-visible:ring-1 bg-background hover:bg-muted/10 rounded-md py-2"
+            />
+          </div>
+        </div>
       ) : (
+        // View mode - vertical layout
         <>
-          <h1 className="text-xl font-medium pr-1 overflow-hidden text-ellipsis whitespace-nowrap">
-            {title}
-          </h1>
+          <h1 className="text-xl font-medium mb-1">{title}</h1>
           {description && (
-            <p className="text-sm text-muted-foreground overflow-hidden text-ellipsis line-clamp-2">
-              {description}
-            </p>
+            <p className="text-sm text-muted-foreground">{description}</p>
           )}
         </>
       )}

@@ -10,6 +10,7 @@ import {
 import { TitleEditor } from "./TitleEditor";
 import { useHeader } from "@/components/header/header-context";
 import { Dashboard } from "@/components/stores/dashboard_store";
+import { PermissionBadge } from "./PermissionBadge";
 
 interface HeaderControlsProps {
   dashboard: Dashboard | null;
@@ -50,23 +51,19 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
 
   useEffect(() => {
     setHeaderContent(
-      <div className="flex flex-1 justify-between items-center w-full">
-        <div className="w-full">
+      <div className="flex flex-col w-full max-w-full px-2">
+        {/* Title area with more horizontal space */}
+        <div className="w-full py-1">
           <TitleEditor
             isEditing={isEditing}
             title={dashboard?.title || "Dashboard"}
             description={dashboard?.description || ""}
             tempTitle={tempTitle}
             tempDescription={tempDescription}
-            onTitleChange={(e) => {
-              handleTitleChange(e);
-            }}
-            onDescriptionChange={(e) => {
-              handleDescriptionChange(e);
-            }}
+            onTitleChange={handleTitleChange}
+            onDescriptionChange={handleDescriptionChange}
           />
         </div>
-        <div className="ml-4 max-w-lg"></div>
       </div>
     );
 

@@ -37,7 +37,7 @@ export const PermissionBadgeDisplay: React.FC<PermissionBadgeDisplayProps> = ({
   };
 
   return (
-    <div className="flex items-center mb-4 px-3 py-2">
+    <div className="flex items-center mb-4 px-3 py-0">
       <TooltipProvider>
         <Tooltip>
           <TooltipTrigger asChild>
