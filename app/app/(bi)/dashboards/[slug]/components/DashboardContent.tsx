@@ -61,6 +61,16 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
     );
   }
 
+  // Ensure we don't pass null to DashboardGrid
+  if (!dashboardForGrid) {
+    return (
+      <EmptyDashboardPlaceholder
+        isEditing={isEditing}
+        setIsManageChartsOpen={setIsManageChartsOpen}
+      />
+    );
+  }
+
   return (
     <DashboardGrid
       key={`grid-${isEditing ? "edit" : "view"}-${chartUpdateCounter}`}

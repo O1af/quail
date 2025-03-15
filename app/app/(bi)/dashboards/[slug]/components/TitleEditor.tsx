@@ -1,6 +1,12 @@
 import React from "react";
 import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 
 interface TitleEditorProps {
   isEditing: boolean;
@@ -45,13 +51,39 @@ export const TitleEditor: React.FC<TitleEditorProps> = ({
           </div>
         </div>
       ) : (
-        // View mode - vertical layout
-        <>
-          <h1 className="text-xl font-medium mb-1">{title}</h1>
+        // View mode - title with description tooltip
+        <div className="flex items-center gap-2">
+          <h1 className="text-xl font-medium">{title}</h1>
           {description && (
-            <p className="text-sm text-muted-foreground">{description}</p>
+            <TooltipProvider>
+              <Tooltip>
+                <TooltipTrigger asChild>
+                  <div className="inline-flex items-center">
+                    <svg
+                      xmlns="http://www.w3.org/2000/svg"
+                      width="16"
+                      height="16"
+                      viewBox="0 0 24 24"
+                      fill="none"
+                      stroke="currentColor"
+                      strokeWidth="2"
+                      strokeLinecap="round"
+                      strokeLinejoin="round"
+                      className="text-muted-foreground"
+                    >
+                      <circle cx="12" cy="12" r="10" />
+                      <path d="M12 16v-4" />
+                      <path d="M12 8h.01" />
+                    </svg>
+                  </div>
+                </TooltipTrigger>
+                <TooltipContent className="max-w-xs">
+                  <p>{description}</p>
+                </TooltipContent>
+              </Tooltip>
+            </TooltipProvider>
           )}
-        </>
+        </div>
       )}
     </div>
   );
