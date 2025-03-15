@@ -75,13 +75,13 @@ export default function RootLayout({
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
         <Toaster />
-        {process.env.NODE_ENV === "production" && (
+        {
           <Script
-            src="/analytics.js"
-            data-website-id="b4e773e1-0632-4b83-b0d9-46548dc71a37"
-            strategy="afterInteractive"
-          />
-        )}
+            defer
+            src="https://umami-sage-iota.vercel.app/script.js"
+            data-website-id="242c6f31-19a3-470d-a9fc-bbe0334217bf"
+          ></Script>
+        }
       </body>
     </html>
   );

@@ -17,16 +17,7 @@ const nextConfig: NextConfig = {
       },
     },
   },
-  async rewrites() {
-    return [
-      {
-        source: "/analytics.js",
-        destination: "https://cloud.umami.is/script.js",
-      },
-    ];
-  },
   webpack(config) {
-    // Simpler SVGR configuration
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],
