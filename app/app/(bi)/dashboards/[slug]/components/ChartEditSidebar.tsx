@@ -1,11 +1,10 @@
-import React, { useState } from "react";
+import React from "react";
 import { ChartDocument } from "@/lib/types/stores/chart";
 import { Button } from "@/components/ui/button";
-import { X, Settings2, Layers, PenLine, Eye } from "lucide-react";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { X, PenLine, Eye, Lock } from "lucide-react";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
-import { Lock } from "lucide-react";
+import Link from "next/link";
 
 interface ChartEditSidebarProps {
   chartData: ChartDocument | null;
@@ -20,8 +19,6 @@ export function ChartEditSidebar({
   onClose,
   isChartOwner,
 }: ChartEditSidebarProps) {
-  const [activeTab, setActiveTab] = useState<string>("general");
-
   if (!chartData) {
     return null;
   }
@@ -35,80 +32,64 @@ export function ChartEditSidebar({
     >
       <div className="flex items-center justify-between p-4 border-b">
         <h3 className="text-lg font-semibold truncate flex-1">
-          {chartData.title || "Untitled Chart"}
+          Chart Settings
         </h3>
         <Button variant="ghost" size="icon" onClick={onClose}>
           <X className="h-4 w-4" />
         </Button>
       </div>
 
-      <Tabs
-        value={activeTab}
-        onValueChange={setActiveTab}
-        className="w-full flex-1 flex flex-col"
-      >
-        <TabsList className="grid grid-cols-3 w-full">
-          <TabsTrigger value="general">
-            <Settings2 className="h-4 w-4 mr-1" /> General
-          </TabsTrigger>
-          <TabsTrigger value="appearance">
-            <Eye className="h-4 w-4 mr-1" /> Appearance
-          </TabsTrigger>
-          <TabsTrigger value="data">
-            <Layers className="h-4 w-4 mr-1" /> Data
-          </TabsTrigger>
-        </TabsList>
-
-        <ScrollArea className="flex-1">
-          <TabsContent value="general" className="p-4">
-            <div className="space-y-4">
-              <div>
-                <h4 className="text-sm font-medium mb-1">Chart Title</h4>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {chartData.title}
-                </p>
-              </div>
-
-              <div>
-                <h4 className="text-sm font-medium mb-1">Description</h4>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {chartData.description || "No description provided"}
-                </p>
-              </div>
-
-              {isChartOwner ? (
-                <Button className="w-full" size="sm">
-                  <PenLine className="h-4 w-4 mr-2" /> Edit Properties
-                </Button>
-              ) : (
-                <div className="text-sm text-muted-foreground p-2 bg-muted rounded-md flex items-center">
-                  <Lock className="h-4 w-4 mr-2" />
-                  You do not have the necessary permissions to edit this chart.
-                </div>
-              )}
+      <ScrollArea className="flex-1">
+        <div className="p-4 space-y-6">
+          {/* General Section */}
+          <div className="space-y-4">
+            {/* <h4 className="text-sm font-medium">Chart Settings</h4> */}
+            <div>
+              <h5 className="text-sm font-medium mb-1">Chart Title</h5>
+              <p className="text-sm text-muted-foreground mb-2">
+                {chartData.title}
+              </p>
             </div>
-          </TabsContent>
 
-          <TabsContent value="appearance" className="p-4">
-            <div className="text-sm text-muted-foreground">
-              <h4 className="text-sm font-medium mb-3">Appearance Settings</h4>
-              <div className="space-y-4">
-                <div>
-                  <p className="text-xs text-muted-foreground mb-4">
-                    Customize the visual appearance of your chart
-                  </p>
-
-                  <Button className="w-full" size="sm" variant="outline">
-                    <Eye className="h-4 w-4 mr-2" /> Customize Appearance
-                  </Button>
-                </div>
-              </div>
+            <div>
+              <h5 className="text-sm font-medium mb-1">Description</h5>
+              <p className="text-sm text-muted-foreground mb-2">
+                {chartData.description || "No description provided"}
+              </p>
             </div>
-          </TabsContent>
 
-          <TabsContent value="data" className="p-4">
-            <div className="text-sm text-muted-foreground">
-              <h4 className="text-sm font-medium mb-3">Data Preview</h4>
+            {isChartOwner ? (
+              <Button className="w-full" size="sm" variant="outline">
+                <PenLine className="h-4 w-4 mr-2" /> Edit Properties
+              </Button>
+            ) : (
+              <div className="text-sm text-muted-foreground p-2 bg-muted rounded-md flex items-center">
+                <Lock className="h-4 w-4 mr-2" />
+                You do not have the necessary permissions to edit this chart.
+              </div>
+            )}
+          </div>
+
+          {/* Appearance Section */}
+          {isChartOwner && (
+            <div className="space-y-4 pt-4 border-t">
+              <h4 className="text-sm font-medium">Appearance Settings</h4>
+              <p className="text-xs text-muted-foreground mb-4">
+                Customize the visual appearance of your chart
+              </p>
+              <Link
+                href={`/charts/${chartData._id}`}
+                className="flex items-center justify-center w-full px-4 py-2 text-sm font-medium border border-input bg-background hover:bg-accent hover:text-accent-foreground rounded-md"
+              >
+                <Eye className="h-4 w-4 mr-2" /> Customize Appearance
+              </Link>
+            </div>
+          )}
+
+          {/* Data Section */}
+          {isChartOwner && (
+            <div className="space-y-4 pt-4 border-t">
+              <h4 className="text-sm font-medium">Data Preview</h4>
               {chartData.data ? (
                 <div>
                   <p className="text-xs text-muted-foreground mb-2">
@@ -128,9 +109,9 @@ export function ChartEditSidebar({
                 <div>No data available for this chart</div>
               )}
             </div>
-          </TabsContent>
-        </ScrollArea>
-      </Tabs>
+          )}
+        </div>
+      </ScrollArea>
     </div>
   );
 }
