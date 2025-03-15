@@ -8,7 +8,6 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { TitleEditor } from "./TitleEditor";
-import { PermissionBadge } from "./PermissionBadge";
 import { useHeader } from "@/components/header/header-context";
 import { Dashboard } from "@/components/stores/dashboard_store";
 
@@ -42,7 +41,7 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
   useEffect(() => {
     setHeaderContent(
       <div className="flex flex-1 justify-between items-center w-full">
-        <div className="flex items-center gap-2">
+        <div className="w-full">
           <TitleEditor
             isEditing={isEditing}
             title={dashboard?.title || "Dashboard"}
@@ -51,18 +50,13 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
             tempDescription={tempDescription}
             onTitleChange={(e) => {
               handleTitleChange(e);
-              // We assume this triggers hasUnsavedChanges elsewhere
             }}
             onDescriptionChange={(e) => {
               handleDescriptionChange(e);
-              // We assume this triggers hasUnsavedChanges elsewhere
             }}
           />
-          {userPermission && !isEditing && (
-            <PermissionBadge permission={userPermission} />
-          )}
         </div>
-        <div className="w-full ml-4 max-w-lg mr-4"></div>
+        <div className="ml-4 max-w-lg"></div>
       </div>
     );
 

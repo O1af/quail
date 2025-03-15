@@ -8,6 +8,7 @@ import { LoadingState } from "./components/LoadingState";
 import { ErrorState } from "./components/ErrorState";
 import { ManageChartsModal } from "./components/ManageChartsModal";
 import { ShareDialog } from "./components/ShareDialog";
+import { PermissionBadgeDisplay } from "./components/PermissionBadgeDisplay";
 
 export default function Page({
   params,
@@ -86,6 +87,17 @@ export default function Page({
         hasUnsavedChanges={hasUnsavedChanges}
         setIsManageChartsOpen={setIsManageChartsOpen}
       />
+
+      {/* Permission badge display - only show when not editing */}
+      {userPermission && !isEditing && (
+        <div className="px-4 pt-2">
+          <PermissionBadgeDisplay
+            permission={userPermission}
+            userName={user?.user_metadata?.name}
+            userEmail={user?.email}
+          />
+        </div>
+      )}
 
       {/* Main scrollable content area */}
       <div className="flex-grow overflow-y-auto p-4 pt-0">

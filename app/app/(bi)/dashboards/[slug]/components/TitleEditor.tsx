@@ -1,6 +1,6 @@
-import React, { useRef, useEffect, memo } from "react";
+import React from "react";
 import { Input } from "@/components/ui/input";
-import { Label } from "recharts";
+import { Textarea } from "@/components/ui/textarea";
 
 interface TitleEditorProps {
   isEditing: boolean;
@@ -12,71 +12,46 @@ interface TitleEditorProps {
   onDescriptionChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
 }
 
-export const TitleEditor = memo(
-  ({
-    isEditing,
-    title,
-    description,
-    tempTitle,
-    tempDescription,
-    onTitleChange,
-    onDescriptionChange,
-  }: TitleEditorProps) => {
-    const titleInputRef = useRef<HTMLInputElement>(null);
-    const descriptionInputRef = useRef<HTMLInputElement>(null);
-
-    useEffect(() => {
-      if (isEditing && titleInputRef.current) {
-        titleInputRef.current.focus();
-      }
-    }, [isEditing]);
-
-    console.log("Title editor rendering");
-
-    return isEditing ? (
-      <div className="flex flex-col max-w-2xl">
-        <div className="grid grid-cols-2 gap-x-4">
-          <div>
-            <Input
-              id="dashboard-title"
-              ref={titleInputRef}
-              type="text"
-              value={tempTitle}
-              onChange={onTitleChange}
-              className="text-lg font-medium w-full"
-              placeholder="Enter dashboard title"
-            />
-          </div>
-          <div>
-            <Input
-              id="dashboard-description"
-              ref={descriptionInputRef}
-              type="text"
-              value={tempDescription}
-              onChange={(e) => onDescriptionChange(e as any)} // Cast to expected type
-              className="w-full"
-              placeholder="Add a description"
-            />
-          </div>
-        </div>
-      </div>
-    ) : (
-      <div>
-        <div className="max-w-2xl flex items-baseline gap-x-3">
-          <h1 className="text-2xl font-bold flex-shrink-0">
-            {title || "Dashboard"}
+export const TitleEditor: React.FC<TitleEditorProps> = ({
+  isEditing,
+  title,
+  description,
+  tempTitle,
+  tempDescription,
+  onTitleChange,
+  onDescriptionChange,
+}) => {
+  return (
+    <div className="flex flex-col w-full overflow-hidden">
+      {isEditing ? (
+        <>
+          <Input
+            value={tempTitle}
+            onChange={onTitleChange}
+            placeholder="Dashboard Title"
+            className="border-none pl-0 text-xl font-medium bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
+          <Textarea
+            value={tempDescription}
+            onChange={onDescriptionChange}
+            placeholder="Add a description (optional)"
+            className="border-none resize-none pl-0 text-sm text-muted-foreground bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
+          />
+        </>
+      ) : (
+        <>
+          <h1 className="text-xl font-medium pr-1 overflow-hidden text-ellipsis whitespace-nowrap">
+            {title}
           </h1>
-        </div>
-        <div>
           {description && (
-            <p className="text-sm text-muted-foreground line-clamp-1 overflow-hidden overflow-ellipsis">
+            <p className="text-sm text-muted-foreground overflow-hidden text-ellipsis line-clamp-2">
               {description}
             </p>
           )}
-        </div>
-      </div>
-    );
-  }
-);
+        </>
+      )}
+    </div>
+  );
+};
 
 TitleEditor.displayName = "TitleEditor";
