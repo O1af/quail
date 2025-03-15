@@ -115,7 +115,7 @@ export const DashboardGrid = memo(
 
         {/* Chart edit sidebar - positioned to the side */}
         <div
-          className={`h-full fixed right-0 top-0 transition-transform duration-300 ease-in-out ${
+          className={`h-[calc(100vh-64px)] fixed right-0 top-16 transition-transform duration-300 ease-in-out ${
             isSidebarOpen ? "translate-x-0" : "translate-x-full"
           }`}
           style={{ width: "320px" }}

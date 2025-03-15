@@ -26,7 +26,7 @@ export function ChartEditSidebar({
   return (
     <div
       className={cn(
-        "h-full w-full bg-background border-l border-border z-40 shadow-lg"
+        "flex flex-col h-full w-full bg-background border-l border-border z-40 shadow-lg"
       )}
       onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing sidebar
     >
@@ -39,7 +39,11 @@ export function ChartEditSidebar({
         </Button>
       </div>
 
-      <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+      <Tabs
+        value={activeTab}
+        onValueChange={setActiveTab}
+        className="w-full flex-1 flex flex-col"
+      >
         <TabsList className="grid grid-cols-3 w-full">
           <TabsTrigger value="general">
             <Settings2 className="h-4 w-4 mr-1" /> General
@@ -52,7 +56,7 @@ export function ChartEditSidebar({
           </TabsTrigger>
         </TabsList>
 
-        <ScrollArea className="h-[calc(100vh-120px)]">
+        <ScrollArea className="flex-1">
           <TabsContent value="general" className="p-4">
             <div className="space-y-4">
               <div>
