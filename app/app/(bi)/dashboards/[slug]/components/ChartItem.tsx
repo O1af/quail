@@ -12,11 +12,11 @@ interface ChartItemProps {
 export function ChartItem({ chartId, chartData, isEditing }: ChartItemProps) {
   return (
     <div className="flex flex-col h-full">
-      {isEditing && (
+      {/* {isEditing && (
         <div className="drag-handle bg-primary/10 text-xs p-1 text-center cursor-move">
           <Grip className="inline-block mr-1" /> Drag to move
         </div>
-      )}
+      )} */}
 
       {/* Give the chart container full height minus the drag handle height if present */}
       <div
@@ -32,6 +32,7 @@ export function ChartItem({ chartId, chartData, isEditing }: ChartItemProps) {
             title={chartData.title || "Untitled Chart"}
             description={chartData.description}
             className="w-full h-full"
+            isEditing={isEditing}
           />
         ) : (
           <div className="flex flex-col items-center justify-center h-full text-center">

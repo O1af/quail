@@ -17,6 +17,7 @@ interface DashboardChartRendererProps {
   description?: string;
   className?: string;
   compact?: boolean;
+  isEditing?: boolean;
 }
 
 // Create memoized DynamicChart component to prevent rerenders
@@ -92,6 +93,7 @@ export default function DashboardChartRenderer({
   description,
   className,
   compact = false,
+  isEditing = false,
 }: DashboardChartRendererProps) {
   const containerRef = useRef<HTMLDivElement>(null);
 
@@ -113,18 +115,26 @@ export default function DashboardChartRenderer({
       className={cn("flex flex-col h-full w-full overflow-hidden", className)}
     >
       {!compact && (
-        <div className="border-b border-border/40 px-2 py-1.5 flex items-center shrink-0">
-          <h3 className="text-sm font-medium leading-tight truncate flex-1">
-            <span className="font-bold text-sm text-foreground/90 truncate">
-              {title}
-            </span>
-          </h3>
+        <div
+          className={cn(
+            "border-border/40 px-2 py-1.5 flex items-center shrink-0 relative",
+            isEditing &&
+              "bg-primary/10 rounded-t-sm drag-handle border-primary/20 cursor-move"
+          )}
+        >
+          <div className="w-full text-center">
+            <h3 className="text-sm font-medium leading-tight truncate mx-auto">
+              <span className="font-bold text-sm text-foreground/90 truncate">
+                {title}
+              </span>
+            </h3>
+          </div>
 
           {description && (
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground ml-1 flex-shrink-0" />
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground ml-1 flex-shrink-0 absolute right-2 top-1/2 transform -translate-y-1/2" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-xs">{description}</p>
