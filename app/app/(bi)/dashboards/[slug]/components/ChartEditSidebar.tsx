@@ -5,17 +5,20 @@ import { X, Settings2, Layers, PenLine, Eye } from "lucide-react";
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { cn } from "@/lib/utils";
+import { Lock } from "lucide-react";
 
 interface ChartEditSidebarProps {
   chartData: ChartDocument | null;
   isOpen: boolean;
   onClose: () => void;
+  isChartOwner: boolean;
 }
 
 export function ChartEditSidebar({
   chartData,
   isOpen,
   onClose,
+  isChartOwner,
 }: ChartEditSidebarProps) {
   const [activeTab, setActiveTab] = useState<string>("general");
 
@@ -73,16 +76,16 @@ export function ChartEditSidebar({
                 </p>
               </div>
 
-              <div>
-                <h4 className="text-sm font-medium mb-1">Chart Type</h4>
-                <p className="text-sm text-muted-foreground mb-2">
-                  {chartData.chartType || "Auto-detected"}
-                </p>
-              </div>
-
-              <Button className="w-full" size="sm">
-                <PenLine className="h-4 w-4 mr-2" /> Edit Properties
-              </Button>
+              {isChartOwner ? (
+                <Button className="w-full" size="sm">
+                  <PenLine className="h-4 w-4 mr-2" /> Edit Properties
+                </Button>
+              ) : (
+                <div className="text-sm text-muted-foreground p-2 bg-muted rounded-md flex items-center">
+                  <Lock className="h-4 w-4 mr-2" />
+                  You do not have the necessary permissions to edit this chart.
+                </div>
+              )}
             </div>
           </TabsContent>
 

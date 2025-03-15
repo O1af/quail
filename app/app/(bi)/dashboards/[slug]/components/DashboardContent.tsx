@@ -13,6 +13,7 @@ interface DashboardContentProps {
   tempLayoutsRef: React.MutableRefObject<any[]>;
   setIsManageChartsOpen: (open: boolean) => void;
   onLayoutChange: (layout: any) => void;
+  userId: string; // Add userId prop
 }
 
 export const DashboardContent: React.FC<DashboardContentProps> = ({
@@ -24,6 +25,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
   tempLayoutsRef,
   setIsManageChartsOpen,
   onLayoutChange,
+  userId, // Add userId to component props
 }) => {
   // Memoize the dashboard object to prevent re-renders
   const dashboardForGrid = useMemo(() => {
@@ -78,6 +80,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
       chartData={memoizedChartData}
       isEditing={isEditing}
       onLayoutChange={onLayoutChange}
+      userId={userId} // Pass userId to DashboardGrid
     />
   );
 };

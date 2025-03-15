@@ -102,6 +102,7 @@ export default function Page({
           tempLayoutsRef={tempLayoutsRef}
           setIsManageChartsOpen={setIsManageChartsOpen}
           onLayoutChange={handleLayoutChange}
+          userId={user?.id} // Pass userId to DashboardContent
         />
       </div>
 

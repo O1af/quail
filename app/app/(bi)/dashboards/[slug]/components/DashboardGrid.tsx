@@ -5,20 +5,28 @@ import { ChartItem } from "@/app/app/(bi)/dashboards/[slug]/components/ChartItem
 import { ChartEditSidebar } from "@/app/app/(bi)/dashboards/[slug]/components/ChartEditSidebar";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { Expand } from "lucide-react";
+import { Expand, Lock } from "lucide-react";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 
 interface DashboardGridProps {
   dashboard: Dashboard;
   chartData: Map<string, any>;
   isEditing: boolean;
   onLayoutChange: (layout: any) => void;
+  userId: string; // Add user ID to check ownership
 }
 
 // Initialize the WidthProvider outside the component to avoid re-creation
 const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export const DashboardGrid = memo(
-  ({ dashboard, chartData, isEditing, onLayoutChange }: DashboardGridProps) => {
+  ({
+    dashboard,
+    chartData,
+    isEditing,
+    onLayoutChange,
+    userId,
+  }: DashboardGridProps) => {
     // Add state to track the selected chart
     const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
 
@@ -32,6 +40,19 @@ export const DashboardGrid = memo(
       }),
       [dashboard?.layout]
     );
+
+    // Check if user owns the selected chart
+    const isChartOwner = useMemo(() => {
+      if (!selectedChartId) return false;
+      const someChartData = chartData.get(selectedChartId);
+      console.log(someChartData);
+      const chartOwnerId = someChartData?.userId;
+
+      // Log chart ownership info for debugging
+      console.log("Chart Owner ID:", chartOwnerId, "Current User ID:", userId);
+
+      return chartOwnerId === userId;
+    }, [selectedChartId, chartData, userId]);
 
     // Handle background click to deselect chart
     const handleBackgroundClick = () => {
@@ -55,7 +76,8 @@ export const DashboardGrid = memo(
       ? chartData.get(selectedChartId)
       : null;
 
-    // Determine if sidebar is open
+    // Determine if sidebar is open - now requires ownership for edit mode
+    const canEdit = isEditing && isChartOwner;
     const isSidebarOpen = isEditing && !!selectedChartId && !isDragging;
 
     // Customize onLayoutChange to detect drag operations
@@ -143,11 +165,54 @@ export const DashboardGrid = memo(
           }`}
           style={{ width: "320px" }}
         >
-          <ChartEditSidebar
-            chartData={selectedChartData}
-            isOpen={isSidebarOpen}
-            onClose={() => setSelectedChartId(null)}
-          />
+          {isSidebarOpen && (
+            <>
+              {
+                // isChartOwner ? (
+                <ChartEditSidebar
+                  chartData={selectedChartData}
+                  isOpen={isSidebarOpen}
+                  onClose={() => setSelectedChartId(null)}
+                  isChartOwner={isChartOwner}
+                />
+                // )
+                // : (
+                //   <div className="p-4 bg-white border-l border-gray-200 h-full overflow-auto">
+                //     <Alert variant="destructive">
+                //       <Lock className="h-4 w-4 mr-2" />
+                //       <AlertDescription>
+                //         You don't have permission to edit this chart. Only the
+                //         chart owner can modify its properties.
+                //       </AlertDescription>
+                //     </Alert>
+
+                //     <div className="mt-4">
+                //       <h3 className="font-medium text-lg">Chart Details</h3>
+                //       <div className="mt-2 text-sm text-gray-600">
+                //         <p>ID: {selectedChartId}</p>
+                //         <p>Owner: {selectedChartData?.ownerName || "Unknown"}</p>
+                //         <p>
+                //           Created:{" "}
+                //           {selectedChartData?.createdAt
+                //             ? new Date(
+                //                 selectedChartData.createdAt
+                //               ).toLocaleDateString()
+                //             : "Unknown"}
+                //         </p>
+                //       </div>
+                //     </div>
+
+                //     <button
+                //       className="mt-6 w-full py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium"
+                //       onClick={() => setSelectedChartId(null)}
+                //     >
+                //       Close
+                //     </button>
+                //   </div>
+                // )
+              }
+            </>
+          )}
         </div>
       </div>
     );
@@ -156,6 +221,9 @@ export const DashboardGrid = memo(
   (prevProps, nextProps) => {
     // Check if editing state changed
     if (prevProps.isEditing !== nextProps.isEditing) return false;
+
+    // Check if user ID changed
+    if (prevProps.userId !== nextProps.userId) return false;
 
     // Check if charts array changed
     const prevCharts = prevProps.dashboard?.charts || [];
