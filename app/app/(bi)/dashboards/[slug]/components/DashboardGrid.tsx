@@ -139,10 +139,10 @@ export const DashboardGrid = memo(
                 key={chartId}
                 className={`border rounded-lg ${
                   isEditing && selectedChartId === chartId
-                    ? "border-primary shadow-md border-solid border-blue-400 border-1"
+                    ? "border-blue-400 shadow-md border-solid border-1"
                     : isEditing
-                    ? "border-primary/50 shadow-md border-dashed border-blue-400 border-1"
-                    : ""
+                    ? "border-blue-400 shadow-sm border-dashed border-1"
+                    : "border-gray-200"
                 }`}
                 onClick={(e) => e.stopPropagation()} // Prevent clicks inside charts from bubbling to background
               >
