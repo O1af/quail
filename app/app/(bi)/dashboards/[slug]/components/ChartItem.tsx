@@ -1,7 +1,7 @@
 import React from "react";
 import { Grip, BarChart } from "lucide-react";
 import { ChartDocument } from "@/lib/types/stores/chart";
-import DashboardChartRenderer from "@/components/BI/Charts/DashboardChartRenderer";
+import DashboardChartRenderer from "./DashboardChartRenderer";
 
 interface ChartItemProps {
   chartId: string;

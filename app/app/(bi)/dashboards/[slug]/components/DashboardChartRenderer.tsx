@@ -1,5 +1,5 @@
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
-import DynamicChartRenderer from "../AgentResult/DynamicChartRenderer";
+import DynamicChartRenderer from "@/components/BI/AgentResult/DynamicChartRenderer";
 import { BarChart3, HelpCircle } from "lucide-react";
 import { useEffect, useRef, memo, useMemo } from "react";
 import { cn } from "@/lib/utils";
