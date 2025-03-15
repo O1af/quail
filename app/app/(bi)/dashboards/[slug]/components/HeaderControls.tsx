@@ -82,7 +82,7 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
           <Link href="/dashboards" passHref>
             <Button variant="ghost" size="sm" className="mr-2">
               <ArrowLeft className="h-4 w-4 mr-1" />
-              Back
+              Dashboards
             </Button>
           </Link>
 

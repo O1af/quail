@@ -1,19 +1,19 @@
-import React, { memo, useEffect, useMemo, useState } from "react";
+import React, { memo, useEffect, useMemo, useState, useCallback } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { Dashboard } from "@/components/stores/dashboard_store";
 import { ChartItem } from "@/app/app/(bi)/dashboards/[slug]/components/ChartItem";
 import { ChartEditSidebar } from "@/app/app/(bi)/dashboards/[slug]/components/ChartEditSidebar";
 import "react-grid-layout/css/styles.css";
 import "react-resizable/css/styles.css";
-import { Expand, Lock } from "lucide-react";
-import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Expand } from "lucide-react";
 
 interface DashboardGridProps {
   dashboard: Dashboard;
   chartData: Map<string, any>;
   isEditing: boolean;
   onLayoutChange: (layout: any) => void;
-  userId: string; // Add user ID to check ownership
+  userId: string;
+  onChartDataChange?: (chartId: string, updates: any) => void;
 }
 
 // Initialize the WidthProvider outside the component to avoid re-creation
@@ -26,9 +26,19 @@ export const DashboardGrid = memo(
     isEditing,
     onLayoutChange,
     userId,
+    onChartDataChange,
   }: DashboardGridProps) => {
     // Add state to track the selected chart
     const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
+
+    // Add state to track local chart data changes
+    const [localChartData, setLocalChartData] =
+      useState<Map<string, any>>(chartData);
+
+    // Update local chart data when chartData prop changes
+    useEffect(() => {
+      setLocalChartData(new Map(chartData));
+    }, [chartData]);
 
     // Add state to track if a drag operation is in progress
     const [isDragging, setIsDragging] = useState(false);
@@ -44,15 +54,40 @@ export const DashboardGrid = memo(
     // Check if user owns the selected chart
     const isChartOwner = useMemo(() => {
       if (!selectedChartId) return false;
-      const someChartData = chartData.get(selectedChartId);
-      console.log(someChartData);
+      const someChartData = localChartData.get(selectedChartId);
       const chartOwnerId = someChartData?.userId;
 
       // Log chart ownership info for debugging
       console.log("Chart Owner ID:", chartOwnerId, "Current User ID:", userId);
 
       return chartOwnerId === userId;
-    }, [selectedChartId, chartData, userId]);
+    }, [selectedChartId, localChartData, userId]);
+
+    // Handle chart update - propagate up and update local state
+    const handleChartUpdate = useCallback(
+      (chartId: string, updates: any) => {
+        // Update local state
+        setLocalChartData((prevData) => {
+          const newData = new Map(prevData);
+          const chartToUpdate = newData.get(chartId);
+
+          if (chartToUpdate) {
+            newData.set(chartId, {
+              ...chartToUpdate,
+              ...updates,
+            });
+          }
+
+          return newData;
+        });
+
+        // Propagate changes to parent components
+        if (onChartDataChange) {
+          onChartDataChange(chartId, updates);
+        }
+      },
+      [onChartDataChange]
+    );
 
     // Handle background click to deselect chart
     const handleBackgroundClick = () => {
@@ -61,11 +96,6 @@ export const DashboardGrid = memo(
       }
     };
 
-    // Log only when the component actually renders
-    useEffect(() => {
-      console.log("DashboardGrid rendered");
-    });
-
     // Only render if dashboard is available
     if (!dashboard) {
       return <div>Loading dashboard...</div>;
@@ -73,11 +103,10 @@ export const DashboardGrid = memo(
 
     // Get the selected chart data
     const selectedChartData = selectedChartId
-      ? chartData.get(selectedChartId)
+      ? localChartData.get(selectedChartId)
       : null;
 
-    // Determine if sidebar is open - now requires ownership for edit mode
-    const canEdit = isEditing && isChartOwner;
+    // Determine if sidebar is open
     const isSidebarOpen = isEditing && !!selectedChartId && !isDragging;
 
     // Customize onLayoutChange to detect drag operations
@@ -127,8 +156,6 @@ export const DashboardGrid = memo(
             width={isSidebarOpen ? window.innerWidth - 320 : window.innerWidth}
             onDragStart={() => setIsDragging(true)}
             onDragStop={() => {
-              // Reset dragging state after a brief delay to ensure
-              // it doesn't trigger chart selection
               setTimeout(() => {
                 setIsDragging(false);
               }, 100);
@@ -144,11 +171,11 @@ export const DashboardGrid = memo(
                     ? "border-blue-400 shadow-sm border-dashed border-1"
                     : "border-gray-200"
                 }`}
-                onClick={(e) => e.stopPropagation()} // Prevent clicks inside charts from bubbling to background
+                onClick={(e) => e.stopPropagation()}
               >
                 <ChartItem
                   chartId={chartId}
-                  chartData={chartData.get(chartId)}
+                  chartData={localChartData.get(chartId)}
                   isEditing={isEditing}
                   isSelected={isEditing && selectedChartId === chartId}
                   onSelect={() => setSelectedChartId(chartId)}
@@ -158,7 +185,7 @@ export const DashboardGrid = memo(
           </ResponsiveGridLayout>
         </div>
 
-        {/* Chart edit sidebar - positioned to the side */}
+        {/* Chart edit sidebar */}
         <div
           className={`h-[calc(100vh-64px)] fixed right-0 top-16 transition-transform duration-300 ease-in-out ${
             isSidebarOpen ? "translate-x-0" : "translate-x-full"
@@ -166,58 +193,21 @@ export const DashboardGrid = memo(
           style={{ width: "320px" }}
         >
           {isSidebarOpen && (
-            <>
-              {
-                // isChartOwner ? (
-                <ChartEditSidebar
-                  chartData={selectedChartData}
-                  isOpen={isSidebarOpen}
-                  onClose={() => setSelectedChartId(null)}
-                  isChartOwner={isChartOwner}
-                />
-                // )
-                // : (
-                //   <div className="p-4 bg-white border-l border-gray-200 h-full overflow-auto">
-                //     <Alert variant="destructive">
-                //       <Lock className="h-4 w-4 mr-2" />
-                //       <AlertDescription>
-                //         You don't have permission to edit this chart. Only the
-                //         chart owner can modify its properties.
-                //       </AlertDescription>
-                //     </Alert>
-
-                //     <div className="mt-4">
-                //       <h3 className="font-medium text-lg">Chart Details</h3>
-                //       <div className="mt-2 text-sm text-gray-600">
-                //         <p>ID: {selectedChartId}</p>
-                //         <p>Owner: {selectedChartData?.ownerName || "Unknown"}</p>
-                //         <p>
-                //           Created:{" "}
-                //           {selectedChartData?.createdAt
-                //             ? new Date(
-                //                 selectedChartData.createdAt
-                //               ).toLocaleDateString()
-                //             : "Unknown"}
-                //         </p>
-                //       </div>
-                //     </div>
-
-                //     <button
-                //       className="mt-6 w-full py-2 bg-gray-200 hover:bg-gray-300 rounded-md text-sm font-medium"
-                //       onClick={() => setSelectedChartId(null)}
-                //     >
-                //       Close
-                //     </button>
-                //   </div>
-                // )
-              }
-            </>
+            <ChartEditSidebar
+              chartData={selectedChartData}
+              chartId={selectedChartId}
+              isOpen={isSidebarOpen}
+              onClose={() => setSelectedChartId(null)}
+              isChartOwner={isChartOwner}
+              userId={userId}
+              onChartUpdate={handleChartUpdate}
+            />
           )}
         </div>
       </div>
     );
   },
-  // Improved custom equality function with deep comparison
+  // Custom equality function remains unchanged
   (prevProps, nextProps) => {
     // Check if editing state changed
     if (prevProps.isEditing !== nextProps.isEditing) return false;
@@ -236,7 +226,7 @@ export const DashboardGrid = memo(
     );
     if (chartsChanged) return false;
 
-    // Check if layout changed (simple reference check, the actual comparison is expensive)
+    // Check if layout changed
     if (prevProps.dashboard?.layout !== nextProps.dashboard?.layout)
       return false;
 

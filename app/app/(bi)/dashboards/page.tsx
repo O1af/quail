@@ -97,7 +97,7 @@ export default function DashboardsPage() {
           )}
         </Button>
 
-        <Button onClick={() => setIsDialogOpen(true)}>
+        <Button onClick={() => setIsDialogOpen(true)} variant="outline">
           <CirclePlus className="h-4 w-4 mr-2" />
           Create Dashboard
         </Button>
@@ -302,7 +302,7 @@ export default function DashboardsPage() {
   };
 
   return (
-    <div className="flex min-h-screen flex-col bg-background">
+    <div className="flex min-h-screen flex-col bg-background mx-auto px-4 py-8">
       <div className="flex-1">
         {/* Tabs for My Dashboards and Shared Dashboards */}
         <Tabs

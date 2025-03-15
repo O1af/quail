@@ -1,5 +1,5 @@
 "use client";
-import React, { useState } from "react";
+import React, { useState, useCallback } from "react";
 import { useDashboard } from "./hooks/useDashboard";
 import { HeaderControls } from "./components/HeaderControls";
 import { DashboardContent } from "./components/DashboardContent";
@@ -48,6 +48,11 @@ export default function Page({
     handleChartsChange,
     handleUpdatePermissions,
   } = useDashboard(slug);
+
+  const handleChartDataUpdate = useCallback(
+    (chartId: string, updates: any) => {},
+    []
+  );
 
   // Show loading state
   if (isAuthLoading || isLoading) {
@@ -103,6 +108,7 @@ export default function Page({
           setIsManageChartsOpen={setIsManageChartsOpen}
           onLayoutChange={handleLayoutChange}
           userId={user?.id} // Pass userId to DashboardContent
+          onChartDataUpdate={handleChartDataUpdate}
         />
       </div>
 
