@@ -54,7 +54,7 @@ export const TitleEditor: React.FC<TitleEditorProps> = ({
       ) : (
         // View mode - title with description tooltip
         <div className="flex items-center gap-2">
-          <h1 className="text-xl font-medium">{title}</h1>
+          <h1 className="text-xl font-bold">{title}</h1>
           {description && (
             <TooltipProvider>
               <Tooltip>
