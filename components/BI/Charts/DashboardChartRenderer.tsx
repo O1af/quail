@@ -112,18 +112,22 @@ export default function DashboardChartRenderer({
 
   return (
     <div
-      className={cn("flex flex-col h-full w-full overflow-hidden", className)}
+      className={cn(
+        "flex flex-col h-full w-full overflow-hidden",
+        isEditing &&
+          "border-2 border-dashed border-primary/30 rounded-md shadow-sm border-blue-400",
+        className
+      )}
     >
       {!compact && (
         <div
           className={cn(
             "border-border/40 px-2 py-1.5 flex items-center shrink-0 relative",
-            isEditing &&
-              "bg-primary/10 rounded-t-sm drag-handle border-primary/20 cursor-move"
+            isEditing && "bg-primary/10 rounded-t-sm drag-handle cursor-move"
           )}
         >
           <div className="w-full text-center">
-            <h3 className="text-sm font-medium leading-tight truncate mx-auto">
+            <h3 className="text-sm font-medium leading-tight truncate mx-auto my-1">
               <span className="font-bold text-sm text-foreground/90 truncate">
                 {title}
               </span>
