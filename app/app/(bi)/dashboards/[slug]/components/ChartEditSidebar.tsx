@@ -26,8 +26,7 @@ export function ChartEditSidebar({
   return (
     <div
       className={cn(
-        "fixed right-0 top-0 w-80 h-full bg-background border-l border-border z-40 shadow-lg transition-transform duration-300 ease-in-out",
-        isOpen ? "translate-x-0" : "translate-x-full"
+        "h-full w-full bg-background border-l border-border z-40 shadow-lg"
       )}
       onClick={(e) => e.stopPropagation()} // Prevent clicks inside from closing sidebar
     >

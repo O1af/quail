@@ -52,69 +52,80 @@ export const DashboardGrid = memo(
       ? chartData.get(selectedChartId)
       : null;
 
+    // Determine if sidebar is open
+    const isSidebarOpen = isEditing && !!selectedChartId;
+
     return (
-      <div className="relative" onClick={handleBackgroundClick}>
-        <ResponsiveGridLayout
-          className="layout"
-          breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
-          cols={{ lg: 12, md: 12, sm: 12, xs: 12 }}
-          rowHeight={30}
-          draggableHandle=".drag-handle"
-          isDraggable={isEditing}
-          isResizable={isEditing}
-          onLayoutChange={onLayoutChange}
-          layouts={layouts}
-          compactType="vertical"
-          preventCollision={false}
-          allowOverlap={false}
-          useCSSTransforms={true}
-          verticalCompact={true}
-          resizeHandles={isEditing ? ["se"] : []}
-          resizeHandle={
-            <span className="absolute right-2 bottom-2 cursor-pointer">
-              <Expand className="w-4 h-4" />
-            </span>
-          }
-          margin={[10, 10]}
-          containerPadding={[5, 5]}
+      <div className="flex flex-row h-full">
+        {/* Main dashboard area with transition */}
+        <div
+          className={`relative flex-grow transition-all duration-300 ease-in-out ${
+            isSidebarOpen ? "pr-80" : ""
+          }`}
+          onClick={handleBackgroundClick}
         >
-          {dashboard.charts.map((chartId) => (
-            <div
-              key={chartId}
-              className={`border rounded-lg ${
-                isEditing && selectedChartId === chartId
-                  ? "border-primary shadow-md border-solid border-blue-400 border-1"
-                  : isEditing
-                  ? "border-primary/50 shadow-md border-dashed border-blue-400 border-1"
-                  : ""
-              }`}
-              onClick={(e) => e.stopPropagation()} // Prevent clicks inside charts from bubbling to background
-            >
-              <ChartItem
-                chartId={chartId}
-                chartData={chartData.get(chartId)}
-                isEditing={isEditing}
-                isSelected={isEditing && selectedChartId === chartId}
-                onSelect={() => setSelectedChartId(chartId)}
-              />
-            </div>
-          ))}
-        </ResponsiveGridLayout>
+          <ResponsiveGridLayout
+            className="layout"
+            breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
+            cols={{ lg: 12, md: 12, sm: 12, xs: 12 }}
+            rowHeight={30}
+            draggableHandle=".drag-handle"
+            isDraggable={isEditing}
+            isResizable={isEditing}
+            onLayoutChange={onLayoutChange}
+            layouts={layouts}
+            compactType="vertical"
+            preventCollision={false}
+            allowOverlap={false}
+            useCSSTransforms={true}
+            verticalCompact={true}
+            resizeHandles={isEditing ? ["se"] : []}
+            resizeHandle={
+              <span className="absolute right-2 bottom-2 cursor-pointer">
+                <Expand className="w-4 w-4" />
+              </span>
+            }
+            margin={[10, 10]}
+            containerPadding={[5, 5]}
+            width={isSidebarOpen ? window.innerWidth - 320 : window.innerWidth}
+          >
+            {dashboard.charts.map((chartId) => (
+              <div
+                key={chartId}
+                className={`border rounded-lg ${
+                  isEditing && selectedChartId === chartId
+                    ? "border-primary shadow-md border-solid border-blue-400 border-1"
+                    : isEditing
+                    ? "border-primary/50 shadow-md border-dashed border-blue-400 border-1"
+                    : ""
+                }`}
+                onClick={(e) => e.stopPropagation()} // Prevent clicks inside charts from bubbling to background
+              >
+                <ChartItem
+                  chartId={chartId}
+                  chartData={chartData.get(chartId)}
+                  isEditing={isEditing}
+                  isSelected={isEditing && selectedChartId === chartId}
+                  onSelect={() => setSelectedChartId(chartId)}
+                />
+              </div>
+            ))}
+          </ResponsiveGridLayout>
+        </div>
 
-        {/* Chart edit sidebar - shows when a chart is selected in edit mode */}
-        <ChartEditSidebar
-          chartData={selectedChartData}
-          isOpen={isEditing && !!selectedChartId}
-          onClose={() => setSelectedChartId(null)}
-        />
-
-        {/* Overlay that appears behind sidebar when open */}
-        {isEditing && selectedChartId && (
-          <div
-            className="fixed inset-0 bg-background/50 z-30 lg:hidden"
-            onClick={() => setSelectedChartId(null)}
+        {/* Chart edit sidebar - positioned to the side */}
+        <div
+          className={`h-full fixed right-0 top-0 transition-transform duration-300 ease-in-out ${
+            isSidebarOpen ? "translate-x-0" : "translate-x-full"
+          }`}
+          style={{ width: "320px" }}
+        >
+          <ChartEditSidebar
+            chartData={selectedChartData}
+            isOpen={isSidebarOpen}
+            onClose={() => setSelectedChartId(null)}
           />
-        )}
+        </div>
       </div>
     );
   },
