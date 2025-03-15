@@ -14,7 +14,7 @@ const nextConfig: NextConfig = {
     return [
       {
         source: "/um.js",
-        destination: "https://cloud.umami.is/script.js",
+        destination: "https://analytics.umami.is/script.js",
       },
     ];
   },
