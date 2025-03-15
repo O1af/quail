@@ -2,7 +2,7 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   output: "standalone",
-  swcMinify: true,
+  // Remove swcMinify as it's now unrecognized in Next.js 15
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
@@ -18,8 +18,22 @@ const nextConfig: NextConfig = {
       },
     ];
   },
+  // Add scripts properly to your CSP
+  async headers() {
+    return [
+      {
+        source: "/(.*)",
+        headers: [
+          {
+            key: "Content-Security-Policy",
+            value:
+              "default-src 'self'; script-src 'self' 'unsafe-inline' 'unsafe-eval' https://cloud.umami.is; connect-src 'self' https://cloud.umami.is;",
+          },
+        ],
+      },
+    ];
+  },
   webpack(config) {
-    // Simpler SVGR configuration
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],

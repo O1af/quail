@@ -58,10 +58,10 @@ export default function RootLayout({
         />
         {process.env.NODE_ENV === "production" && (
           <script
-            src="/analytics.js"
+            defer
+            src="https://cloud.umami.is/script.js"
             data-website-id="b4e773e1-0632-4b83-b0d9-46548dc71a37"
-            strategy="afterInteractive"
-          />
+          ></script>
         )}
       </head>
       <body
