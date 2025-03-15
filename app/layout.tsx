@@ -72,7 +72,7 @@ export default function RootLayout({
         {process.env.NODE_ENV === "production" && (
           <Script
             src="/um.js"
-            data-website-id="b4e773e1-0632-4b83-b0d9-46548dc71a37"
+            data-website-id="242c6f31-19a3-470d-a9fc-bbe0334217bf"
             strategy="afterInteractive"
           />
         )}
