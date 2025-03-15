@@ -7,11 +7,27 @@ interface ChartItemProps {
   chartId: string;
   chartData: ChartDocument | null;
   isEditing: boolean;
+  isSelected?: boolean;
+  onSelect?: () => void;
 }
 
-export function ChartItem({ chartId, chartData, isEditing }: ChartItemProps) {
+export function ChartItem({
+  chartId,
+  chartData,
+  isEditing,
+  isSelected = false,
+  onSelect,
+}: ChartItemProps) {
   return (
-    <div className="flex flex-col h-full">
+    <div
+      className="flex flex-col h-full"
+      onClick={(e) => {
+        if (isEditing && onSelect) {
+          e.stopPropagation();
+          onSelect();
+        }
+      }}
+    >
       {/* {isEditing && (
         <div className="drag-handle bg-primary/10 text-xs p-1 text-center cursor-move">
           <Grip className="inline-block mr-1" /> Drag to move

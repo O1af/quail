@@ -113,10 +113,10 @@ export default function DashboardChartRenderer({
   return (
     <div
       className={cn(
-        "flex flex-col h-full w-full overflow-hidden",
-        isEditing &&
-          "border-2 border-dashed border-primary/30 rounded-md shadow-sm border-blue-400",
-        className
+        "flex flex-col h-full w-full overflow-hidden"
+        // isEditing &&
+        //   "border-2 border-dashed border-primary/30 rounded-md shadow-sm border-blue-400",
+        // className
       )}
     >
       {!compact && (

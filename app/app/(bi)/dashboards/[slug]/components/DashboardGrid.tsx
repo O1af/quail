@@ -1,4 +1,4 @@
-import React, { memo, useEffect, useMemo } from "react";
+import React, { memo, useEffect, useMemo, useState } from "react";
 import { Responsive, WidthProvider } from "react-grid-layout";
 import { Dashboard } from "@/components/stores/dashboard_store";
 import { ChartItem } from "@/app/app/(bi)/dashboards/[slug]/components/ChartItem";
@@ -18,6 +18,9 @@ const ResponsiveGridLayout = WidthProvider(Responsive);
 
 export const DashboardGrid = memo(
   ({ dashboard, chartData, isEditing, onLayoutChange }: DashboardGridProps) => {
+    // Add state to track the selected chart
+    const [selectedChartId, setSelectedChartId] = useState<string | null>(null);
+
     // Use useMemo for layouts to prevent recreating the object on every render
     const layouts = useMemo(
       () => ({
@@ -66,13 +69,19 @@ export const DashboardGrid = memo(
             <div
               key={chartId}
               className={`border rounded-lg ${
-                isEditing ? "border-primary/50 shadow-md" : ""
+                isEditing && selectedChartId === chartId
+                  ? "border-primary shadow-md border-solid border-blue-400 border-1"
+                  : isEditing
+                  ? "border-primary/50 shadow-md border-dashed border-blue-400 border-1"
+                  : ""
               }`}
             >
               <ChartItem
                 chartId={chartId}
                 chartData={chartData.get(chartId)}
                 isEditing={isEditing}
+                isSelected={isEditing && selectedChartId === chartId}
+                onSelect={() => setSelectedChartId(chartId)}
               />
             </div>
           ))}
