@@ -72,7 +72,7 @@ export default function RootLayout({
         {
           <Script
             defer
-            src="https://umami-sage-iota.vercel.app/script.js"
+            src="https://olaf-metrics.vercel.app/script.js"
             data-website-id="242c6f31-19a3-470d-a9fc-bbe0334217bf"
           ></Script>
         }
