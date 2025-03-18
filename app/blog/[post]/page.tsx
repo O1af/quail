@@ -13,6 +13,9 @@ import { Metadata } from "next";
 
 const Footer = dynamic(() => import("@/components/Static/Footer"));
 
+// Get base URL from environment or fallback to production URL
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quailbi.com";
+
 // Define custom components for MDX
 const components = {
   Image,
@@ -132,8 +135,13 @@ export async function generateMetadata({
 
     const title = `${data.title} | Quail Blog`;
     const description = data.description || "Quail engineering blog post";
-    const url = `https://quailbi.com/blog/${post}`;
-    const imageUrl = data.image || "/quail_logo_white.png";
+    const url = `${baseUrl}/blog/${post}`;
+
+    // Convert relative image paths to absolute URLs
+    let imageUrl = data.image || "/quail_logo_white.png";
+    if (imageUrl.startsWith("/")) {
+      imageUrl = `${baseUrl}${imageUrl}`;
+    }
 
     return {
       title,

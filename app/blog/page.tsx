@@ -17,6 +17,9 @@ import { Metadata } from "next";
 
 const Footer = dynamic(() => import("@/components/Static/Footer"));
 
+// Get base URL from environment or fallback to production URL
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quailbi.com";
+
 // Add metadata for the blog index page
 export const metadata: Metadata = {
   title: "Engineering Blog | Quail",
@@ -26,11 +29,11 @@ export const metadata: Metadata = {
     title: "Engineering Blog | Quail",
     description:
       "Read the latest articles and insights from the Quail engineering team",
-    url: "https://quailbi.com/blog",
+    url: `${baseUrl}/blog`,
     type: "website",
     images: [
       {
-        url: "/quail_logo_white.png",
+        url: `${baseUrl}/quail_logo_white.png`,
         width: 1200,
         height: 630,
         alt: "Quail Engineering Blog",
@@ -42,7 +45,7 @@ export const metadata: Metadata = {
     title: "Engineering Blog | Quail",
     description:
       "Read the latest articles and insights from the Quail engineering team",
-    images: ["/quail_logo_white.png"],
+    images: [`${baseUrl}/quail_logo_white.png`],
   },
 };
 
