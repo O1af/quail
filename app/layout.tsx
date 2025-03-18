@@ -32,6 +32,31 @@ export const metadata: Metadata = {
   description:
     "The Simpler, Smarter AI Data Query & Analysis tool for everyone",
   keywords: keywords,
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: "https://quailbi.com",
+    siteName: "Quail",
+    title: "Quail - AI Data Query & Analysis Tool",
+    description:
+      "The Simpler, Smarter AI Data Query & Analysis tool for everyone",
+    images: [
+      {
+        url: "/quail_logo_white.png",
+        width: 1200,
+        height: 630,
+        alt: "Quail - AI Data Query & Analysis Tool",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Quail - AI Data Query & Analysis Tool",
+    description:
+      "The Simpler, Smarter AI Data Query & Analysis tool for everyone",
+    images: ["/quail_logo_white.png"],
+    creator: "@useQuail",
+  },
 };
 
 export default function RootLayout({

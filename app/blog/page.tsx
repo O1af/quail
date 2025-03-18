@@ -13,8 +13,38 @@ import {
 } from "@/components/ui/card";
 import { Header } from "@/components/Static/Landing/header";
 import dynamic from "next/dynamic";
+import { Metadata } from "next";
 
 const Footer = dynamic(() => import("@/components/Static/Footer"));
+
+// Add metadata for the blog index page
+export const metadata: Metadata = {
+  title: "Engineering Blog | Quail",
+  description:
+    "Read the latest articles and insights from the Quail engineering team",
+  openGraph: {
+    title: "Engineering Blog | Quail",
+    description:
+      "Read the latest articles and insights from the Quail engineering team",
+    url: "https://quailbi.com/blog",
+    type: "website",
+    images: [
+      {
+        url: "/quail_logo_white.png",
+        width: 1200,
+        height: 630,
+        alt: "Quail Engineering Blog",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Engineering Blog | Quail",
+    description:
+      "Read the latest articles and insights from the Quail engineering team",
+    images: ["/quail_logo_white.png"],
+  },
+};
 
 export default function BlogPage() {
   // Get all MDX files from the content directory

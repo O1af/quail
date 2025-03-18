@@ -9,6 +9,7 @@ import { Header } from "@/components/Static/Landing/header";
 import dynamic from "next/dynamic";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { vscDarkPlus } from "react-syntax-highlighter/dist/cjs/styles/prism";
+import { Metadata } from "next";
 
 const Footer = dynamic(() => import("@/components/Static/Footer"));
 
@@ -110,6 +111,58 @@ export async function generateStaticParams() {
   return files.map((file) => ({
     post: file.replace(".mdx", ""),
   }));
+}
+
+// Generate metadata for the blog post
+export async function generateMetadata({
+  params,
+}: {
+  params: { post: string };
+}): Promise<Metadata> {
+  const { post } = await params;
+  const postPath = path.join(process.cwd(), "content", `${post}.mdx`);
+
+  try {
+    if (!fs.existsSync(postPath)) {
+      return {};
+    }
+
+    const fileContent = fs.readFileSync(postPath, "utf8");
+    const { data } = matter(fileContent);
+
+    const title = `${data.title} | Quail Blog`;
+    const description = data.description || "Quail engineering blog post";
+    const url = `https://quailbi.com/blog/${post}`;
+    const imageUrl = data.image || "/quail_logo_white.png";
+
+    return {
+      title,
+      description,
+      openGraph: {
+        title,
+        description,
+        type: "article",
+        publishedTime: data.date,
+        url,
+        images: [
+          {
+            url: imageUrl,
+            width: 1200,
+            height: 630,
+            alt: data.title,
+          },
+        ],
+      },
+      twitter: {
+        card: "summary_large_image",
+        title,
+        description,
+        images: [imageUrl],
+      },
+    };
+  } catch (err) {
+    return {};
+  }
 }
 
 // Blog post page component
