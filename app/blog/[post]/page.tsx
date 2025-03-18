@@ -117,7 +117,7 @@ export async function generateStaticParams() {
 export async function generateMetadata({
   params,
 }: {
-  params: { post: string };
+  params: Promise<{ post: string }>;
 }): Promise<Metadata> {
   const { post } = await params;
   const postPath = path.join(process.cwd(), "content", `${post}.mdx`);
