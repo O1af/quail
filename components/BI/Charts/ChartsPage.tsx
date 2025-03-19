@@ -8,7 +8,6 @@ import { formatDistanceToNow } from "date-fns";
 import { createClient } from "@/utils/supabase/client";
 import Routes from "@/components/routes";
 import { ChartDocument } from "@/lib/types/stores/chart";
-import { ChartPreview } from "./ChartPreview";
 
 import {
   Card,
@@ -178,9 +177,6 @@ export default function ChartsPage() {
                     </Button>
                   </div>
                 </CardHeader>
-                <CardContent className="pb-2">
-                  <ChartPreview chart={chart} />
-                </CardContent>
                 <CardFooter className="pt-1">
                   <p className="text-xs text-muted-foreground">
                     Updated{" "}

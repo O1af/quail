@@ -1,11 +1,8 @@
 "use client";
 import { useMemo, useCallback, memo, useEffect } from "react";
 import { useTheme } from "next-themes";
-import JsxParser from "react-jsx-parser";
+import CustomJsxParser from "./JSXParser";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
-import { transformData, getUniqueValues } from "@/lib/utils/chartDataTransform";
-import { generateColors } from "@/lib/utils/colorGenerator";
-import { formatNumber, formatDate } from "@/lib/utils/chartHelpers";
 import {
   Chart as ChartJS,
   CategoryScale,
@@ -21,12 +18,11 @@ import {
   Tooltip,
   Legend,
   Filler,
-  SubTitle,
 } from "chart.js";
 import "chartjs-adapter-date-fns";
 
 // Import D3 color scales directly
-import * as d3 from "d3-scale-chromatic";
+import * as d3 from "d3";
 
 import {
   Line,
@@ -34,7 +30,6 @@ import {
   Pie,
   Doughnut,
   Scatter,
-  Bubble,
   Radar,
   PolarArea,
 } from "react-chartjs-2";
@@ -52,13 +47,9 @@ ChartJS.register(
   RadialLinearScale,
   Filler,
   Title,
-  SubTitle,
   Tooltip,
   Legend
 );
-
-// Set default locale for the date adapter
-ChartJS.defaults.locale = "en-US";
 
 // Configure theme-aware Chart.js defaults
 const configureChartDefaults = (isDarkMode: boolean) => {
@@ -121,7 +112,6 @@ const chartComponents = {
   Pie,
   Doughnut,
   Scatter,
-  Bubble,
   Radar,
   PolarArea,
 };
@@ -132,29 +122,6 @@ const ErrorDisplay = memo(({ message }: { message: string }) => (
     Failed to render chart: {message}
   </div>
 ));
-
-// Memoize the JSX Parser component for better performance
-const MemoizedJsxParser = memo(
-  ({ jsx, components, bindings, onError }: any) => (
-    <JsxParser
-      components={components}
-      bindings={bindings}
-      jsx={jsx}
-      renderInWrapper={false}
-      onError={onError}
-      showWarnings={true}
-    />
-  ),
-  (prevProps, nextProps) => {
-    // Re-render when jsx, data, or theme changes
-    return (
-      prevProps.jsx === nextProps.jsx &&
-      JSON.stringify(prevProps.bindings.data) ===
-        JSON.stringify(nextProps.bindings.data) &&
-      prevProps.bindings.isDarkMode === nextProps.bindings.isDarkMode
-    );
-  }
-);
 
 // Create memoized empty state component
 const EmptyState = memo(() => (
@@ -190,21 +157,16 @@ function DynamicChartRenderer({
   const bindings = useMemo(
     () => ({
       data,
-      transformData,
-      getUniqueValues,
-      generateColors,
-      formatNumber,
-      formatDate,
       d3,
+      isDarkMode: resolvedTheme === "dark",
     }),
-    [data]
+    [data, resolvedTheme]
   );
 
   try {
     return (
       <div className={className}>
-        <MemoizedJsxParser
-          key={`chart-${resolvedTheme}`} // Force re-render on theme change
+        <CustomJsxParser
           jsx={jsxString}
           components={chartComponents}
           bindings={bindings}

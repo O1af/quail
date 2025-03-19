@@ -1,43 +1,48 @@
-import { ColumnType } from "@/lib/types/DBQueryTypes";
+import { Message } from "ai";
+import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 
-export function createChartEditPrompt({
-  prompt,
-  currentJsx,
-  types,
-  rowCount,
+export function createChartPrompt({
+  data,
   query,
+  messages,
 }: {
-  prompt: string;
-  currentJsx: string;
-  types: ColumnType[];
-  rowCount: number;
+  data: PostgresResponse;
   query: string;
+  messages: Message[];
 }): string {
+  // Extract sample data (first 3 rows)
+  const sampleRows = data.rows.slice(0, 3);
+  const sampleData = JSON.stringify(sampleRows, null, 2);
+
   // Check if we have date columns in the result
-  const dateColumns = types
+  const dateColumns = data.types
     .filter((type) => type.jsType === "Date")
     .map((type) => type.colName);
 
   const hasDateColumns = dateColumns.length > 0;
 
+  // Extract most recent user message to better understand intent
+  const recentUserMessages = messages
+    .filter((msg) => msg.role === "user")
+    .slice(-2)
+    .map((msg) => msg.content);
+
   return `
-  # TASK: Modify the provided Chart.js visualization code based on user's request
+  # TASK: Generate a complete ChartComponent function that visualizes SQL query results
   
-  ## USER REQUEST
-  "${prompt}"
-  
-  ## CURRENT CHART IMPLEMENTATION
-  \`\`\`jsx
-  ${currentJsx}
-  \`\`\`
+  ## USER INTENT
+  Recent user request: "${recentUserMessages.join(" ")}"
   
   ## DATA OVERVIEW
   - Query: ${query}
-  - Rows: ${rowCount}
-  - Columns: ${types.map((t) => `${t.colName} (${t.jsType})`).join(", ")}
+  - Rows: ${data.rows.length}
+  - Columns: ${data.types.map((t) => `${t.colName} (${t.jsType})`).join(", ")}
+  - Sample Data (first ${sampleRows.length} rows): 
+  \`\`\`json
+  ${sampleData}
+  \`\`\`
   
   ## COMPONENT STRUCTURE
-  Maintain this structure - DO NOT CHANGE:
   \`\`\`jsx
   function ChartComponent(props) {
     // 1. Extract props
@@ -50,11 +55,24 @@ export function createChartEditPrompt({
     }
     
     // 3. Data analysis and preparation
-    // ... your modifications here ...
+    const chartData = {
+      labels: [...],
+      datasets: [...]
+    };
     
-    // 4. Return the appropriate chart component
+    // 4. Theme-aware options
+    const options = {
+      responsive: true,
+      maintainAspectRatio: false,
+      // Additional options
+    };
+    
+    // 5. Return the appropriate chart component
     return (
-      // ... your modifications here ...
+      <ChartType 
+        data={chartData}
+        options={options}
+      />
     );
   }
   \`\`\`
@@ -135,74 +153,67 @@ export function createChartEditPrompt({
       : ""
   }
   
-  ## COMMON EDIT OPERATIONS
+  ## CHART TYPE SELECTION GUIDE
+  Analyze the data structure first:
+  - Time-based trends → <Line />
+  - Categorical comparisons (< 10 categories) → <Bar />
+  - Categorical comparisons (≥ 10 categories) → Horizontal <Bar /> with indexAxis: 'y'
+  - Composition/percentage (≤ 7 segments) → <Pie /> or <Doughnut />
+  - Correlation between variables → <Scatter />
+  - Multiple metrics across categories → <Radar />
+  - Multiple series over time → <Line /> with multiple datasets
   
-  1. Changing chart type:
+  ## DATA PROCESSING PATTERNS
+  For common data patterns:
+  
+  1. Simple category comparison:
   \`\`\`jsx
-  // Change from Bar to Line
-  return (
-    <Line
-      data={chartData}
-      options={options}
-    />
-  );
+  const labels = data.rows.map(row => row.categoryColumn);
+  const values = data.rows.map(row => row.valueColumn);
+  
+  const chartData = {
+    labels,
+    datasets: [{
+      label: 'Value',
+      data: values,
+      backgroundColor: Array.from({ length: labels.length }, (_, i) => 
+        d3.interpolateBlues(0.2 + (i / labels.length) * 0.6)
+      )
+    }]
+  };
   \`\`\`
   
-  2. Adding data points/series:
+  2. Time series:
   \`\`\`jsx
   const chartData = {
-    // ...existing labels
-    datasets: [
-      // ...existing datasets
-      {
-        label: 'New Series',
-        data: data.rows.map(row => row.newColumn),
-        borderColor: d3.interpolateBlues(0.8),
-        backgroundColor: d3.interpolateBlues(0.2)
-      }
-    ]
+    labels: data.rows.map(row => new Date(row.dateColumn)),
+    datasets: [{
+      label: 'Value',
+      data: data.rows.map(row => row.valueColumn),
+      borderColor: isDarkMode ? 'rgba(29, 78, 216, 0.8)' : 'rgba(37, 99, 235, 1)',
+      backgroundColor: isDarkMode ? 'rgba(29, 78, 216, 0.2)' : 'rgba(37, 99, 235, 0.1)',
+      borderWidth: 2,
+      tension: 0.3
+    }]
   };
   \`\`\`
   
-  3. Changing colors:
+  3. Multiple series:
   \`\`\`jsx
-  // Sequential gradient:
-  const colors = Array.from({ length: labels.length }, (_, i) => 
-    d3.interpolateViridis(0.1 + (i / labels.length) * 0.8)
-  );
+  // Get unique categories
+  const categories = [...new Set(data.rows.map(row => row.categoryColumn))];
   
-  // Categorical:
-  const colors = Array.from({ length: labels.length }, (_, i) => 
-    d3.interpolateRainbow(i / labels.length)
-  );
-  \`\`\`
-  
-  4. Adjusting chart options:
-  \`\`\`jsx
-  const options = {
-    // ...existing options
-    plugins: {
-      legend: {
-        position: 'bottom',  // top, bottom, left, right
-        labels: { color: textColor }
-      },
-      title: {
-        display: true,
-        text: 'New Chart Title',
-        color: textColor
-      }
-    }
+  // Group data by series
+  const chartData = {
+    labels: [...], // Common labels
+    datasets: categories.map((category, index) => ({
+      label: category,
+      data: [...], // Values for this category
+      borderColor: d3.interpolateCool(0.1 + (index / categories.length) * 0.8),
+      backgroundColor: d3.interpolateCool(0.1 + (index / categories.length) * 0.8) + '40'
+    }))
   };
   \`\`\`
   
-  5. Sorting data:
-  \`\`\`jsx
-  // Sort data descending by value
-  const sortedData = [...data.rows].sort((a, b) => b.value - a.value);
-  const labels = sortedData.map(row => row.category);
-  const values = sortedData.map(row => row.value);
-  \`\`\`
-  
-  ## RESPONSE FORMAT
   RETURN ONLY THE COMPLETE ChartComponent FUNCTION - NO EXPLANATION, NO MARKDOWN.`;
 }

@@ -12,6 +12,7 @@
   "dependencies": {
     "@ai-sdk/azure": "^1.0.13",
     "@ai-sdk/react": "^1.1.21",
+    "@babel/standalone": "^7.26.10",
     "@editorjs/code": "^2.8.0",
     "@editorjs/editorjs": "^2.27.2",
     "@editorjs/header": "^2.7.0",
@@ -87,6 +88,7 @@
     "react-resizable-panels": "^2.1.7",
     "react-router-dom": "^7.1.1",
     "react-select": "^5.10.0",
+    "react-syntax-highlighter": "^15.5.0",
     "recharts": "^2.15.0",
     "rehype-highlight": "^7.0.2",
     "rehype-slug": "^6.0.0",
@@ -99,12 +101,13 @@
     "usehooks-ts": "^3.1.0",
     "xlsx": "^0.18.5",
     "zod": "^3.24.1",
-    "zustand": "^5.0.2",
-    "react-syntax-highlighter": "^15.5.0"
+    "zustand": "^5.0.2"
   },
   "devDependencies": {
     "@eslint/eslintrc": "^3",
     "@svgr/webpack": "^8.1.0",
+    "@types/babel__core": "^7.20.5",
+    "@types/babel__standalone": "^7.1.9",
     "@types/d3": "^7.4.3",
     "@types/node": "^20",
     "@types/numeral": "^2.0.5",
