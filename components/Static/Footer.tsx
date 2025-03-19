@@ -26,6 +26,7 @@ const footerData = {
       links: [
         { name: "Terms of Service", href: "/terms" },
         { name: "Privacy Policy", href: "/privacy" },
+        { name: "Blog", href: "/blog" },
       ],
     },
     {

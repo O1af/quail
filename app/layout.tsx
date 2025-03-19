@@ -27,11 +27,39 @@ const keywords = [
   "Business Intelligence",
 ];
 
+// Get base URL from environment or fallback to production URL
+const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quailbi.com";
+
 export const metadata: Metadata = {
   title: "Quail",
   description:
     "The Simpler, Smarter AI Data Query & Analysis tool for everyone",
   keywords: keywords,
+  openGraph: {
+    type: "website",
+    locale: "en_US",
+    url: baseUrl,
+    siteName: "Quail",
+    title: "Quail - AI Data Query & Analysis Tool",
+    description:
+      "The Simpler, Smarter AI Data Query & Analysis tool for everyone",
+    images: [
+      {
+        url: `${baseUrl}/quail_logo_white.png`,
+        width: 1200,
+        height: 630,
+        alt: "Quail - AI Data Query & Analysis Tool",
+      },
+    ],
+  },
+  twitter: {
+    card: "summary",
+    title: "Quail - AI Data Query & Analysis Tool",
+    description:
+      "The Simpler, Smarter AI Data Query & Analysis tool for everyone",
+    images: [`${baseUrl}/quail_logo_white.png`],
+    creator: "@useQuail",
+  },
 };
 
 export default function RootLayout({
@@ -75,13 +103,13 @@ export default function RootLayout({
           <AuthProvider>{children}</AuthProvider>
         </ThemeProvider>
         <Toaster />
-        {
+        {process.env.NODE_ENV === "production" && (
           <Script
             defer
-            src="https://umami-sage-iota.vercel.app/script.js"
+            src="https://olaf-metrics.vercel.app/script.js"
             data-website-id="242c6f31-19a3-470d-a9fc-bbe0334217bf"
-          ></Script>
-        }
+          />
+        )}
       </body>
     </html>
   );
