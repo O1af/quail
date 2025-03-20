@@ -10,13 +10,20 @@ import { saveChat, deleteChat } from "@/components/stores/chat_store";
 import { generateTitleFromUserMessage } from "./utils/title";
 import { DataVisAgentTool } from "./DataVisAgent";
 import { tryCatch } from "@/lib/trycatch";
-import { createAgentPrompt } from "./prompts/mainAgent";
+import { createAgentPrompt, createSystemPrompt } from "./prompts/mainAgent";
 import { updateStatus } from "./utils/workflow";
 import { optimizeMessages } from "./utils/format";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
   apiKey: process.env.NEXT_PUBLIC_AZURE_API_KEY, // Azure API key
+});
+
+const azure_reasoning = createAzure({
+  resourceName: "olafp-m835s8rx-eastus2",
+  apiKey:
+    "DiA69uxybU7GWfy81JZFfZuBLhGGhLbBllqy9L3zO3r4cbHKtRYuJQQJ99BCACHYHv6XJ3w3AAAAACOGXwlH",
+  apiVersion: "2025-02-01-preview",
 });
 
 export async function DELETE(req: Request) {
@@ -76,6 +83,8 @@ export async function POST(req: Request) {
     id,
   } = await req.json();
 
+  //verify user tier
+
   // Verify database connection information is present
   if (!connectionString || !dbType) {
     return new Response(
@@ -102,27 +111,25 @@ export async function POST(req: Request) {
           : { data: undefined, error: null };
 
       const stream = streamText({
-        model: azure("gpt-4o"),
-        // Use agent prompt instead of system message for more contextual guidance
+        model: azure_reasoning("o3-mini"),
         prompt: createAgentPrompt({
           messages: optimizeMessages(messages),
           dbType,
           databaseStructure,
         }),
-        // System message now provides identity and general behavior
-        system:
-          "You are an expert data analyst AI assistant. Answer questions concisely and accurately. For data requests, use the DataVisAgent tool.",
+        system: createSystemPrompt(),
         experimental_transform: smoothStream({ chunking: "word" }),
-        maxTokens: 1000,
+        onError(error) {
+          console.log("Error in request:", error);
+        },
         tools: {
           DataVisAgent: DataVisAgentTool({
-            userTier,
             supabase: await createClient(),
             messages,
             dbType,
             connectionString,
             dbSchema: databaseStructure,
-            provider: azure,
+            provider: azure_reasoning,
             stream: dataStream,
           }),
         },

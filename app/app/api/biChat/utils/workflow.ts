@@ -23,7 +23,6 @@ export async function executeQueryWithErrorHandling({
   stream,
   dbSchema,
   provider,
-  modelName,
   createQueryValidationPrompt,
 }: {
   query: string;
@@ -33,12 +32,10 @@ export async function executeQueryWithErrorHandling({
   stream: DataStreamWriter;
   dbSchema?: DatabaseStructure;
   provider?: any;
-  modelName?: string;
   createQueryValidationPrompt?: Function;
 }) {
   let currentQuery = query;
   let attempts = 0;
-  let validationPromptUsed = null;
 
   while (attempts <= maxRetries) {
     await updateStatus(
@@ -54,13 +51,12 @@ export async function executeQueryWithErrorHandling({
     );
 
     if (!error && data?.rows?.length > 0) {
-      return { data, query: currentQuery, success: true, validationPromptUsed };
+      return { data, query: currentQuery, success: true };
     }
 
     if (
       attempts < maxRetries &&
       provider &&
-      modelName &&
       createQueryValidationPrompt &&
       dbSchema
     ) {
@@ -68,28 +64,37 @@ export async function executeQueryWithErrorHandling({
         ? `Error executing query: ${error.message}`
         : "Query executed but returned no results.";
 
-      // Generate improved query based on error
-
-      await updateStatus(stream, "Query failed. Attempting to fix issues...", {
+      await updateStatus(stream, "Query failed. Attempting to fix...", {
         error: error?.message || "No results returned",
       });
 
+      // Always use o3-mini for query validation regardless of user tier
       const { data: improvedQueryData, error: reformError } = await tryCatch(
         generateText({
-          model: provider(modelName),
+          model: provider("o3-mini"), // Explicitly use o3-mini
           prompt: createQueryValidationPrompt({
             originalQuery: currentQuery,
             errorMessage,
             dbType,
             databaseStructure: dbSchema,
           }),
-          system:
-            "You are a database expert who fixes SQL queries that contain errors.",
+          system: "Fix the SQL query to address the error or no-results issue.",
         })
       );
 
       if (!reformError && improvedQueryData) {
-        currentQuery = improvedQueryData.text;
+        currentQuery = improvedQueryData.text.trim();
+
+        // Log the fixed query for debugging
+        console.log("Fixed query:", currentQuery);
+
+        await updateStatus(stream, "Attempting with fixed query...", {
+          fixedQuery: currentQuery,
+        });
+      } else {
+        await updateStatus(stream, "Failed to fix query", {
+          error: reformError?.message,
+        });
       }
     }
 
@@ -100,64 +105,5 @@ export async function executeQueryWithErrorHandling({
     data: null,
     query: currentQuery,
     success: false,
-    validationPromptUsed,
   };
-}
-
-/**
- * Perform quality checks on generated SQL query
- */
-export function performQueryQualityChecks(
-  query: string,
-  dbSchema: DatabaseStructure
-): { passes: boolean; issues: string[] } {
-  const issues: string[] = [];
-
-  // Basic syntax checks
-  if (!query.toLowerCase().includes("select")) {
-    issues.push("Query missing SELECT statement");
-  }
-
-  if (!query.toLowerCase().includes("from")) {
-    issues.push("Query missing FROM clause");
-  }
-
-  if (!query.toLowerCase().includes("limit")) {
-    issues.push("Query missing LIMIT clause");
-  }
-
-  // Check for table references - simplified version
-  const tableList = getAllTables(dbSchema);
-  let foundAnyTable = false;
-
-  for (const table of tableList) {
-    if (query.toLowerCase().includes(table.toLowerCase())) {
-      foundAnyTable = true;
-      break;
-    }
-  }
-
-  if (!foundAnyTable) {
-    issues.push("Query doesn't reference any known tables");
-  }
-
-  return {
-    passes: issues.length === 0,
-    issues,
-  };
-}
-
-/**
- * Get all table names from database schema
- */
-function getAllTables(dbSchema: DatabaseStructure): string[] {
-  const tables: string[] = [];
-
-  for (const schema of dbSchema.schemas) {
-    for (const table of schema.tables) {
-      tables.push(table.name);
-    }
-  }
-
-  return tables;
 }

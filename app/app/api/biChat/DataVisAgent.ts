@@ -1,9 +1,6 @@
 import { generateText, tool, Message, Provider, DataStreamWriter } from "ai";
 import { z } from "zod";
-import {
-  createSqlPrompt,
-  createQueryValidationPrompt,
-} from "./prompts/createSqlPrompt";
+import { createQueryValidationPrompt } from "./prompts/createSqlPrompt";
 import { createChartPrompt } from "./prompts/createChartPrompt";
 import { getModelName } from "@/utils/metrics/AI";
 import { DatabaseStructure } from "@/components/stores/table_store";
@@ -12,7 +9,6 @@ import { executeQueryWithErrorHandling, updateStatus } from "./utils/workflow";
 import { ObjectId } from "mongodb";
 
 interface DataVisAgentParams {
-  userTier: string;
   supabase: any;
   messages: Message[];
   dbType: string;
@@ -22,53 +18,34 @@ interface DataVisAgentParams {
   stream: DataStreamWriter;
 }
 
+//object that contains the parameters for the DataVisAgent in zod
+export const agent_tool_params = z.object({
+  user_intent: z
+    .string()
+    .describe(
+      "A detailed description of what the user is asking for, with specific metrics, dimensions, and filters identified."
+    ),
+  sql_query: z
+    .string()
+    .describe(
+      "A complete, executable SQL query you've generated that addresses the user's request. Make sure it uses only tables and columns that exist in the provided schema, with proper syntax for the database type."
+    ),
+});
+
 export const DataVisAgentTool = (params: DataVisAgentParams) =>
   tool({
-    description: "A data agent tool that can query and visualize data.",
-    parameters: z.object({}),
-    execute: async () => {
-      const {
-        userTier,
-        messages,
-        dbType,
-        connectionString,
-        dbSchema,
-        provider,
-        stream,
-      } = params;
+    description:
+      "A data agent tool that executes SQL queries and creates visualizations from query results.",
+    parameters: agent_tool_params,
+    execute: async ({ user_intent, sql_query }) => {
+      const { messages, dbType, connectionString, dbSchema, provider, stream } =
+        params;
+      console.log("tool params", user_intent, sql_query);
 
-      const modelName = getModelName(userTier);
-
-      // Step 1: Generate SQL query using the full conversation context
-      const sqlPrompt = createSqlPrompt({
-        messages,
-        dbType,
-        databaseStructure: dbSchema,
-      });
-
-      await updateStatus(stream, "Crafting SQL query...", {
+      // Execute the provided SQL query
+      await updateStatus(stream, "Executing your SQL query...", {
         step: 1,
-        prompt: sqlPrompt,
       });
-
-      const { data: queryData, error: queryError } = await tryCatch(
-        generateText({
-          model: provider(modelName),
-          prompt: sqlPrompt,
-          system:
-            "You are a data analysis expert. Your task is to generate SQL queries that produce visualization-friendly data.",
-        })
-      );
-
-      if (queryError) {
-        await updateStatus(stream, "Failed to generate SQL query", {
-          error: queryError?.message || "Unknown error",
-        });
-
-        return {
-          error: "Failed to generate SQL query",
-        };
-      }
 
       // Execute query with error handling and potential reformulation
       const {
@@ -76,27 +53,17 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         query: finalQuery,
         success,
       } = await executeQueryWithErrorHandling({
-        query: queryData.text,
+        query: sql_query,
         connectionString,
         dbType,
         maxRetries: 1,
         stream,
         dbSchema,
         provider,
-        modelName,
         createQueryValidationPrompt,
       });
 
       if (!success || !resultData) {
-        await updateStatus(
-          stream,
-          "No results returned from query. Please refine your question.",
-          {
-            originalQueryLength: queryData.text.length,
-            finalQueryLength: finalQuery?.length,
-          }
-        );
-
         return {
           error: "No data found",
           query: finalQuery,
@@ -108,6 +75,7 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         data: resultData,
         query: finalQuery,
         messages,
+        userIntent: user_intent,
       });
 
       await updateStatus(stream, "Creating visualization...", {
@@ -116,7 +84,7 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
 
       const { data: chartJsxData, error: vizError } = await tryCatch(
         generateText({
-          model: provider(modelName),
+          model: provider("o3-mini"),
           prompt: chartPrompt,
           system:
             "You are a data visualization expert. Generate Chart.js JSX code based on data analysis requirements.",
@@ -124,14 +92,6 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
       );
 
       if (vizError || !chartJsxData) {
-        await updateStatus(
-          stream,
-          "Could not generate visualization, but query executed successfully.",
-          {
-            error: vizError?.message || "Unknown error",
-          }
-        );
-
         return {
           error: "Visualization failed",
           data: resultData,
@@ -149,13 +109,6 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         chartJsx: chartJsxData.text,
         chartId: chartId,
       };
-
-      // Return final results
-      await updateStatus(
-        stream,
-        "Here's your data visualization based on the query results.",
-        result
-      );
 
       return result;
     },
