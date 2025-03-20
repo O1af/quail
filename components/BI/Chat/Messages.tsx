@@ -2,58 +2,23 @@
 
 import { JSONValue, type Message } from "ai";
 import { AnimatePresence } from "framer-motion";
-import { memo, useEffect, useState } from "react";
-import { useTheme } from "next-themes";
+import { memo, useEffect, useMemo, useState } from "react";
 import { useScrollToBottom } from "@/components/Dev/ChatBot/use-scroll-to-bottom";
 import { Message as MessageComponent } from "./Message";
-import { Avatar } from "@/components/ui/avatar";
-import { AvatarImage } from "@radix-ui/react-avatar";
-import { motion } from "framer-motion";
 import { listCharts } from "@/components/stores/chart_store";
 import { createClient } from "@/utils/supabase/client";
+import { StatusMessage } from "./StatusMessage";
 
 interface MessagesProps {
   messages: Message[];
-  isLoading?: boolean;
+  status?: "submitted" | "streaming" | "ready" | "error";
   data?: JSONValue[] | undefined;
 }
-
-// Memoize the status message to prevent re-render when unchanged
-const StatusMessage = memo(
-  ({ status }: { status: any }) => {
-    const { theme } = useTheme();
-    const avatarSrc =
-      theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
-
-    return (
-      <motion.div
-        className="w-full max-w-3xl mx-auto"
-        initial={{ y: 5, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
-        transition={{ duration: 0.3 }}
-      >
-        <div className="flex gap-4 items-center">
-          <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-            <Avatar className="w-6 h-6">
-              <AvatarImage src={avatarSrc} alt="AI" />
-            </Avatar>
-          </div>
-          <div className="flex items-center gap-2 text-muted-foreground">
-            <div className="h-1 w-1 rounded-full bg-current animate-pulse" />
-            {String(status.status)}
-          </div>
-        </div>
-      </motion.div>
-    );
-  },
-  (prevProps, nextProps) =>
-    JSON.stringify(prevProps.status) === JSON.stringify(nextProps.status)
-);
 
 // Memoize individual message items to prevent each from re-rendering
 const MemoizedMessageComponent = memo(MessageComponent);
 
-function PureMessages({ messages, isLoading, data }: MessagesProps) {
+function PureMessages({ messages, status, data }: MessagesProps) {
   const [messagesContainerRef, messagesEndRef] =
     useScrollToBottom<HTMLDivElement>();
   const [savedCharts, setSavedCharts] = useState<
@@ -79,8 +44,36 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
     fetchCharts();
   }, []);
 
-  const currentStatus = data?.[data.length - 1];
-  const showStatus = isLoading && currentStatus;
+  const currentStepData = data?.[data.length - 1];
+  const currentStep = typeof currentStepData === "number" ? currentStepData : 0;
+  // Show status when streaming or submitted and there's step data
+  const showStatus =
+    (status === "streaming" || status === "submitted") &&
+    currentStepData !== undefined;
+
+  // Filter out the last message if it's an empty assistant message while status is showing
+  const displayMessages = useMemo(() => {
+    if (!showStatus) return messages;
+
+    // If we're showing a status and the last message is from the assistant
+    const lastMessage = messages[messages.length - 1];
+    if (lastMessage && lastMessage.role === "assistant") {
+      // Check if it's an empty message (no parts or empty text parts)
+      const isEmpty =
+        !lastMessage.parts?.length ||
+        lastMessage.parts.every(
+          (part) =>
+            part.type === "text" && (!part.text || part.text.trim() === "")
+        );
+
+      if (isEmpty) {
+        // Return all messages except the last one
+        return messages.slice(0, -1);
+      }
+    }
+
+    return messages;
+  }, [messages, showStatus]);
 
   return (
     <div
@@ -88,7 +81,7 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
       className="absolute inset-0 flex flex-col overflow-y-auto scroll-smooth"
     >
       <div className="flex flex-col gap-6 px-4 py-4">
-        {messages.map((message) => (
+        {displayMessages.map((message) => (
           <AnimatePresence key={message.id} mode="wait">
             <MemoizedMessageComponent
               message={message}
@@ -97,12 +90,7 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
           </AnimatePresence>
         ))}
 
-        {showStatus && (
-          <StatusMessage
-            status={currentStatus}
-            key={`status-${JSON.stringify(currentStatus)}`}
-          />
-        )}
+        {showStatus && <StatusMessage step={currentStep} />}
       </div>
 
       <div ref={messagesEndRef} className="h-px w-full" />
@@ -112,7 +100,7 @@ function PureMessages({ messages, isLoading, data }: MessagesProps) {
 
 // Optimize memo comparison to only check relevant changes
 export const Messages = memo(PureMessages, (prevProps, nextProps) => {
-  if (prevProps.isLoading !== nextProps.isLoading) return false;
+  if (prevProps.status !== nextProps.status) return false;
   if (prevProps.messages.length !== nextProps.messages.length) return false;
 
   // Only do deep comparison of data if needed

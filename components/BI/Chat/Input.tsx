@@ -22,7 +22,7 @@ import { Textarea } from "@/components/ui/textarea";
 interface InputProps {
   input: string;
   setInput: (value: string) => void;
-  isLoading: boolean;
+  status?: "submitted" | "streaming" | "ready" | "error";
   stop: () => void;
   messages: Array<Message>;
   setMessages: Dispatch<SetStateAction<Array<Message>>>;
@@ -79,7 +79,7 @@ const SubmitButton = memo(
 function PureInput({
   input,
   setInput,
-  isLoading,
+  status,
   stop,
   messages,
   setMessages,
@@ -93,6 +93,9 @@ function PureInput({
     "input",
     ""
   );
+
+  // Check if the chat is currently processing
+  const isProcessing = status === "submitted" || status === "streaming";
 
   const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
@@ -134,7 +137,7 @@ function PureInput({
     (event: React.KeyboardEvent) => {
       if (event.key === "Enter" && !event.shiftKey) {
         event.preventDefault();
-        if (isLoading) {
+        if (isProcessing) {
           toast({
             title: "Please wait for the model to finish its response!",
             duration: 1500,
@@ -145,7 +148,7 @@ function PureInput({
         }
       }
     },
-    [input, isLoading, submitForm, toast]
+    [input, isProcessing, submitForm, toast]
   );
 
   const handleOpenSettings = useCallback(() => {
@@ -190,7 +193,7 @@ function PureInput({
         />
         <div className="absolute bottom-2 right-2 space-y-1 flex flex-col items-end">
           <DatabaseButton onClick={handleOpenSettings} />
-          {isLoading ? (
+          {isProcessing ? (
             <StopButton onClick={handleStop} />
           ) : (
             <SubmitButton
@@ -207,7 +210,6 @@ function PureInput({
 export const Input = memo(PureInput, (prevProps, nextProps) => {
   // Only re-render when these crucial props change
   return (
-    prevProps.input === nextProps.input &&
-    prevProps.isLoading === nextProps.isLoading
+    prevProps.input === nextProps.input && prevProps.status === nextProps.status
   );
 });

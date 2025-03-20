@@ -64,7 +64,7 @@ export default function Chat({ className, chat_id }: ChatProps) {
     input,
     handleInputChange,
     handleSubmit: originalHandleSubmit,
-    isLoading: isChatLoading,
+    status,
     setMessages,
     setInput,
     stop,
@@ -78,6 +78,9 @@ export default function Chat({ className, chat_id }: ChatProps) {
     sendExtraMessageFields: true,
     experimental_prepareRequestBody: prepareRequestBody,
     onFinish: async (message) => {
+      // Reset the status data when finished
+      setData(undefined);
+
       if (localId) {
         const supabase = await createClient();
         const { data: user } = await supabase.auth.getUser();
@@ -167,11 +170,7 @@ export default function Chat({ className, chat_id }: ChatProps) {
           <Welcome />
         ) : (
           <div className="h-full relative">
-            <Messages
-              messages={messages}
-              isLoading={isChatLoading}
-              data={data}
-            />
+            <Messages messages={messages} status={status} data={data} />
           </div>
         )}
       </div>
@@ -179,7 +178,7 @@ export default function Chat({ className, chat_id }: ChatProps) {
       <Input
         input={input}
         setInput={setInput}
-        isLoading={isChatLoading}
+        status={status}
         stop={stop}
         messages={messages}
         setMessages={setMessages}

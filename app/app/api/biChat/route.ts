@@ -98,10 +98,8 @@ export async function POST(req: Request) {
 
   return createDataStreamResponse({
     async execute(dataStream) {
-      // First, update with understanding status
-      await updateStatus(dataStream, "Understanding your request...", {
-        messageCount: messages.length,
-      });
+      // First, update with understanding status (step 0)
+      await updateStatus(dataStream, 0);
 
       const { data: title, error: titleError } =
         messages.length === 1
@@ -152,8 +150,6 @@ export async function POST(req: Request) {
             });
             return;
           }
-
-          await updateStatus(dataStream, "Response completed successfully.");
         },
       });
 

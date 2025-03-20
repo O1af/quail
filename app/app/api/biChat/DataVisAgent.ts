@@ -42,10 +42,8 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         params;
       console.log("tool params", user_intent, sql_query);
 
-      // Execute the provided SQL query
-      await updateStatus(stream, "Executing your SQL query...", {
-        step: 1,
-      });
+      // Execute the provided SQL query - step 1
+      await updateStatus(stream, 1);
 
       // Execute query with error handling and potential reformulation
       const {
@@ -65,12 +63,15 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
 
       if (!success || !resultData) {
         return {
-          error: "No data found",
+          error: "No data found or query execution failed",
           query: finalQuery,
         };
       }
 
-      // Step 3: Generate visualization JSX
+      // Step 2: Analyze results
+      await updateStatus(stream, 2);
+
+      // Step 3: Create visualization
       const chartPrompt = createChartPrompt({
         data: resultData,
         query: finalQuery,
@@ -78,9 +79,7 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         userIntent: user_intent,
       });
 
-      await updateStatus(stream, "Creating visualization...", {
-        rowCount: resultData.rows.length,
-      });
+      await updateStatus(stream, 3);
 
       const { data: chartJsxData, error: vizError } = await tryCatch(
         generateText({
@@ -93,7 +92,7 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
 
       if (vizError || !chartJsxData) {
         return {
-          error: "Visualization failed",
+          error: "Visualization generation failed",
           data: resultData,
           query: finalQuery,
         };

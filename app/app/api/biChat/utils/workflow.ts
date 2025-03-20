@@ -4,15 +4,24 @@ import { tryCatch } from "@/lib/trycatch";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { generateText } from "ai";
 
+/**
+ * Updates the status in the data stream with just a step number
+ * Steps:
+ * 0: Thinking/Understanding
+ * 1: Executing SQL query
+ * 2: Analyzing results
+ * 3: Creating visualization
+ */
 export async function updateStatus(
   stream: DataStreamWriter,
-  status: string,
-  data?: any
-) {
-  await stream.writeData({
-    status,
-    data,
-  });
+  step: number
+): Promise<void> {
+  try {
+    console.log("Sending step update:", step);
+    await stream.writeData(step);
+  } catch (error) {
+    console.error("Failed to update status:", error);
+  }
 }
 
 export async function executeQueryWithErrorHandling({
@@ -38,13 +47,8 @@ export async function executeQueryWithErrorHandling({
   let attempts = 0;
 
   while (attempts <= maxRetries) {
-    await updateStatus(
-      stream,
-      attempts === 0
-        ? "Executing database query..."
-        : "Executing reformulated query...",
-      { query: currentQuery, attempt: attempts + 1 }
-    );
+    // Update status to step 1 (querying)
+    await updateStatus(stream, 1);
 
     const { data, error } = await tryCatch(
       executeQuery(currentQuery, connectionString, dbType)
@@ -64,14 +68,12 @@ export async function executeQueryWithErrorHandling({
         ? `Error executing query: ${error.message}`
         : "Query executed but returned no results.";
 
-      await updateStatus(stream, "Query failed. Attempting to fix...", {
-        error: error?.message || "No results returned",
-      });
+      // Still on step 1 for query retries
 
       // Always use o3-mini for query validation regardless of user tier
       const { data: improvedQueryData, error: reformError } = await tryCatch(
         generateText({
-          model: provider("o3-mini"), // Explicitly use o3-mini
+          model: provider("o3-mini"),
           prompt: createQueryValidationPrompt({
             originalQuery: currentQuery,
             errorMessage,
@@ -84,17 +86,7 @@ export async function executeQueryWithErrorHandling({
 
       if (!reformError && improvedQueryData) {
         currentQuery = improvedQueryData.text.trim();
-
-        // Log the fixed query for debugging
         console.log("Fixed query:", currentQuery);
-
-        await updateStatus(stream, "Attempting with fixed query...", {
-          fixedQuery: currentQuery,
-        });
-      } else {
-        await updateStatus(stream, "Failed to fix query", {
-          error: reformError?.message,
-        });
       }
     }
 
