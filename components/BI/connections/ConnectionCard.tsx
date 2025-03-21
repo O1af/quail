@@ -22,6 +22,7 @@ import {
   Loader2,
   ServerOff,
   Server,
+  TableProperties,
 } from "lucide-react";
 import {
   DropdownMenu,
@@ -42,6 +43,7 @@ import {
 } from "@/components/ui/alert-dialog";
 import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
 import Image from "next/image";
+import Link from "next/link";
 
 interface ConnectionCardProps {
   connection: DatabaseConfig;
@@ -157,12 +159,6 @@ export const ConnectionCard = memo(function ConnectionCard({
               <div className="min-w-0 overflow-hidden">
                 <div className="flex items-center gap-2 mb-0.5">
                   <h3 className="font-medium truncate">{connection.name}</h3>
-                  {isActive && (
-                    <Badge className="flex gap-1 flex-shrink-0 bg-primary/10 text-primary border-primary/20">
-                      <CheckCircle className="h-3 w-3" />
-                      <span>Active</span>
-                    </Badge>
-                  )}
                 </div>
                 <CardDescription className="truncate flex items-center gap-1">
                   <Server className="h-3 w-3 opacity-70" />
@@ -172,6 +168,18 @@ export const ConnectionCard = memo(function ConnectionCard({
             </div>
 
             <div className="flex items-center gap-2 shrink-0 ml-auto">
+              {isActive && (
+                <Link href="/connections/schema" passHref>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="h-8 gap-1 text-xs"
+                  >
+                    <TableProperties className="h-3.5 w-3.5" />
+                    Schema Explorer
+                  </Button>
+                </Link>
+              )}
               <Button
                 variant={isActive ? "secondary" : "default"}
                 size="sm"
