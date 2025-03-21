@@ -18,7 +18,6 @@ import { useLocalStorage, useWindowSize } from "usehooks-ts";
 import { sanitizeUIMessages } from "@/lib/utils";
 
 import { ArrowUpIcon, StopIcon } from "./icons";
-import { ChartNoAxesCombined } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 
@@ -104,8 +103,6 @@ function PureMultimodalInput({
 
     handleSubmit();
   }, [handleSubmit, setLocalStorageInput, width]);
-
-  // console.log(messages);
 
   return (
     <div className="relative w-full flex flex-col gap-4">

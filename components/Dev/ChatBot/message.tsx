@@ -9,18 +9,6 @@ import { memo, useState } from "react";
 import { Markdown } from "./markdown";
 import { MessageActions } from "./message-actions";
 import { cn } from "@/lib/utils";
-import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from "@/components/ui/dialog";
-import { BarChart3 } from "lucide-react";
-import { Results } from "./Results";
-import { Button } from "@/components/ui/button";
-
 import { useTheme } from "next-themes";
 
 const PurePreviewMessage = ({
@@ -64,69 +52,6 @@ const PurePreviewMessage = ({
               </div>
             </div>
           )}
-
-          {message.toolInvocations &&
-            message.toolInvocations.length > 0 &&
-            message.role === "assistant" && (
-              <>
-                {message.toolInvocations.map((toolInvocation) => {
-                  const { toolName, toolCallId, state } = toolInvocation;
-
-                  if (state === "result") {
-                    if (toolName === "chart") {
-                      const { result } = toolInvocation;
-                      return (
-                        <div key={toolCallId}>
-                          {result.error ? (
-                            <div className="text-destructive">
-                              {result.error}
-                            </div>
-                          ) : (
-                            <Dialog>
-                              <DialogTrigger asChild>
-                                <Button
-                                  variant="outline"
-                                  className="justify-start text-left font-normal"
-                                >
-                                  <BarChart3 className="h-4 w-4" />
-                                  <span>View Chart</span>
-                                </Button>
-                              </DialogTrigger>
-                              <DialogContent className="sm:max-w-[95dvw] max-h-[85dvh] overflow-y-auto">
-                                <DialogHeader>
-                                  <DialogTitle></DialogTitle>
-                                  <DialogDescription></DialogDescription>
-                                </DialogHeader>
-                                <Results
-                                  results={result.results}
-                                  chartConfig={result.config}
-                                  sql={result.sql}
-                                  columns={
-                                    result.results.length > 0
-                                      ? Object.keys(result.results[0])
-                                      : []
-                                  }
-                                />
-                              </DialogContent>
-                            </Dialog>
-                          )}
-                        </div>
-                      );
-                    }
-                  } else {
-                    return (
-                      <div key={toolCallId}>
-                        {toolName === "chart" && (
-                          <div className="flex items-center justify-center h-full">
-                            <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-6 w-6" />
-                          </div>
-                        )}
-                      </div>
-                    );
-                  }
-                })}
-              </>
-            )}
 
           <div className="flex flex-col gap-2 w-full">
             {message.content && mode === "view" && (

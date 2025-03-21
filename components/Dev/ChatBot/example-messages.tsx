@@ -3,10 +3,6 @@ import { Avatar, AvatarImage } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 const exampleMessages = [
   {
-    heading: "Generate an informative",
-    subheading: "chart for my data",
-  },
-  {
     heading: "Write a query to",
     subheading: "join two tables on a common column",
   },
@@ -17,6 +13,10 @@ const exampleMessages = [
   {
     heading: "How can I filter",
     subheading: "records based on a range of dates?",
+  },
+  {
+    heading: "Help me optimize",
+    subheading: "this complex query for better performance",
   },
 ];
 
