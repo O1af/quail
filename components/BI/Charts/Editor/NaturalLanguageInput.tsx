@@ -4,17 +4,24 @@ import { useCallback, useRef, useEffect, useState } from "react";
 import { useChat } from "@ai-sdk/react";
 import { Textarea } from "@/components/ui/textarea";
 import { Button } from "@/components/ui/button";
-import { ArrowRightCircle, Sparkles, StopCircle } from "lucide-react";
+import { ArrowRightCircle, GripHorizontal, StopCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useChartEditorStore from "@/components/stores/chartEditor_store";
+import Draggable from "react-draggable";
 
 export default function NaturalLanguageInput() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
+  const nodeRef = useRef<HTMLDivElement>(null);
+  const containerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
   // Add a debounce ref to prevent excessive re-renders
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
   // Manage prompt locally instead of in the store
   const [naturalLanguagePrompt, setNaturalLanguagePrompt] = useState("");
+  // State for position and dragging
+  const [isDragging, setIsDragging] = useState(false);
+  // State to track if the component has been dragged from its initial position
+  const [hasBeenDragged, setHasBeenDragged] = useState(false);
 
   const {
     currJsx,
@@ -138,80 +145,150 @@ export default function NaturalLanguageInput() {
     setIsStreaming(false);
   };
 
+  // Drag event handlers
+  const handleDragStart = () => {
+    setIsDragging(true);
+    setHasBeenDragged(true);
+  };
+
+  const handleDragStop = () => {
+    setTimeout(() => setIsDragging(false), 0);
+  };
+
+  // Calculate default position
+  const getDefaultPosition = () => {
+    // If it's been dragged, don't reposition it
+    if (hasBeenDragged) {
+      return undefined;
+    }
+
+    // Otherwise, return position with bottom-center coordinates
+    if (containerRef.current && nodeRef.current) {
+      const containerWidth = containerRef.current.clientWidth;
+      const nodeWidth = nodeRef.current.clientWidth;
+
+      // Calculate x position to center the component
+      // Since position is relative to the starting (top-left) point, we need to
+      // calculate the offset from left to achieve center positioning
+      return {
+        x: containerWidth / 2 - nodeWidth / 2,
+        y:
+          containerRef.current.clientHeight - nodeRef.current.clientHeight - 24, // 24px from bottom
+      };
+    }
+
+    return undefined;
+  };
+
+  // Update node width after initial render
+  useEffect(() => {
+    const updateNodePosition = () => {
+      if (!hasBeenDragged) {
+        // Force a re-render to update position
+        setHasBeenDragged(false);
+      }
+    };
+
+    // Initial update
+    updateNodePosition();
+
+    // Update on window resize
+    window.addEventListener("resize", updateNodePosition);
+    return () => window.removeEventListener("resize", updateNodePosition);
+  }, [hasBeenDragged]);
+
   return (
-    <div className="relative w-full max-w-full">
-      <div
-        className={cn(
-          "relative rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-lg backdrop-blur-sm",
-          "transition-opacity duration-200",
-          !isFocused && !isProcessing && !naturalLanguagePrompt
-            ? "opacity-70"
-            : "opacity-100"
-        )}
+    <div ref={containerRef} className="absolute inset-0 pointer-events-none">
+      <Draggable
+        nodeRef={nodeRef as React.RefObject<HTMLElement>}
+        handle=".drag-handle"
+        bounds="parent"
+        onStart={handleDragStart}
+        onStop={handleDragStop}
+        position={getDefaultPosition()}
       >
-        <div className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground">
-          <Sparkles className="h-4 w-4" />
-        </div>
-
-        <Textarea
-          ref={textareaRef}
-          placeholder="Describe chart changes in natural language..."
-          value={naturalLanguagePrompt}
-          onChange={(e) => setNaturalLanguagePrompt(e.target.value)}
-          onKeyDown={handleKeyDown}
-          onFocus={() => setIsFocused(true)}
-          onBlur={() => setIsFocused(false)}
-          disabled={isProcessing}
-          className="pl-10 pr-12 rounded-full border-0 shadow-none bg-transparent resize-none min-h-[40px] max-h-[100px] py-3 overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0"
-          rows={1}
-        />
-
-        <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 transition-all duration-200">
-          {isProcessing ? (
-            <Button
-              type="button"
-              size="sm"
-              onClick={handleStop}
-              variant="destructive"
-              className={cn(
-                "h-7 w-7 rounded-full p-0",
-                "bg-gradient-to-br from-rose-400 to-red-500",
-                "hover:from-rose-500 hover:to-red-600",
-                "text-white shadow-sm",
-                "transition-all duration-200 ease-in-out",
-                "dark:from-rose-500 dark:to-red-600",
-                "dark:hover:from-rose-600 dark:hover:to-red-700"
-              )}
+        <div
+          ref={nodeRef}
+          className="absolute z-50 w-1/2 max-w-md pointer-events-auto"
+          style={{ cursor: isDragging ? "grabbing" : "default" }}
+        >
+          <div
+            className={cn(
+              "relative rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-lg backdrop-blur-sm",
+              "transition-opacity duration-200",
+              !isFocused && !isProcessing && !naturalLanguagePrompt
+                ? "opacity-70"
+                : "opacity-100"
+            )}
+          >
+            <div
+              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground drag-handle"
+              style={{ cursor: "grab", zIndex: 10 }}
             >
-              <StopCircle className="h-4 w-4" />
-              <span className="sr-only">Stop generating</span>
-            </Button>
-          ) : (
-            <Button
-              type="button"
-              size="sm"
-              disabled={!canSubmit}
-              onClick={() => canSubmit && handleSubmit()}
-              className={cn(
-                "h-7 w-7 rounded-full p-0",
-                "bg-gradient-to-br from-blue-400 to-indigo-500",
-                "hover:from-blue-500 hover:to-indigo-600",
-                "text-white shadow-sm",
-                "transition-all duration-200 ease-in-out",
-                "dark:from-blue-500 dark:to-indigo-600",
-                "dark:hover:from-blue-600 dark:hover:to-indigo-700",
-                "disabled:from-gray-200 disabled:to-gray-300",
-                "disabled:dark:from-gray-700 disabled:dark:to-gray-800",
-                "disabled:text-gray-400 disabled:dark:text-gray-500",
-                "disabled:cursor-not-allowed disabled:opacity-70"
+              <GripHorizontal className="h-4 w-4" />
+            </div>
+
+            <Textarea
+              ref={textareaRef}
+              placeholder="Describe chart changes ..."
+              value={naturalLanguagePrompt}
+              onChange={(e) => setNaturalLanguagePrompt(e.target.value)}
+              onKeyDown={handleKeyDown}
+              onFocus={() => setIsFocused(true)}
+              onBlur={() => setIsFocused(false)}
+              disabled={isProcessing}
+              className="pl-10 pr-12 rounded-full border-0 shadow-none bg-transparent resize-none min-h-[40px] max-h-[100px] py-3 overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+              rows={1}
+            />
+
+            <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 transition-all duration-200">
+              {isProcessing ? (
+                <Button
+                  type="button"
+                  size="sm"
+                  onClick={handleStop}
+                  variant="destructive"
+                  className={cn(
+                    "h-7 w-7 rounded-full p-0",
+                    "bg-gradient-to-br from-rose-400 to-red-500",
+                    "hover:from-rose-500 hover:to-red-600",
+                    "text-white shadow-sm",
+                    "transition-all duration-200 ease-in-out",
+                    "dark:from-rose-500 dark:to-red-600",
+                    "dark:hover:from-rose-600 dark:hover:to-red-700"
+                  )}
+                >
+                  <StopCircle className="h-4 w-4" />
+                  <span className="sr-only">Stop generating</span>
+                </Button>
+              ) : (
+                <Button
+                  type="button"
+                  size="sm"
+                  disabled={!canSubmit}
+                  onClick={() => canSubmit && handleSubmit()}
+                  className={cn(
+                    "h-7 w-7 rounded-full p-0",
+                    "bg-gradient-to-br from-blue-400 to-indigo-500",
+                    "hover:from-blue-500 hover:to-indigo-600",
+                    "text-white shadow-sm",
+                    "transition-all duration-200 ease-in-out",
+                    "dark:from-blue-500 dark:to-indigo-600",
+                    "dark:hover:from-blue-600 dark:hover:to-indigo-700",
+                    "disabled:from-gray-200 disabled:to-gray-300",
+                    "disabled:dark:from-gray-700 disabled:dark:to-gray-800",
+                    "disabled:text-gray-400 disabled:dark:text-gray-500",
+                    "disabled:cursor-not-allowed disabled:opacity-70"
+                  )}
+                >
+                  <ArrowRightCircle className="h-4 w-4" />
+                  <span className="sr-only">Send message</span>
+                </Button>
               )}
-            >
-              <ArrowRightCircle className="h-4 w-4" />
-              <span className="sr-only">Send message</span>
-            </Button>
-          )}
+            </div>
+          </div>
         </div>
-      </div>
+      </Draggable>
     </div>
   );
 }

@@ -29,7 +29,7 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { PlusCircle, BarChart3, Trash2, AlertCircle } from "lucide-react";
+import { BarChart3, Trash2, AlertCircle } from "lucide-react";
 
 type AppState = {
   user: any;

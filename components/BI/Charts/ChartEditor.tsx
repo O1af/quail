@@ -217,11 +217,7 @@ export default function ChartEditor({
           </ResizablePanel>
         </ResizablePanelGroup>
       </div>
-      <div className="absolute bottom-6 left-1/2 transform -translate-x-1/2 w-2/3 max-w-3xl">
-        <div className="bg-background border rounded-full shadow-lg">
-          <NaturalLanguageInput />
-        </div>
-      </div>
+      <NaturalLanguageInput />
     </div>
   );
 }
