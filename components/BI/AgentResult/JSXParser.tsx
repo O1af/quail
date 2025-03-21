@@ -1,5 +1,5 @@
 "use client";
-import React, { useEffect, useState, memo } from "react";
+import React, { useEffect, useState, memo, ErrorInfo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 
 interface CustomJsxParserProps {
@@ -7,6 +7,36 @@ interface CustomJsxParserProps {
   components: Record<string, any>;
   bindings: Record<string, any>;
   onError?: (error: Error) => void;
+}
+
+// Create an error boundary component to catch runtime errors
+class ErrorBoundary extends React.Component<
+  { children: React.ReactNode; onError: (error: Error) => void },
+  { hasError: boolean }
+> {
+  constructor(props: {
+    children: React.ReactNode;
+    onError: (error: Error) => void;
+  }) {
+    super(props);
+    this.state = { hasError: false };
+  }
+
+  static getDerivedStateFromError() {
+    return { hasError: true };
+  }
+
+  componentDidCatch(error: Error, errorInfo: ErrorInfo) {
+    this.props.onError(error);
+  }
+
+  render() {
+    if (this.state.hasError) {
+      return null; // The parent will display the error
+    }
+
+    return this.props.children;
+  }
 }
 
 const CustomJsxParser: React.FC<CustomJsxParserProps> = ({
@@ -61,7 +91,14 @@ const CustomJsxParser: React.FC<CustomJsxParserProps> = ({
     compileJSX();
   }, [jsx, components, bindings, onError]);
 
-  return Component ? <Component /> : <Skeleton className="h-full" />;
+  // Use the error boundary to catch runtime errors
+  return Component ? (
+    <ErrorBoundary onError={(error) => onError?.(error)}>
+      <Component />
+    </ErrorBoundary>
+  ) : (
+    <Skeleton className="h-full" />
+  );
 };
 
 export default memo(CustomJsxParser);

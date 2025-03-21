@@ -115,7 +115,7 @@ export async function POST(req: Request) {
           dbType,
           databaseStructure,
         }),
-        system: createSystemPrompt(),
+        system: createSystemPrompt(dbType),
         experimental_transform: smoothStream({ chunking: "word" }),
         onError(error) {
           console.log("Error in request:", error);

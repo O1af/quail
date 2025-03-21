@@ -1,5 +1,5 @@
 "use client";
-import { useMemo, useCallback, memo, useEffect } from "react";
+import { useMemo, useCallback, memo, useEffect, useState } from "react";
 import { useTheme } from "next-themes";
 import CustomJsxParser from "./JSXParser";
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
@@ -103,6 +103,10 @@ interface DynamicChartRendererProps {
   jsxString: string;
   data: PostgresResponse;
   className?: string;
+  showSkeleton?: boolean;
+  disableAnimations?: boolean;
+  optimizeForDashboard?: boolean;
+  onError?: (error: string) => void;
 }
 
 // Create stable chart component object
@@ -116,12 +120,23 @@ const chartComponents = {
   PolarArea,
 };
 
-// Create memoized error renderer
-const ErrorDisplay = memo(({ message }: { message: string }) => (
-  <div className="p-4 text-red-500 border border-red-300 rounded">
-    Failed to render chart: {message}
-  </div>
-));
+// Enhanced error display with more details
+const ErrorDisplay = memo(
+  ({ message, jsxString }: { message: string; jsxString?: string }) => (
+    <div className="p-4 text-red-500 border border-red-300 rounded overflow-auto">
+      <h3 className="font-medium mb-2">Chart Rendering Error</h3>
+      <p className="mb-2">{message}</p>
+      {jsxString && (
+        <details className="text-xs mt-4">
+          <summary className="cursor-pointer mb-1">Show Chart Code</summary>
+          <pre className="p-2 bg-gray-100 dark:bg-gray-800 rounded overflow-auto max-h-[300px] text-xs">
+            {jsxString}
+          </pre>
+        </details>
+      )}
+    </div>
+  )
+);
 
 // Create memoized empty state component
 const EmptyState = memo(() => (
@@ -134,9 +149,13 @@ function DynamicChartRenderer({
   jsxString,
   data,
   className,
+  showSkeleton = true,
+  disableAnimations = false,
+  optimizeForDashboard = false,
+  onError,
 }: DynamicChartRendererProps) {
-  // Get the current theme
   const { resolvedTheme } = useTheme();
+  const [error, setError] = useState<Error | null>(null);
 
   // Update chart defaults when theme changes
   useEffect(() => {
@@ -148,10 +167,17 @@ function DynamicChartRenderer({
     return <EmptyState />;
   }
 
-  // Stable error handler
-  const handleError = useCallback((err: Error) => {
-    console.error("JSX Parser error:", err);
-  }, []);
+  // Enhanced error handler to capture and propagate errors
+  const handleError = useCallback(
+    (err: Error) => {
+      console.error("Chart error:", err);
+      setError(err);
+      if (onError) {
+        onError(err.message);
+      }
+    },
+    [onError]
+  );
 
   // Memoize bindings to prevent recreation on each render
   const bindings = useMemo(
@@ -162,6 +188,11 @@ function DynamicChartRenderer({
     }),
     [data, resolvedTheme]
   );
+
+  // If we have an error, display it
+  if (error) {
+    return <ErrorDisplay message={error.message} jsxString={jsxString} />;
+  }
 
   try {
     return (
@@ -176,7 +207,9 @@ function DynamicChartRenderer({
     );
   } catch (error) {
     console.error("Chart rendering error:", error);
-    return <ErrorDisplay message={(error as Error).message} />;
+    const err = error as Error;
+    if (onError) onError(err.message);
+    return <ErrorDisplay message={err.message} jsxString={jsxString} />;
   }
 }
 

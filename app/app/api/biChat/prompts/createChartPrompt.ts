@@ -80,19 +80,39 @@ function ChartComponent(props) {
 \`\`\`
 
 ## CHART SELECTION GUIDE
-- Time series → <Line />
-- Categories (< 10) → <Bar />
-- Categories (≥ 10) → Horizontal <Bar /> with indexAxis: 'y'
-- Parts of whole (≤ 7) → <Pie /> or <Doughnut />
-- Correlations → <Scatter />
-- Multiple metrics across categories → <Radar />
-- Multiple series → <Line /> or <Bar /> with multiple datasets
+- Time series → <Line /> with smooth curves and gradient fills
+- Categories (< 10) → <Bar /> with consistent color themes
+- Categories (≥ 10) → Horizontal <Bar /> with indexAxis: 'y' and sorted values
+- Parts of whole (≤ 7) → <Pie /> or <Doughnut /> with complementary colors
+- Correlations → <Scatter /> with size variations and semi-transparency
+- Multiple metrics across categories → <Radar /> with translucent fills
+- Multiple series → <Line /> or <Bar /> with carefully chosen contrasting colors
+
+## VISUAL AESTHETICS
+- Use a consistent color palette that works in both light and dark modes
+- Apply subtle gradients instead of flat colors when appropriate
+- Add slight transparency (0.7-0.9) to improve overlapping elements
+- Include thin borders (1px) on elements for definition
+- Apply proper spacing between elements (padding/margin)
+- Limit the number of elements to prevent visual clutter
+- Sort data when appropriate (ascending/descending) for better comprehension
 
 ## D3 COLOR USAGE
-Create color arrays from D3 scales:
+Create beautiful color arrays from D3 scales:
 \`\`\`jsx
+// For vibrant sequential colors
 const colors = Array.from({ length: count }, (_, i) => 
   d3.interpolateViridis(0.1 + (i / count) * 0.8)
+);
+
+// For pastel colors
+const pastelColors = Array.from({ length: count }, (_, i) => 
+  d3.interpolateCool(0.2 + (i / count) * 0.6)
+);
+
+// For complementary categorical colors
+const categoryColors = Array.from({ length: count }, (_, i) =>
+  d3.interpolateRainbow(i / count)
 );
 \`\`\`
 
@@ -104,14 +124,37 @@ For date columns (${dateColumns.join(", ")}):
 scales: {
   x: {
     type: 'time',
-    time: { unit: 'month' }, // or day, week, year
-    adapters: { date: { zone: 'UTC' } }
+    time: { 
+      unit: 'month', // Choose appropriate unit: day, week, month, quarter, year
+      displayFormats: {
+        day: 'MMM d',
+        week: 'MMM d',
+        month: 'MMM yyyy',
+        quarter: 'QQQ yyyy',
+        year: 'yyyy'
+      }
+    },
+    adapters: { date: { zone: 'UTC' } },
+    grid: {
+      display: true,
+      color: 'rgba(200, 200, 200, 0.15)', // Subtle grid lines
+      borderDash: [5, 5] // Elegant dashed lines
+    }
   }
 }
 \`\`\`
 `
     : ""
 }
+
+## CHART STYLING BEST PRACTICES
+- Add subtle gradients using createLinearGradient for Bar/Line charts
+- Use rounded corners (borderRadius: 6) for bars
+- Apply elegant animations with animation: { duration: 1000, easing: 'easeOutQuart' }
+- Include meaningful tooltips with custom formatting
+- Optimize whitespace with proper padding: { top: 20, right: 25, bottom: 30, left: 25 }
+- Use grid lines sparingly and with low opacity (0.1-0.2)
+- Apply soft shadows for emphasis: boxShadow: '0 4px 6px rgba(0,0,0,0.1)'
 
 ## LIMITATIONS
 - Write only the ChartComponent function

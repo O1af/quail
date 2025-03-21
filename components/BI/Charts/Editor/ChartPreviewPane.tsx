@@ -1,8 +1,9 @@
 import { PostgresResponse } from "@/lib/types/DBQueryTypes";
 import DynamicChartRenderer from "../../AgentResult/DynamicChartRenderer";
-import { BarChart3 } from "lucide-react";
-import { useEffect, useRef, memo, useMemo } from "react";
+import { AlertTriangle, BarChart3 } from "lucide-react";
+import { useEffect, useRef, memo, useMemo, useState, useCallback } from "react";
 import useChartEditorStore from "@/components/stores/chartEditor_store";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 
 interface ChartPreviewPaneProps {
   data: PostgresResponse | null;
@@ -15,10 +16,12 @@ const MemoizedChart = memo(
     jsxString,
     data,
     className,
+    onError,
   }: {
     jsxString: string;
     data: PostgresResponse;
     className: string;
+    onError?: (error: string) => void;
   }) => {
     // Create a stable key that only changes when jsxCode or data structure changes
     const chartKey = useMemo(() => {
@@ -36,6 +39,7 @@ const MemoizedChart = memo(
         data={data}
         className={className}
         key={chartKey}
+        onError={onError}
       />
     );
   },
@@ -78,6 +82,7 @@ export default function ChartPreviewPane({
 }: ChartPreviewPaneProps) {
   const containerRef = useRef<HTMLDivElement>(null);
   const { isStreaming, newJsx, showDiffView, currJsx } = useChartEditorStore();
+  const [renderError, setRenderError] = useState<string | null>(null);
 
   // Add resize observer to handle container size changes
   useEffect(() => {
@@ -92,6 +97,11 @@ export default function ChartPreviewPane({
     return () => resizeObserver.disconnect();
   }, []);
 
+  // Reset error when JSX changes
+  useEffect(() => {
+    setRenderError(null);
+  }, [currJsx, newJsx]);
+
   // Determine which JSX to display based on current state
   const displayJsx = useMemo(() => {
     // During streaming, show streaming content
@@ -100,10 +110,15 @@ export default function ChartPreviewPane({
     if (!isStreaming && showDiffView && newJsx) return newJsx;
     // Otherwise show current JSX
     return currJsx;
-  }, [currJsx, isStreaming, showDiffView]);
+  }, [currJsx, isStreaming, showDiffView, newJsx]);
 
   // Showing modified state when viewing the new JSX in diff view mode but not streaming
   const isShowingNewJsx = !isStreaming && showDiffView && newJsx !== null;
+
+  // Handle chart errors
+  const handleChartError = useCallback((errorMessage: string) => {
+    setRenderError(errorMessage);
+  }, []);
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
@@ -131,11 +146,25 @@ export default function ChartPreviewPane({
         className="flex-1 min-h-0 overflow-auto p-4 bg-muted/10 flex items-center justify-center"
       >
         <div className="w-full h-full max-w-full max-h-full">
-          {data ? (
+          {renderError ? (
+            <Alert variant="destructive" className="overflow-auto max-h-full">
+              <AlertTriangle className="h-4 w-4" />
+              <AlertTitle>Chart Rendering Error</AlertTitle>
+              <AlertDescription className="mt-2">
+                <p className="mb-2 text-sm">
+                  Fix the following error in your chart code:
+                </p>
+                <pre className="p-2 bg-destructive/10 rounded text-xs overflow-auto whitespace-pre-wrap">
+                  {renderError}
+                </pre>
+              </AlertDescription>
+            </Alert>
+          ) : data ? (
             <MemoizedChart
               jsxString={displayJsx}
               data={data}
               className={className || "w-full h-full"}
+              onError={handleChartError}
             />
           ) : (
             <NoDataFallback />
