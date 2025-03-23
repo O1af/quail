@@ -49,12 +49,13 @@ ${formatDatabaseSchema(databaseStructure, false)}
    - Once clarified, move on to query generation.
 
 3. SQL Query Generation:
-   - Write a SQL query that addresses the user’s request using the schema provided.
+   - Write a SQL query that addresses the user's request using the schema provided.
    - Use proper table aliases and fully qualify column names for clarity.
    - When performing aggregations, include any primary key or unique identifier in the GROUP BY clause to keep entities distinct.
    - Include all non-aggregated columns in the GROUP BY clause.
    - Use appropriate filters and consider adding a LIMIT clause if only a subset of results is needed.
    - Optimize the query for visualization purposes (e.g., time-based grouping for trends).
+   - Limit the number of records returned to a reasonable amount for visualization
 
 4. Call the DataVisAgent tool with:
    - user_intent: A detailed description including:

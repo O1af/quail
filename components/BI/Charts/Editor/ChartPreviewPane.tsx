@@ -84,6 +84,12 @@ export default function ChartPreviewPane({
   const { isStreaming, newJsx, showDiffView, currJsx } = useChartEditorStore();
   const [renderError, setRenderError] = useState<string | null>(null);
 
+  // Keep track of the last stable JSX code
+  const lastStableJsxRef = useRef<string>(currJsx);
+
+  // Keep track of the last displayed error to avoid flashing
+  const lastErrorRef = useRef<string | null>(null);
+
   // Add resize observer to handle container size changes
   useEffect(() => {
     if (!containerRef.current) return;
@@ -97,17 +103,41 @@ export default function ChartPreviewPane({
     return () => resizeObserver.disconnect();
   }, []);
 
-  // Reset error when JSX changes
+  // Update lastStableJsxRef when not streaming and code changes
   useEffect(() => {
-    setRenderError(null);
-  }, [currJsx, newJsx]);
+    if (!isStreaming) {
+      lastStableJsxRef.current = currJsx;
+    }
+  }, [currJsx, isStreaming]);
+
+  // Clear errors when streaming starts
+  useEffect(() => {
+    if (isStreaming) {
+      // Save the current error before clearing it
+      lastErrorRef.current = renderError;
+      setRenderError(null);
+    } else if (!isStreaming && lastErrorRef.current) {
+      // If we stopped streaming and had a previous error, restore it
+      // But only if we're not in diff view mode (which would show new code)
+      if (!showDiffView || !newJsx) {
+        setRenderError(lastErrorRef.current);
+      }
+      lastErrorRef.current = null;
+    }
+  }, [isStreaming, renderError, showDiffView, newJsx]);
 
   // Determine which JSX to display based on current state
   const displayJsx = useMemo(() => {
-    // During streaming, show streaming content
-    if (isStreaming && newJsx) return newJsx;
+    // During streaming, always use the stable version
+    if (isStreaming) {
+      return lastStableJsxRef.current;
+    }
+
     // After streaming, in diff view, show newJsx
-    if (!isStreaming && showDiffView && newJsx) return newJsx;
+    if (showDiffView && newJsx) {
+      return newJsx;
+    }
+
     // Otherwise show current JSX
     return currJsx;
   }, [currJsx, isStreaming, showDiffView, newJsx]);
@@ -115,10 +145,15 @@ export default function ChartPreviewPane({
   // Showing modified state when viewing the new JSX in diff view mode but not streaming
   const isShowingNewJsx = !isStreaming && showDiffView && newJsx !== null;
 
-  // Handle chart errors
-  const handleChartError = useCallback((errorMessage: string) => {
-    setRenderError(errorMessage);
-  }, []);
+  // Handle chart errors - only process when not streaming
+  const handleChartError = useCallback(
+    (errorMessage: string) => {
+      if (!isStreaming) {
+        setRenderError(errorMessage);
+      }
+    },
+    [isStreaming]
+  );
 
   return (
     <div className="h-full w-full flex flex-col overflow-hidden">
@@ -146,7 +181,7 @@ export default function ChartPreviewPane({
         className="flex-1 min-h-0 overflow-auto p-4 bg-muted/10 flex items-center justify-center"
       >
         <div className="w-full h-full max-w-full max-h-full">
-          {renderError ? (
+          {renderError && !isStreaming ? (
             <Alert variant="destructive" className="overflow-auto max-h-full">
               <AlertTriangle className="h-4 w-4" />
               <AlertTitle>Chart Rendering Error</AlertTitle>
