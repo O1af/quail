@@ -12,7 +12,6 @@
   "dependencies": {
     "@ai-sdk/azure": "^1.2.6",
     "@ai-sdk/react": "^1.1.21",
-    "@babel/standalone": "^7.26.10",
     "@editorjs/code": "^2.8.0",
     "@editorjs/editorjs": "^2.27.2",
     "@editorjs/header": "^2.7.0",
@@ -105,6 +104,7 @@
     "zustand": "^5.0.2"
   },
   "devDependencies": {
+    "@babel/standalone": "^7.27.0",
     "@eslint/eslintrc": "^3",
     "@svgr/webpack": "^8.1.0",
     "@types/babel__core": "^7.20.5",

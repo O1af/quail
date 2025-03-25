@@ -122,16 +122,16 @@ export const DashboardGrid = memo(
     };
 
     return (
-      <div className="flex flex-row h-full">
+      <div className="flex flex-row h-full mb-24 pb-32">
         {/* Main dashboard area with transition */}
         <div
-          className={`relative flex-grow transition-all duration-300 ease-in-out ${
+          className={`relative flex-grow transition-all duration-300 ease-in-out overflow-auto h-[calc(100vh-64px)] ${
             isSidebarOpen ? "pr-80" : ""
           }`}
           onClick={handleBackgroundClick}
         >
           <ResponsiveGridLayout
-            className="layout"
+            className="layout" // Added bottom padding to prevent content from being cut off
             breakpoints={{ lg: 1200, md: 996, sm: 768, xs: 480 }}
             cols={{ lg: 12, md: 12, sm: 12, xs: 12 }}
             rowHeight={30}
