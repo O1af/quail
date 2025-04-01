@@ -1,56 +1,29 @@
 "use client";
 
-import React, { useState, useEffect } from "react";
-import { createClient } from "@/utils/supabase/client";
-import { NotesEditor } from "./components/NotesEditor";
-import { NotesList } from "./components/NotesList";
-import { Loader2 } from "lucide-react";
-import { useRouter } from "next/navigation";
+import Editor from "@/app/app/(bi)/notes/components/advanced-editor";
+import { useState } from "react";
 
-export default function NotesPage() {
-  const [user, setUser] = useState<any>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [selectedNoteId, setSelectedNoteId] = useState<string | null>(null);
-  const supabase = createClient();
-  const router = useRouter();
+interface TailwindEditorProps {}
 
-  // Fetch user data
-  useEffect(() => {
-    const fetchUser = async () => {
-      const { data } = await supabase.auth.getUser();
+/**
+ * TailwindEditor component that wraps the advanced editor
+ * Manages content state and provides editor change handling
+ */
+const TailwindEditor: React.FC<TailwindEditorProps> = () => {
+  const [content, setContent] = useState<string>("");
 
-      if (!data.user) {
-        router.push("/login");
-        return;
-      }
-
-      setUser(data.user);
-      setIsLoading(false);
-    };
-
-    fetchUser();
-  }, [supabase, router]);
-
-  if (isLoading) {
-    return (
-      <div className="flex justify-center items-center min-h-screen">
-        <Loader2 className="h-8 w-8 animate-spin text-primary" />
-      </div>
-    );
-  }
+  const handleEditorChange = (value: string) => {
+    setContent(value);
+  };
 
   return (
-    <div className="flex h-[calc(100vh-4rem)]">
-      <div className="w-64 border-r overflow-auto">
-        <NotesList
-          userId={user.id}
-          onNoteSelect={setSelectedNoteId}
-          selectedNoteId={selectedNoteId}
-        />
-      </div>
-      <div className="flex-1 overflow-auto">
-        <NotesEditor userId={user.id} noteId={selectedNoteId} />
-      </div>
+    <div className="border rounded-md h-[600px]">
+      <Editor
+        onChange={handleEditorChange}
+        initialValue={content}
+        height="100%"
+      />
     </div>
   );
-}
+};
+export default TailwindEditor;
