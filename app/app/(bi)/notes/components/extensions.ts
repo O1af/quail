@@ -8,8 +8,12 @@ import {
   StarterKit,
   Placeholder,
   AIHighlight,
+  TiptapUnderline,
+  Color,
+  TextStyle,
 } from "novel";
-import { UploadImagesPlugin } from "novel/";
+import { UploadImagesPlugin } from "novel";
+import { HighlightExtension } from "novel";
 
 import { cx } from "class-variance-authority";
 
@@ -104,6 +108,14 @@ const starterKit = StarterKit.configure({
   gapcursor: false,
 });
 
+// Configure the new extensions
+const textStyle = TextStyle;
+const color = Color;
+const underline = TiptapUnderline;
+const highlightExtension = HighlightExtension.configure({
+  multicolor: true,
+});
+
 export const defaultExtensions = [
   starterKit,
   placeholder,
@@ -114,4 +126,8 @@ export const defaultExtensions = [
   taskItem,
   horizontalRule,
   aiHighlight,
+  textStyle,
+  color,
+  underline,
+  highlightExtension,
 ];

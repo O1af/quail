@@ -32,13 +32,40 @@ interface EditorProp {
   height?: string;
 }
 
-const Editor = ({ initialValue, onChange, height = "500px" }: EditorProp) => {
+const Editor = ({
+  initialValue,
+  onChange,
+  height = "h-[calc(100vh-4rem)]",
+}: EditorProp) => {
   const [openNode, setOpenNode] = useState(false);
   const [openColor, setOpenColor] = useState(false);
   const [openLink, setOpenLink] = useState(false);
   const [editorInstance, setEditorInstance] = useState<any>(null);
   const editorRef = useRef<HTMLDivElement>(null);
   const editorContainerRef = useRef<HTMLDivElement>(null);
+
+  // Add state to track when images are being uploaded
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+
+  // Custom image upload handler to track the upload state
+  const handleImageUpload = async (file: File): Promise<string> => {
+    try {
+      setIsUploadingImage(true);
+      const url = await uploadFn(file);
+      setTimeout(() => {
+        // Ensure content is saved after image is inserted
+        if (editorInstance) {
+          onChange(editorInstance.getHTML());
+        }
+        setIsUploadingImage(false);
+      }, 100);
+      return url;
+    } catch (error) {
+      setIsUploadingImage(false);
+      console.error("Error uploading image:", error);
+      throw error;
+    }
+  };
 
   // Handle direct clicks on the editor container
   useEffect(() => {
@@ -48,21 +75,26 @@ const Editor = ({ initialValue, onChange, height = "500px" }: EditorProp) => {
       const handleContainerClick = (e: MouseEvent) => {
         const target = e.target as HTMLElement;
 
-        // If clicking the container but not on actual editor content
+        // Only handle clicks directly on the container or its immediate children
+        // that aren't part of the actual editor content
         if (
           target === container ||
-          target.classList.contains("editor-container")
+          (target.parentElement === container &&
+            !target.closest(".ProseMirror-content")) ||
+          target.classList.contains("notion-like-editor")
         ) {
           e.preventDefault();
-          e.stopPropagation();
-          editorInstance.commands.focus("end");
+          // Focus at the end of the editor
+          setTimeout(() => {
+            editorInstance.commands.focus("end");
+          }, 0);
         }
       };
 
-      container.addEventListener("click", handleContainerClick);
+      container.addEventListener("click", handleContainerClick, true); // Use capture phase
 
       return () => {
-        container.removeEventListener("click", handleContainerClick);
+        container.removeEventListener("click", handleContainerClick, true);
       };
     }
   }, [editorInstance]);
@@ -77,47 +109,73 @@ const Editor = ({ initialValue, onChange, height = "500px" }: EditorProp) => {
     }
   }, [editorInstance]);
 
+  // Add a more direct click handler for the empty space
+  const handleEmptySpaceClick = (e: React.MouseEvent) => {
+    if (editorInstance && !editorInstance.isFocused) {
+      // Prevent default to ensure our handler runs
+      e.preventDefault();
+      e.stopPropagation();
+
+      // Force focus at the end
+      editorInstance.commands.focus("end");
+    }
+  };
+
   return (
     <EditorRoot>
       <div
-        className="editor-container relative h-full w-full cursor-text"
-        style={{ height }}
+        className="editor-container relative cursor-text"
+        style={{ height, minHeight: "200px" }}
         ref={editorContainerRef}
+        onClick={handleEmptySpaceClick}
       >
+        {/* Add a full-height, full-width clickable backdrop */}
+        <div
+          className="absolute inset-0 w-full h-full cursor-text"
+          onClick={handleEmptySpaceClick}
+          aria-hidden="true"
+        />
+
         <EditorContent
           ref={editorRef}
-          className="h-full notion-like-editor"
+          className="h-full notion-like-editor relative z-10"
           {...(initialValue && { initialContent: initialValue })}
           extensions={extensions}
           editorProps={{
             handleDOMEvents: {
               keydown: (_view, event) => handleCommandNavigation(event),
               mousedown: (view, event) => {
-                // Check if we're clicking in empty space
+                // Special handling for clicks in the editor but not on content
                 const target = event.target as HTMLElement;
-                const editorElement = view.dom as HTMLElement;
-
-                // If clicking empty space in the editor (not on content)
-                if (target === editorElement) {
-                  // Place cursor at end
-                  editorInstance?.commands.focus("end");
-                  return true; // Prevent default handling
+                if (target.classList.contains("ProseMirror")) {
+                  setTimeout(() => {
+                    editorInstance?.commands.focus("end");
+                  }, 0);
+                  return true;
                 }
-
-                return false; // Let other clicks be handled normally
+                return false;
               },
             },
+            // Improve image paste handling with more explicit options
             handlePaste: (view, event) =>
               handleImagePaste(view, event, uploadFn),
+            // Improve image drop handling with more explicit options
             handleDrop: (view, event, _slice, moved) =>
               handleImageDrop(view, event, moved, uploadFn),
+
             attributes: {
               class: `prose prose-lg dark:prose-invert prose-headings:font-title font-default focus:outline-none max-w-full h-full`,
             },
             autofocus: "end",
           }}
           onUpdate={({ editor }) => {
-            onChange(editor.getHTML());
+            // When editor updates, save the content
+            if (!isUploadingImage) {
+              const html = editor.getHTML();
+              onChange(html);
+            }
+
+            // Store editor instance for focus management
             if (!editorInstance) {
               setEditorInstance(editor);
             }
@@ -131,6 +189,8 @@ const Editor = ({ initialValue, onChange, height = "500px" }: EditorProp) => {
               display: flex;
               flex-direction: column;
               cursor: text;
+              width: 100%;
+              height: 100%;
             }
 
             .notion-like-editor {
@@ -140,12 +200,18 @@ const Editor = ({ initialValue, onChange, height = "500px" }: EditorProp) => {
               width: 100%;
               overflow-y: auto;
               padding: 16px;
+              display: flex;
+              flex-direction: column;
+              position: relative;
+              z-index: 10;
             }
 
+            /* Make the ProseMirror editor fill the entire container */
             .notion-like-editor .ProseMirror {
+              flex-grow: 1;
               min-height: 100%;
               outline: none !important;
-              caret-color: black;
+              caret-color: currentColor;
               position: relative;
               word-wrap: break-word;
               white-space: pre-wrap;
@@ -155,14 +221,18 @@ const Editor = ({ initialValue, onChange, height = "500px" }: EditorProp) => {
               font-feature-settings: "liga" 0;
               padding: 0;
               cursor: text;
+              display: flex;
+              flex-direction: column;
             }
 
-            /* Add transparent line at bottom to make clicks work */
+            /* Create a full-page placeholder that's always at the end */
             .notion-like-editor .ProseMirror::after {
-              content: " ";
-              display: block;
-              height: 300px;
-              pointer-events: none;
+              content: "";
+              flex-grow: 1;
+              pointer-events: all;
+              min-height: 500px; /* Make this much larger to ensure it fills the space */
+              width: 100%;
+              cursor: text;
             }
 
             /* Ensure text colors are properly rendered */
@@ -181,7 +251,31 @@ const Editor = ({ initialValue, onChange, height = "500px" }: EditorProp) => {
               margin-bottom: 0.5rem;
               margin-top: 0.5rem;
             }
+
+            /* Add better styling for images */
+            .notion-like-editor img {
+              max-width: 100%;
+              height: auto;
+              border-radius: 4px;
+              margin: 1rem 0;
+            }
+
+            /* Ensure image captions are styled properly */
+            .notion-like-editor .image-caption {
+              text-align: center;
+              font-size: 0.875rem;
+              color: var(--tw-prose-captions);
+              margin-top: -0.5rem;
+              margin-bottom: 1rem;
+            }
           `}</style>
+
+          {/* Add an invisible element that captures clicks in empty space */}
+          <div
+            className="absolute inset-0 z-[-1]"
+            onClick={() => editorInstance?.commands.focus("end")}
+            aria-hidden="true"
+          />
 
           {/* Command menu */}
           <EditorCommand className="z-50 h-auto max-h-[330px] overflow-y-auto rounded-md border border-muted bg-background px-1 py-2 shadow-md transition-all">

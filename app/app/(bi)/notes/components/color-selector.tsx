@@ -1,12 +1,14 @@
 import { Check, ChevronDown } from "lucide-react";
 import { EditorBubbleItem, useEditor } from "novel";
+import { useCallback, useRef, useState } from "react";
 
-import { Button } from "@/components/ui/button";
 import {
+  PopoverTrigger,
   Popover,
   PopoverContent,
-  PopoverTrigger,
 } from "@/components/ui/popover";
+import { Button } from "@/components/ui/button";
+
 export interface BubbleColorMenuItem {
   name: string;
   color: string;
@@ -97,35 +99,77 @@ interface ColorSelectorProps {
 
 export const ColorSelector = ({ open, onOpenChange }: ColorSelectorProps) => {
   const { editor } = useEditor();
+  const [savedSelection, setSavedSelection] = useState<{
+    from: number;
+    to: number;
+  } | null>(null);
+
+  // Reference to track if we've saved the selection for this popup session
+  const hasStoredSelectionRef = useRef(false);
 
   if (!editor) return null;
 
-  // Check the active color more reliably
-  const currentColor = editor.getAttributes("textStyle").color;
-  const activeColorItem =
-    TEXT_COLORS.find(({ color }) => color === currentColor) || TEXT_COLORS[0];
+  // Get active color status
+  const activeColorItem = TEXT_COLORS.find(({ color }) =>
+    editor.isActive("textStyle", { color })
+  );
 
-  // Check the active highlight more reliably
-  const currentHighlight = editor.getAttributes("highlight").color;
-  const activeHighlightItem =
-    HIGHLIGHT_COLORS.find(({ color }) => color === currentHighlight) ||
-    HIGHLIGHT_COLORS[0];
+  const activeHighlightItem = HIGHLIGHT_COLORS.find(({ color }) =>
+    editor.isActive("highlight", { color })
+  );
+
+  // When the popup opens, immediately grab and store the selection
+  const handleOpenChange = (isOpen: boolean) => {
+    if (isOpen && editor && !hasStoredSelectionRef.current) {
+      // Store selection on open
+      const { from, to } = editor.state.selection;
+      setSavedSelection({ from, to });
+      hasStoredSelectionRef.current = true;
+    } else if (!isOpen) {
+      // Reset when closed
+      hasStoredSelectionRef.current = false;
+    }
+
+    onOpenChange(isOpen);
+  };
+
+  // Apply the color with proper selection handling
+  const applyColor = (color: string | null, isHighlight = false) => {
+    if (!editor || !savedSelection) return;
+
+    editor.view.focus();
+
+    // Restore the selection first
+    editor.commands.setTextSelection(savedSelection);
+
+    // Apply the appropriate color command
+    if (isHighlight) {
+      if (color === null) {
+        editor.chain().unsetHighlight().run();
+      } else {
+        editor.chain().setHighlight({ color }).run();
+      }
+    } else {
+      if (color === null) {
+        editor.chain().unsetColor().run();
+      } else {
+        editor.chain().setColor(color).run();
+      }
+    }
+
+    // Close the popup
+    onOpenChange(false);
+  };
 
   return (
-    <Popover modal={true} open={open} onOpenChange={onOpenChange}>
+    <Popover modal={true} open={open} onOpenChange={handleOpenChange}>
       <PopoverTrigger asChild>
         <Button size="sm" className="gap-2 rounded-none" variant="ghost">
           <span
             className="rounded-sm px-1"
             style={{
-              color:
-                activeColorItem?.color !== TEXT_COLORS[0].color
-                  ? activeColorItem?.color
-                  : undefined,
-              backgroundColor:
-                activeHighlightItem?.color !== HIGHLIGHT_COLORS[0].color
-                  ? activeHighlightItem?.color
-                  : undefined,
+              color: activeColorItem?.color,
+              backgroundColor: activeHighlightItem?.color,
             }}
           >
             A
@@ -136,24 +180,18 @@ export const ColorSelector = ({ open, onOpenChange }: ColorSelectorProps) => {
 
       <PopoverContent
         sideOffset={5}
-        className="my-1 flex max-h-80 w-48 flex-col overflow-hidden overflow-y-auto rounded border p-1 shadow-xl "
+        className="my-1 flex max-h-80 w-48 flex-col overflow-hidden overflow-y-auto rounded border p-1 shadow-xl"
         align="start"
       >
         <div className="flex flex-col">
           <div className="my-1 px-2 text-sm font-semibold text-muted-foreground">
             Color
           </div>
-          {TEXT_COLORS.map(({ name, color }) => (
+          {TEXT_COLORS.map(({ name, color }, index) => (
             <EditorBubbleItem
-              key={name}
+              key={index}
               onSelect={() => {
-                // More explicit color handling
-                if (name === "Default") {
-                  editor.chain().focus().unsetColor().run();
-                } else {
-                  editor.chain().focus().setColor(color).run();
-                }
-                onOpenChange(false);
+                applyColor(name === "Default" ? null : color, false);
               }}
               className="flex cursor-pointer items-center justify-between px-2 py-1 text-sm hover:bg-accent"
             >
@@ -166,7 +204,9 @@ export const ColorSelector = ({ open, onOpenChange }: ColorSelectorProps) => {
                 </div>
                 <span>{name}</span>
               </div>
-              {color === currentColor && <Check className="h-4 w-4" />}
+              {editor.isActive("textStyle", { color }) && (
+                <Check className="h-4 w-4" />
+              )}
             </EditorBubbleItem>
           ))}
         </div>
@@ -174,17 +214,11 @@ export const ColorSelector = ({ open, onOpenChange }: ColorSelectorProps) => {
           <div className="my-1 px-2 text-sm font-semibold text-muted-foreground">
             Background
           </div>
-          {HIGHLIGHT_COLORS.map(({ name, color }) => (
+          {HIGHLIGHT_COLORS.map(({ name, color }, index) => (
             <EditorBubbleItem
-              key={name}
+              key={index}
               onSelect={() => {
-                // More explicit highlight handling
-                if (name === "Default") {
-                  editor.chain().focus().unsetHighlight().run();
-                } else {
-                  editor.chain().focus().setHighlight({ color }).run();
-                }
-                onOpenChange(false);
+                applyColor(name === "Default" ? null : color, true);
               }}
               className="flex cursor-pointer items-center justify-between px-2 py-1 text-sm hover:bg-accent"
             >
@@ -197,7 +231,9 @@ export const ColorSelector = ({ open, onOpenChange }: ColorSelectorProps) => {
                 </div>
                 <span>{name}</span>
               </div>
-              {color === currentHighlight && <Check className="h-4 w-4" />}
+              {editor.isActive("highlight", { color }) && (
+                <Check className="h-4 w-4" />
+              )}
             </EditorBubbleItem>
           ))}
         </div>
