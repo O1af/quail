@@ -46,10 +46,7 @@ const TailwindEditor: React.FC<TailwindEditorProps> = () => {
   }, []);
 
   return (
-    <div
-      ref={containerRef}
-      className="border rounded-md h-[calc(100vh-4rem)] max-h-[calc(100vh-4rem)] mx-16 my-8"
-    >
+    <div ref={containerRef} className="border rounded-md mx-16 my-8">
       <Editor
         onChange={handleEditorChange}
         initialValue={content}
