@@ -97,6 +97,3 @@ export function getCurrentUsageColumn(): string {
   return `${month}_${year}`;
 }
 
-export function getModelName(tier: string): string {
-  return tier === "Pro" ? "gpt-4o" : "gpt-4o-mini";
-}

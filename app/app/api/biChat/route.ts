@@ -17,12 +17,6 @@ import { optimizeMessages } from "./utils/format";
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
   apiKey: process.env.NEXT_PUBLIC_AZURE_API_KEY, // Azure API key
-});
-
-const azure_reasoning = createAzure({
-  resourceName: "olafp-m835s8rx-eastus2",
-  apiKey:
-    "DiA69uxybU7GWfy81JZFfZuBLhGGhLbBllqy9L3zO3r4cbHKtRYuJQQJ99BCACHYHv6XJ3w3AAAAACOGXwlH",
   apiVersion: "2025-02-01-preview",
 });
 
@@ -109,7 +103,7 @@ export async function POST(req: Request) {
           : { data: undefined, error: null };
 
       const stream = streamText({
-        model: azure_reasoning("o3-mini"),
+        model: azure("o3-mini"),
         prompt: createAgentPrompt({
           messages: optimizeMessages(messages),
           dbType,
@@ -127,7 +121,7 @@ export async function POST(req: Request) {
             dbType,
             connectionString,
             dbSchema: databaseStructure,
-            provider: azure_reasoning,
+            provider: azure,
             stream: dataStream,
           }),
         },

@@ -7,7 +7,6 @@ import {
   updateTokenUsage,
   updateUsage,
   getCurrentUsageColumn,
-  getModelName,
 } from "@/utils/metrics/AI";
 import { formatDatabaseSchema } from "../biChat/utils/format";
 
@@ -97,7 +96,7 @@ export async function POST(req: Request) {
   };
 
   const result = streamText({
-    model: azure(getModelName(userTier)),
+    model: azure("gpt-4o-mini"),
     messages: [systemPrompt, ...messages],
     maxTokens: 1000,
     async onFinish({ usage }) {

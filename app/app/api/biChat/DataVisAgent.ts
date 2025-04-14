@@ -2,7 +2,6 @@ import { generateText, tool, Message, Provider, DataStreamWriter } from "ai";
 import { z } from "zod";
 import { createQueryValidationPrompt } from "./prompts/createSqlPrompt";
 import { createChartPrompt } from "./prompts/createChartPrompt";
-import { getModelName } from "@/utils/metrics/AI";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { tryCatch } from "@/lib/trycatch";
 import { executeQueryWithErrorHandling, updateStatus } from "./utils/workflow";
