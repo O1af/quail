@@ -54,6 +54,8 @@ export interface DatabaseStructure {
   schemas: Schema[];
 }
 
+export type SpeedMode = "fast" | "medium" | "slow";
+
 interface TableStore {
   // Query result related state
   data: SQLData[];
@@ -65,6 +67,10 @@ interface TableStore {
 
   // Database structure related state
   databaseStructure: DatabaseStructure;
+
+  // Speed mode state
+  speedMode: SpeedMode;
+  setSpeedMode: (mode: SpeedMode) => void;
 
   // Query result related actions
   setSorting: (sorting: SortingState | null) => void;
@@ -114,6 +120,10 @@ export const useTableStore = create<TableStore>()(
 
       // Database structure state
       databaseStructure: { schemas: [] },
+
+      // Speed mode state
+      speedMode: "medium",
+      setSpeedMode: (mode: SpeedMode) => set({ speedMode: mode }),
 
       // Query result related actions
       setSorting: (sorting: SortingState | null) =>
@@ -182,3 +192,5 @@ export const useTableVisibility = () =>
   useTableStore((state) => state.columnVisibility);
 export const useTableSelection = () =>
   useTableStore((state) => state.rowSelection);
+
+export const useSpeedMode = () => useTableStore((state) => state.speedMode);

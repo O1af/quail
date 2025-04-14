@@ -13,12 +13,26 @@ import { tryCatch } from "@/lib/trycatch";
 import { createAgentPrompt, createSystemPrompt } from "./prompts/mainAgent";
 import { updateStatus } from "./utils/workflow";
 import { optimizeMessages } from "./utils/format";
+import { type SpeedMode } from "@/components/stores/table_store";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
   apiKey: process.env.NEXT_PUBLIC_AZURE_API_KEY, // Azure API key
   apiVersion: "2025-02-01-preview",
 });
+
+/**
+ * Select the appropriate model based on speed mode
+ * - slow: o3-mini (more accurate but slower)
+ * - fast/medium: gpt-4o-mini (faster but may be less accurate)
+ */
+function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
+  if (speedMode === "slow") {
+    return azure("o3-mini");
+  } else {
+    return azure("gpt-4o-mini");
+  }
+}
 
 export async function DELETE(req: Request) {
   const supabase = await createClient();
@@ -74,10 +88,9 @@ export async function POST(req: Request) {
     dbType,
     connectionString,
     userTier,
+    speedMode,
     id,
   } = await req.json();
-
-  //verify user tier
 
   // Verify database connection information is present
   if (!connectionString || !dbType) {
@@ -102,8 +115,11 @@ export async function POST(req: Request) {
             )
           : { data: undefined, error: null };
 
+      // Select model based on speed mode
+      const modelToUse = getModelBySpeedMode(speedMode);
+
       const stream = streamText({
-        model: azure("o3-mini"),
+        model: modelToUse,
         prompt: createAgentPrompt({
           messages: optimizeMessages(messages),
           dbType,

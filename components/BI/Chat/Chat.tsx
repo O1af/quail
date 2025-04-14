@@ -11,7 +11,10 @@ import { Welcome } from "./Welcome";
 import { useInitializeChat } from "@/lib/hooks/useInitializeChat";
 import { loadChat } from "@/components/stores/chat_store";
 import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
-import { useDatabaseStructure } from "@/components/stores/table_store";
+import {
+  useDatabaseStructure,
+  useSpeedMode,
+} from "@/components/stores/table_store";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -35,6 +38,7 @@ export default function Chat({ className, chat_id }: ChatProps) {
   // Get current database info
   const currentDB = useDbStoreWithAutoLoad().getCurrentDatabase();
   const databaseStructure = useDatabaseStructure();
+  const speedMode = useSpeedMode();
 
   // Check if database is selected
   useEffect(() => {
@@ -54,9 +58,10 @@ export default function Chat({ className, chat_id }: ChatProps) {
         dbType: currentDB.type,
         connectionString: currentDB.connectionString,
         databaseStructure,
+        speedMode,
       };
     },
-    [currentDB, databaseStructure]
+    [currentDB, databaseStructure, speedMode]
   );
 
   const {
