@@ -9,6 +9,15 @@ import {
   getCurrentUsageColumn,
 } from "@/utils/metrics/AI";
 import { formatDatabaseSchema } from "../biChat/utils/format";
+import { type SpeedMode } from "@/components/stores/table_store";
+
+function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
+  if (speedMode === "slow") {
+    return azure("o3-mini");
+  } else {
+    return azure("gpt-4o-mini");
+  }
+}
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -55,6 +64,7 @@ export async function POST(req: Request) {
     databaseStructure,
     dbType,
     connectionString,
+    speedMode,
     editorValue,
     editorError,
   } = await req.json();
@@ -96,7 +106,7 @@ export async function POST(req: Request) {
   };
 
   const result = streamText({
-    model: azure("gpt-4o-mini"),
+    model: getModelBySpeedMode(speedMode),
     messages: [systemPrompt, ...messages],
     maxTokens: 1000,
     async onFinish({ usage }) {

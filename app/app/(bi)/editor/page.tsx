@@ -7,6 +7,7 @@ import { ClearChat } from "@/components/header/clear-chat";
 import { UploadButton } from "@/components/header/upload-button";
 import { useHeader } from "@/components/header/header-context";
 import { DbHeaderSwitcher } from "@/components/header/db-header-switcher";
+import { SpeedModeToggle } from "@/components/header/speed-mode-toggle";
 
 export default function Page() {
   const { setHeaderContent, setHeaderButtons } = useHeader();
@@ -21,11 +22,12 @@ export default function Page() {
     );
 
     setHeaderButtons(
-      <>
+      <div className="flex items-center space-x-2">
         <UploadButton />
         <DownloadButton />
+        <SpeedModeToggle />
         <RunButton />
-      </>
+      </div>
     );
 
     // Clean up when component unmounts

@@ -4,7 +4,10 @@ import { useChat } from "@ai-sdk/react";
 import { Messages } from "./Messages";
 import ExampleMessages from "./example-messages";
 import { MultimodalInput } from "./multimodal-input";
-import { useDatabaseStructure } from "@/components/stores/table_store";
+import {
+  useDatabaseStructure,
+  useSpeedMode,
+} from "@/components/stores/table_store";
 import { useEffect } from "react";
 import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
 import { useEditorStore } from "@/components/stores/editor_store";
@@ -15,6 +18,7 @@ export default function Chat() {
   const { getCurrentDatabase, isDatabaseChanged, resetDatabaseChange } =
     useDbStoreWithAutoLoad();
   const { value, error } = useEditorStore();
+  const speedMode = useSpeedMode();
 
   const {
     messages,
@@ -39,6 +43,7 @@ export default function Chat() {
           connectionString: currentDb?.connectionString,
           editorValue: value,
           editorError: error,
+          speedMode,
         })
       );
     },
