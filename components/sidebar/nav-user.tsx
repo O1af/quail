@@ -103,16 +103,6 @@ export function NavUser({
                 <DropdownMenuItem
                   onSelect={() => {
                     setIsOpen(false);
-                    const event = new CustomEvent("openSettings", {});
-                    window.dispatchEvent(event);
-                  }}
-                >
-                  <Settings2 />
-                  Settings
-                </DropdownMenuItem>
-                <DropdownMenuItem
-                  onSelect={() => {
-                    setIsOpen(false);
                     const event = new CustomEvent("openSettings", {
                       detail: { section: "billing" },
                     });

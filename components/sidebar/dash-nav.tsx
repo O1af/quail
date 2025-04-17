@@ -2,7 +2,6 @@
 
 import { useRouter, usePathname } from "next/navigation";
 import {
-  Settings,
   LayoutDashboard,
   Share2,
   BarChart3,
@@ -25,8 +24,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { Badge } from "@/components/ui/badge";
-import { cn } from "@/lib/utils";
 
 export function DashNav() {
   const router = useRouter();
@@ -36,12 +33,6 @@ export function DashNav() {
   const isActive = (path: string) => pathname?.startsWith(path);
 
   const navigationItems = [
-    // {
-    //   icon: Search,
-    //   label: "Insights",
-    //   path: "/insights",
-    //   description: "Quick search & recent insights",
-    // },
     {
       icon: LayoutDashboard,
       label: "Dashboards",
@@ -65,12 +56,6 @@ export function DashNav() {
       icon: SearchCode,
       path: "/editor",
       description: "AI Powered SQL Editor",
-    },
-    {
-      icon: Settings,
-      label: "Settings",
-      path: "/settings",
-      description: "Configure dashboard settings",
     },
   ];
 
