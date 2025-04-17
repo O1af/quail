@@ -104,43 +104,51 @@ export function NavSchema() {
   };
 
   return (
-    <SidebarGroup className="h-full">
-      <SidebarGroupLabel>
-        Database Schemas
+    <SidebarGroup className="flex flex-col flex-grow h-full">
+      <SidebarGroupLabel className="flex justify-between items-center mb-1">
+        <div className="flex items-center gap-1.5">
+          <Database className="h-3.5 w-3.5 text-muted-foreground" />
+          <span>Database Schemas</span>
+        </div>
         {getCurrentDatabase() && (
           <TooltipProvider>
-            <div className="absolute top-2 right-2 flex space-x-2">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <button
-                    onClick={handleRefresh}
-                    className="p-1 hover:bg-accent rounded-sm"
-                    disabled={refreshing || isLoading}
-                  >
-                    <RefreshCw
-                      className={`h-4 w-4 ${
-                        refreshing || isLoading ? "animate-spin" : ""
-                      }`}
-                    />
-                  </button>
-                </TooltipTrigger>
-                <TooltipContent>
-                  <p>Refresh Database Schemas</p>
-                </TooltipContent>
-              </Tooltip>
-            </div>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <button
+                  onClick={handleRefresh}
+                  className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
+                  disabled={refreshing || isLoading}
+                >
+                  <RefreshCw
+                    className={`h-3.5 w-3.5 ${
+                      refreshing || isLoading ? "animate-spin" : ""
+                    }`}
+                  />
+                </button>
+              </TooltipTrigger>
+              <TooltipContent>
+                <p>Refresh Database Schemas</p>
+              </TooltipContent>
+            </Tooltip>
           </TooltipProvider>
         )}
       </SidebarGroupLabel>
-      <SidebarMenu className="h-[calc(100%-2rem)] overflow-y-auto">
+      <SidebarMenu className="flex-grow overflow-y-auto pr-1">
         {databaseStructure.schemas.map((schema) => (
-          <Collapsible key={schema.name} asChild className="group/collapsible">
+          <Collapsible
+            key={schema.name}
+            asChild
+            className="group/collapsible mb-0.5"
+          >
             <SidebarMenuItem>
               <CollapsibleTrigger asChild>
-                <SidebarMenuButton tooltip={schema.name}>
-                  <Database className="h-4 w-4" />
-                  <span>{schema.name}</span>
-                  <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                <SidebarMenuButton
+                  tooltip={schema.name}
+                  className="rounded-md hover:bg-muted transition-colors duration-150 px-2 py-1.5"
+                >
+                  <Database className="h-4 w-4 text-primary" />
+                  <span className="font-medium">{schema.name}</span>
+                  <ChevronRight className="ml-auto h-4 w-4 text-muted-foreground transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
                 </SidebarMenuButton>
               </CollapsibleTrigger>
               <CollapsibleContent>
@@ -151,13 +159,13 @@ export function NavSchema() {
                       onClick={() => handleTableClick(schema.name, table.name)}
                       className="cursor-pointer"
                     >
-                      <SidebarMenuSubButton>
+                      <SidebarMenuSubButton className="rounded-md hover:bg-muted hover:text-foreground transition-colors duration-150 pl-6 py-1">
                         {table.type === "VIEW" ? (
-                          <BoxSelect className="h-4 w-4" />
+                          <BoxSelect className="h-3.5 w-3.5 mr-1.5 text-indigo-500" />
                         ) : (
-                          <Table2 className="h-4 w-4" />
+                          <Table2 className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
                         )}
-                        <span>{table.name}</span>
+                        <span className="text-sm truncate">{table.name}</span>
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}

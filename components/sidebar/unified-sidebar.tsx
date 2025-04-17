@@ -63,20 +63,28 @@ export function UnifiedSidebar({ mode, ...props }: UnifiedSidebarProps) {
   return (
     <Sidebar
       collapsible="icon"
-      className="h-screen max-h-screen overflow-hidden"
+      className="h-screen max-h-screen overflow-hidden border-r bg-card"
       {...props}
     >
       <SidebarHeader>
         <DashSidebarHeader />
       </SidebarHeader>
-      <SidebarContent className="flex flex-col overflow-hidden">
-        <DashNav />
-        {mode === "dash" ? <NavChats /> : <NavSchema />}
+      <SidebarContent className="flex flex-col overflow-hidden px-2 py-2">
+        <div className="flex-shrink-0">
+          <DashNav />
+        </div>
+        <div
+          className={`${
+            mode === "dev" ? "flex-grow" : ""
+          } overflow-y-auto mt-1`}
+        >
+          {mode === "dash" ? <NavChats /> : <NavSchema />}
+        </div>
       </SidebarContent>
-      <SidebarFooter>
+      <SidebarFooter className="border-t pt-2 pb-2 px-2">
         <TooltipProvider>
           <SidebarMenu>
-            <SidebarMenuItem>
+            <SidebarMenuItem className="mb-2">
               <Tooltip>
                 <TooltipTrigger asChild>
                   <SidebarMenuButton
@@ -84,8 +92,9 @@ export function UnifiedSidebar({ mode, ...props }: UnifiedSidebarProps) {
                       const event = new CustomEvent("openSettings", {});
                       window.dispatchEvent(event);
                     }}
+                    className="hover:bg-muted rounded-md transition-colors"
                   >
-                    <Settings2 className="h-4 w-4 mr-2 flex-shrink-0" />
+                    <Settings2 className="h-4 w-4 mr-2 flex-shrink-0 text-muted-foreground" />
                     <span className="truncate">Settings</span>
                   </SidebarMenuButton>
                 </TooltipTrigger>
@@ -98,7 +107,7 @@ export function UnifiedSidebar({ mode, ...props }: UnifiedSidebarProps) {
         </TooltipProvider>
         <NavUser user={supabaseData.user} />
       </SidebarFooter>
-      <SidebarRail />
+      <SidebarRail className="border-r" />
     </Sidebar>
   );
 }

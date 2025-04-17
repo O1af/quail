@@ -164,21 +164,17 @@ export function NavChats() {
   const isNewChat = pathname === "/chat";
 
   return (
-    <Collapsible
-      open={isOpen}
-      onOpenChange={setIsOpen}
-      className="w-full space-y-2"
-    >
+    <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full mb-2">
       <SidebarGroup>
         <div className="flex items-center w-full">
           <CollapsibleTrigger className="flex-1">
-            <SidebarGroupLabel className="flex items-center gap-2 cursor-pointer">
+            <SidebarGroupLabel className="flex items-center gap-2 cursor-pointer hover:bg-muted/50 rounded-md p-1 transition-colors">
               <ChevronRight
-                className={`h-4 w-4 transition-transform duration-200 ${
+                className={`h-3.5 w-3.5 text-muted-foreground transition-transform duration-200 ${
                   isOpen ? "rotate-90" : ""
                 }`}
               />
-              <MessageSquare className="h-4 w-4" />
+              <MessageSquare className="h-3.5 w-3.5 text-muted-foreground" />
               <span>Chats</span>
             </SidebarGroupLabel>
           </CollapsibleTrigger>
@@ -190,11 +186,11 @@ export function NavChats() {
                     e.stopPropagation();
                     handleNewChat();
                   }}
-                  className={`p-2 hover:bg-accent rounded-sm cursor-pointer ${
-                    isNewChat ? "bg-sidebar-accent" : ""
+                  className={`p-1.5 hover:bg-accent rounded-md cursor-pointer transition-colors ${
+                    isNewChat ? "bg-sidebar-accent/80" : ""
                   }`}
                 >
-                  <SquarePen className="h-4 w-4" />
+                  <SquarePen className="h-3.5 w-3.5" />
                 </div>
               </TooltipTrigger>
               <TooltipContent>
@@ -204,7 +200,7 @@ export function NavChats() {
           </TooltipProvider>
         </div>
         <CollapsibleContent>
-          <SidebarGroupContent>
+          <SidebarGroupContent className="pl-6 pr-1">
             <SidebarMenu>
               {loading ? (
                 <>
@@ -216,18 +212,22 @@ export function NavChats() {
                 </>
               ) : (
                 chats.map((chat) => (
-                  <SidebarMenuItem key={chat._id}>
+                  <SidebarMenuItem key={chat._id} className="mb-0.5">
                     <SidebarMenuButton
                       onClick={() => router.push(`/chat/${chat._id}`)}
                       isActive={isCurrentChat(chat._id)}
+                      className="group rounded-md transition-all duration-200 py-1.5"
                     >
-                      <span className="truncate">
+                      <span className="truncate text-sm">
                         {chat.title || "New Chat"}
                       </span>
                     </SidebarMenuButton>
                     <DropdownMenu modal={false}>
                       <DropdownMenuTrigger asChild>
-                        <SidebarMenuAction showOnHover>
+                        <SidebarMenuAction
+                          showOnHover
+                          className="opacity-0 group-hover:opacity-100 transition-opacity"
+                        >
                           <MoreHorizontal className="h-4 w-4" />
                           <span className="sr-only">More</span>
                         </SidebarMenuAction>

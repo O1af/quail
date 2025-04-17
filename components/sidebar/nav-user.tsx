@@ -57,25 +57,27 @@ export function NavUser({
 
   return (
     <>
-      <SidebarMenu>
+      <SidebarMenu className="py-1">
         <SidebarMenuItem>
           <DropdownMenu open={isOpen} onOpenChange={setIsOpen}>
             <DropdownMenuTrigger asChild>
               <SidebarMenuButton
                 size="lg"
-                className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
+                className="data-[state=open]:bg-accent hover:bg-muted rounded-md transition-colors py-2.5 px-2"
               >
-                <Avatar className="h-8 w-8 rounded-lg">
+                <Avatar className="h-8 w-8 rounded-md border">
                   <AvatarImage src={user.avatar} alt={user.name} />
-                  <AvatarFallback className="rounded-lg">
+                  <AvatarFallback className="rounded-md bg-primary/10 text-primary">
                     {user.name[0]}
                   </AvatarFallback>
                 </Avatar>
-                <div className="grid flex-1 text-left text-sm leading-tight">
-                  <span className="truncate font-semibold">{user.name}</span>
-                  <span className="truncate text-xs">{user.email}</span>
+                <div className="grid flex-1 text-left text-sm leading-tight ml-2">
+                  <span className="truncate font-medium">{user.name}</span>
+                  <span className="truncate text-xs text-muted-foreground">
+                    {user.email}
+                  </span>
                 </div>
-                <ChevronsUpDown className="ml-auto size-4" />
+                <ChevronsUpDown className="ml-auto size-4 text-muted-foreground" />
               </SidebarMenuButton>
             </DropdownMenuTrigger>
             <DropdownMenuContent
@@ -85,16 +87,18 @@ export function NavUser({
               sideOffset={4}
             >
               <DropdownMenuLabel className="p-0 font-normal">
-                <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                  <Avatar className="h-8 w-8 rounded-lg">
+                <div className="flex items-center gap-2 px-2 py-2 text-left text-sm">
+                  <Avatar className="h-8 w-8 rounded-md border">
                     <AvatarImage src={user.avatar} alt={user.name} />
-                    <AvatarFallback className="rounded-lg">
+                    <AvatarFallback className="rounded-md bg-primary/10">
                       {user.name[0]}
                     </AvatarFallback>
                   </Avatar>
                   <div className="grid flex-1 text-left text-sm leading-tight">
-                    <span className="truncate font-semibold">{user.name}</span>
-                    <span className="truncate text-xs">{user.email}</span>
+                    <span className="truncate font-medium">{user.name}</span>
+                    <span className="truncate text-xs text-muted-foreground">
+                      {user.email}
+                    </span>
                   </div>
                 </div>
               </DropdownMenuLabel>
@@ -108,8 +112,9 @@ export function NavUser({
                     });
                     window.dispatchEvent(event);
                   }}
+                  className="gap-2"
                 >
-                  <CreditCard />
+                  <CreditCard className="h-4 w-4" />
                   Billing
                 </DropdownMenuItem>
               </DropdownMenuGroup>
@@ -120,8 +125,9 @@ export function NavUser({
                   signout();
                   setClientUser(null);
                 }}
+                className="gap-2 text-red-500 focus:text-red-500 focus:bg-red-50 dark:focus:bg-red-950/50"
               >
-                <LogOut />
+                <LogOut className="h-4 w-4" />
                 Logout
               </DropdownMenuItem>
             </DropdownMenuContent>
