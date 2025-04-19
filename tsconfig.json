@@ -30,6 +30,6 @@
     ".next/types/**/*.ts",
     "build/types/**/*.ts",
     "app/app/(bi)/dashboards/[slug]/page.tsx"
-  ],
+, "next.config.mjs"  ],
   "exclude": ["node_modules"]
 }

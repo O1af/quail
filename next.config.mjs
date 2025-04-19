@@ -1,10 +1,21 @@
-import type { NextConfig } from "next";
+// next.config.mjs
+import { createMDX } from "fumadocs-mdx/next";
 
-const nextConfig: NextConfig = {
+const withMDX = createMDX();
+
+const nextConfig = {
+  // enable standalone builds
   output: "standalone",
+
+  // turn on React strict mode
+  reactStrictMode: true,
+
+  // strip console.* calls in production
   compiler: {
     removeConsole: process.env.NODE_ENV === "production",
   },
+
+  // your experimental flags
   experimental: {
     optimizeCss: false,
     optimizePackageImports: ["react-icons", "recharts"],
@@ -17,14 +28,16 @@ const nextConfig: NextConfig = {
       },
     },
   },
+
+  // custom webpack to load SVGs via @svgr/webpack
   webpack(config) {
     config.module.rules.push({
       test: /\.svg$/,
       use: ["@svgr/webpack"],
     });
-
     return config;
   },
 };
 
-export default nextConfig;
+// wrap it with MDX support
+export default withMDX(nextConfig);

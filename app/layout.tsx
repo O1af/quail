@@ -1,5 +1,7 @@
 import type { Metadata } from "next";
 import { Inter, Roboto_Mono } from "next/font/google";
+import { RootProvider } from "fumadocs-ui/provider";
+import type { ReactNode } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/context/AuthContext";
@@ -65,10 +67,10 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
         {process.env.NODE_ENV !== "production" && (
           <Script
@@ -91,23 +93,32 @@ export default function RootLayout({
           crossOrigin="anonymous"
         />
       </head>
-      <body className={`${inter.variable} ${robotoMono.variable} antialiased`}>
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
-        <Toaster />
-        {process.env.NODE_ENV === "production" && (
-          <Script
-            defer
-            src="https://olaf-metrics.vercel.app/script.js"
-            data-website-id="242c6f31-19a3-470d-a9fc-bbe0334217bf"
-          />
-        )}
+      <body
+        className={`${inter.variable} ${robotoMono.variable} antialiased`}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+        }}
+      >
+        <RootProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <AuthProvider>{children}</AuthProvider>
+          </ThemeProvider>
+          <Toaster />
+          {process.env.NODE_ENV === "production" && (
+            <Script
+              defer
+              src="https://olaf-metrics.vercel.app/script.js"
+              data-website-id="242c6f31-19a3-470d-a9fc-bbe0334217bf"
+            />
+          )}
+        </RootProvider>
       </body>
     </html>
   );
