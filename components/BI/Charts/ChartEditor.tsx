@@ -138,7 +138,7 @@ export default function ChartEditor({
               className="h-full flex flex-col"
               onValueChange={handleTabChange}
             >
-              <div className="border-b px-4 flex-shrink-0">
+              <div className="border-b px-4 shrink-0">
                 <div className="flex items-center justify-between flex-wrap">
                   <TabsList className="mt-2 mb-2 justify-start">
                     <TabsTrigger value="code">JSX Code</TabsTrigger>

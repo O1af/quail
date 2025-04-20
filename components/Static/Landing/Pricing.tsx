@@ -150,12 +150,12 @@ export function Pricing() {
   return (
     <section
       id="pricing"
-      className="w-full py-12 md:py-20 bg-gradient-to-b from-background to-background/80"
+      className="w-full py-12 md:py-20 bg-linear-to-b from-background to-background/80"
     >
       <div className="container px-4 md:px-6 mx-auto">
         <div className="flex flex-col items-center justify-center space-y-4 text-center">
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-4 leading-tight">
-            <span className="bg-gradient-to-r from-primary/90 to-primary bg-clip-text text-transparent inline-block pb-1">
+            <span className="bg-linear-to-r from-primary/90 to-primary bg-clip-text text-transparent inline-block pb-1">
               Simple, Transparent Pricing
             </span>
           </h2>
@@ -169,18 +169,18 @@ export function Pricing() {
           {pricingPlans.map((plan) => (
             <Card
               key={plan.name}
-              className="flex flex-col h-full relative backdrop-blur-sm bg-gradient-to-b from-background/80 to-background hover:shadow-lg hover:shadow-primary/20 transition-all duration-300"
+              className="flex flex-col h-full relative backdrop-blur-xs bg-linear-to-b from-background/80 to-background hover:shadow-lg hover:shadow-primary/20 transition-all duration-300"
             >
               {plan.highlight && (
                 <div className="absolute -top-4 left-0 right-0 flex justify-center">
-                  <span className="bg-gradient-to-r from-primary/80 to-primary text-primary-foreground text-sm font-medium px-4 py-1 rounded-full shadow-lg">
+                  <span className="bg-linear-to-r from-primary/80 to-primary text-primary-foreground text-sm font-medium px-4 py-1 rounded-full shadow-lg">
                     {plan.highlight}
                   </span>
                 </div>
               )}
 
               <CardHeader className="flex flex-col space-y-2 pb-6">
-                <CardTitle className="text-2xl font-bold bg-gradient-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
+                <CardTitle className="text-2xl font-bold bg-linear-to-br from-foreground to-foreground/80 bg-clip-text text-transparent">
                   {plan.name}
                 </CardTitle>
                 <div className="flex items-baseline justify-center gap-1">
@@ -202,15 +202,15 @@ export function Pricing() {
                 <CardDescription>{plan.description}</CardDescription>
               </CardHeader>
 
-              <CardContent className="flex-grow">
+              <CardContent className="grow">
                 <ul className="space-y-3">
                   {plan.features.map((feature) => (
                     <TooltipProvider key={feature.name}>
                       <li className="flex items-center text-sm">
                         {feature.included ? (
-                          <Check className="h-5 w-5 text-primary mr-2 flex-shrink-0" />
+                          <Check className="h-5 w-5 text-primary mr-2 shrink-0" />
                         ) : (
-                          <X className="h-5 w-5 text-muted-foreground mr-2 flex-shrink-0" />
+                          <X className="h-5 w-5 text-muted-foreground mr-2 shrink-0" />
                         )}
                         <Tooltip>
                           <TooltipTrigger>
@@ -231,7 +231,7 @@ export function Pricing() {
                   className={cn(
                     "w-full",
                     plan.name === "Pro" &&
-                      "bg-gradient-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
+                      "bg-linear-to-r from-primary to-primary/80 hover:from-primary/90 hover:to-primary"
                   )}
                   variant={plan.name === "Pro" ? "default" : "outline"}
                   size="lg"

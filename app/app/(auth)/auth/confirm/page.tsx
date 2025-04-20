@@ -92,7 +92,7 @@ export default function ConfirmEmail() {
                 numInputs={6}
                 shouldAutoFocus
                 containerStyle="flex justify-center gap-4"
-                inputStyle="text-3xl text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                inputStyle="text-3xl text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
                 renderInput={(props) => <input {...props} />}
               />
             </div>

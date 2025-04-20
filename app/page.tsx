@@ -69,7 +69,7 @@ export default function Home() {
         <Marquee />
         <FrameworksSection />
         <Demo />
-        <div className="relative bg-gradient-to-b from-background to-background/90">
+        <div className="relative bg-linear-to-b from-background to-background/90">
           <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
           <Pricing />
         </div>

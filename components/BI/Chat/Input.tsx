@@ -184,7 +184,7 @@ function PureInput({
           value={input}
           onChange={handleInput}
           className={cx(
-            "max-h-[100px] min-h-[80px] overflow-y-auto resize-none rounded-2xl !text-base bg-muted pr-12 dark:border-zinc-700",
+            "max-h-[100px] min-h-[80px] overflow-y-auto resize-none rounded-2xl text-base! bg-muted pr-12 dark:border-zinc-700",
             className
           )}
           rows={3}

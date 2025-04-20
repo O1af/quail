@@ -70,12 +70,12 @@ export function UnifiedSidebar({ mode, ...props }: UnifiedSidebarProps) {
         <DashSidebarHeader />
       </SidebarHeader>
       <SidebarContent className="flex flex-col overflow-hidden px-2 py-2">
-        <div className="flex-shrink-0">
+        <div className="shrink-0">
           <DashNav />
         </div>
         <div
           className={`${
-            mode === "dev" ? "flex-grow" : ""
+            mode === "dev" ? "grow" : ""
           } overflow-y-auto mt-1`}
         >
           {mode === "dash" ? <NavChats /> : <NavSchema />}
@@ -94,7 +94,7 @@ export function UnifiedSidebar({ mode, ...props }: UnifiedSidebarProps) {
                     }}
                     className="hover:bg-muted rounded-md transition-colors"
                   >
-                    <Settings2 className="h-4 w-4 mr-2 flex-shrink-0 text-muted-foreground" />
+                    <Settings2 className="h-4 w-4 mr-2 shrink-0 text-muted-foreground" />
                     <span className="truncate">Settings</span>
                   </SidebarMenuButton>
                 </TooltipTrigger>

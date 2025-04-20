@@ -16,7 +16,7 @@ export function DashSidebarHeader() {
   return (
     <SidebarHeader className="px-3 py-2.5 border-b">
       <Link href="/" className="flex items-center gap-2.5 cursor-pointer">
-        <div className="relative h-7 w-7 flex-shrink-0 overflow-hidden">
+        <div className="relative h-7 w-7 shrink-0 overflow-hidden">
           <Image
             src={avatarSrc}
             alt="Quail Logo"

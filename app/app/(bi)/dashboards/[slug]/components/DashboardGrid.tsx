@@ -479,7 +479,7 @@ export const DashboardGrid = memo(
           {/* Main dashboard area with transition */}
           <div
             ref={containerRef}
-            className={`relative flex-grow transition-all duration-300 ease-in-out overflow-auto h-[calc(100vh-100px)] ${
+            className={`relative grow transition-all duration-300 ease-in-out overflow-auto h-[calc(100vh-100px)] ${
               isSidebarOpen ? "pr-80" : ""
             }`}
             onClick={handleBackgroundClick}
@@ -542,7 +542,7 @@ export const DashboardGrid = memo(
                       isEditing && selectedChartId === chartId
                         ? "border-blue-400 shadow-md border-solid border-1"
                         : isEditing
-                        ? "border-blue-400 shadow-sm border-dashed border-1"
+                        ? "border-blue-400 shadow-xs border-dashed border-1"
                         : "border-gray-200"
                     }`}
                     onClick={(e) => e.stopPropagation()}

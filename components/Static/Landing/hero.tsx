@@ -31,8 +31,8 @@ export const Hero = memo(function Hero() {
   return (
     <section className="py-20 md:py-28 lg:py-36 relative overflow-hidden">
       {/* Enhanced background elements - made smaller and more subtle */}
-      <div className="absolute top-20 right-[10%] w-[30%] h-[30%] bg-gradient-to-br from-primary/10 to-transparent rounded-full blur-3xl -z-10 opacity-60" />
-      <div className="absolute bottom-20 left-[5%] w-[25%] h-[25%] bg-gradient-to-tr from-emerald-500/10 to-transparent rounded-full blur-3xl -z-10 opacity-50" />
+      <div className="absolute top-20 right-[10%] w-[30%] h-[30%] bg-linear-to-br from-primary/10 to-transparent rounded-full blur-3xl -z-10 opacity-60" />
+      <div className="absolute bottom-20 left-[5%] w-[25%] h-[25%] bg-linear-to-tr from-emerald-500/10 to-transparent rounded-full blur-3xl -z-10 opacity-50" />
 
       <Container className="relative">
         <motion.div
@@ -44,7 +44,7 @@ export const Hero = memo(function Hero() {
           <motion.div variants={itemVariants} className="flex justify-center">
             <Badge
               variant="secondary"
-              className="px-4 py-1.5 text-sm font-medium rounded-full shadow-sm"
+              className="px-4 py-1.5 text-sm font-medium rounded-full shadow-xs"
             >
               🚀 Turn Data Into Decisions
             </Badge>
@@ -54,7 +54,7 @@ export const Hero = memo(function Hero() {
             variants={itemVariants}
             className="font-heading text-4xl md:text-5xl lg:text-6xl font-bold tracking-tight text-center leading-[1.15]"
           >
-            <span className="bg-gradient-to-r from-green-600 via-emerald-500 to-green-400 bg-clip-text text-transparent inline-block pb-1">
+            <span className="bg-linear-to-r from-green-600 via-emerald-500 to-green-400 bg-clip-text text-transparent inline-block pb-1">
               AI Powered Analytics{" "}
             </span>
             <br />
@@ -75,7 +75,7 @@ export const Hero = memo(function Hero() {
           >
             <Button
               size="lg"
-              className="text-base px-6 py-5 bg-gradient-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 transition-all duration-300 rounded-md shadow-md hover:shadow-lg"
+              className="text-base px-6 py-5 bg-linear-to-r from-green-600 to-emerald-500 hover:from-green-700 hover:to-emerald-600 transition-all duration-300 rounded-md shadow-md hover:shadow-lg"
               onClick={() => (window.location.href = `${APP_URL}/signup`)}
             >
               Get Started

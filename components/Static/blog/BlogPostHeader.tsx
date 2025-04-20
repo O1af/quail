@@ -36,7 +36,7 @@ export function BlogPostHeader({
       </div>
 
       {image && (
-        <div className="relative w-full max-w-3xl mx-auto aspect-[16/9] max-h-[450px] rounded-xl overflow-hidden shadow-lg mb-8">
+        <div className="relative w-full max-w-3xl mx-auto aspect-16/9 max-h-[450px] rounded-xl overflow-hidden shadow-lg mb-8">
           <Image
             src={image}
             alt={title}

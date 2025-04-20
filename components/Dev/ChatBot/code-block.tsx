@@ -146,7 +146,7 @@ export function CodeBlock({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-md hover:bg-zinc-700 focus:outline-none"
+                      className="rounded-md hover:bg-zinc-700 focus:outline-hidden"
                       onClick={() => insertCode(children)}
                     >
                       <Repeat className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
@@ -161,7 +161,7 @@ export function CodeBlock({
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="rounded-md hover:bg-zinc-700 focus:outline-none"
+                      className="rounded-md hover:bg-zinc-700 focus:outline-hidden"
                       onClick={handleCopy}
                     >
                       <Copy className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />

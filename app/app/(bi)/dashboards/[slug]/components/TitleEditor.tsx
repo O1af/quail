@@ -38,7 +38,7 @@ export const TitleEditor: React.FC<TitleEditorProps> = ({
               value={tempTitle}
               onChange={onTitleChange}
               placeholder="Dashboard Title"
-              className="text-xl font-medium px-2 border shadow-sm focus-visible:ring-1 bg-background hover:bg-muted/10 rounded-md"
+              className="text-xl font-medium px-2 border shadow-xs focus-visible:ring-1 bg-background hover:bg-muted/10 rounded-md"
             />
           </div>
           <div className="flex-1">
@@ -47,7 +47,7 @@ export const TitleEditor: React.FC<TitleEditorProps> = ({
               onChange={onDescriptionChange}
               placeholder="Add a description (optional)"
               rows={1}
-              className="min-h-[38px] resize-none text-sm text-muted-foreground px-2 border shadow-sm focus-visible:ring-1 bg-background hover:bg-muted/10 rounded-md py-2"
+              className="min-h-[38px] resize-none text-sm text-muted-foreground px-2 border shadow-xs focus-visible:ring-1 bg-background hover:bg-muted/10 rounded-md py-2"
             />
           </div>
         </div>

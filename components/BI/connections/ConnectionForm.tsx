@@ -187,7 +187,7 @@ export function ConnectionForm({
   );
 
   return (
-    <Card className="mb-6 border-primary/20 shadow-sm">
+    <Card className="mb-6 border-primary/20 shadow-xs">
       <CardHeader className="pb-3">
         <CardTitle className="flex items-center gap-2">
           {isEditing ? "Edit Connection" : "Add New Connection"}

@@ -12,7 +12,7 @@ export function Demo() {
   return (
     <section
       id="demo"
-      className="py-12 md:py-16 bg-gradient-to-b from-background to-background/90 relative overflow-hidden"
+      className="py-12 md:py-16 bg-linear-to-b from-background to-background/90 relative overflow-hidden"
     >
       <div className="absolute inset-0 bg-grid-pattern opacity-[0.03] pointer-events-none" />
 
@@ -28,7 +28,7 @@ export function Demo() {
             Watch Quail in Action
           </span>
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-3 leading-tight">
-            <span className="bg-gradient-to-r from-primary/90 to-primary bg-clip-text text-transparent inline-block pb-1">
+            <span className="bg-linear-to-r from-primary/90 to-primary bg-clip-text text-transparent inline-block pb-1">
               See Quail Transform Your Workflow
             </span>
           </h2>

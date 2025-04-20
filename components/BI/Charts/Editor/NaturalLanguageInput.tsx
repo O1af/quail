@@ -214,7 +214,7 @@ export default function NaturalLanguageInput() {
         >
           <div
             className={cn(
-              "relative rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-lg backdrop-blur-sm",
+              "relative rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-lg backdrop-blur-xs",
               "transition-opacity duration-200",
               !isFocused && !isProcessing && !naturalLanguagePrompt
                 ? "opacity-70"
@@ -250,9 +250,9 @@ export default function NaturalLanguageInput() {
                   variant="destructive"
                   className={cn(
                     "h-7 w-7 rounded-full p-0",
-                    "bg-gradient-to-br from-rose-400 to-red-500",
+                    "bg-linear-to-br from-rose-400 to-red-500",
                     "hover:from-rose-500 hover:to-red-600",
-                    "text-white shadow-sm",
+                    "text-white shadow-xs",
                     "transition-all duration-200 ease-in-out",
                     "dark:from-rose-500 dark:to-red-600",
                     "dark:hover:from-rose-600 dark:hover:to-red-700"
@@ -269,15 +269,15 @@ export default function NaturalLanguageInput() {
                   onClick={() => canSubmit && handleSubmit()}
                   className={cn(
                     "h-7 w-7 rounded-full p-0",
-                    "bg-gradient-to-br from-blue-400 to-indigo-500",
+                    "bg-linear-to-br from-blue-400 to-indigo-500",
                     "hover:from-blue-500 hover:to-indigo-600",
-                    "text-white shadow-sm",
+                    "text-white shadow-xs",
                     "transition-all duration-200 ease-in-out",
                     "dark:from-blue-500 dark:to-indigo-600",
                     "dark:hover:from-blue-600 dark:hover:to-indigo-700",
                     "disabled:from-gray-200 disabled:to-gray-300",
-                    "disabled:dark:from-gray-700 disabled:dark:to-gray-800",
-                    "disabled:text-gray-400 disabled:dark:text-gray-500",
+                    "dark:disabled:from-gray-700 dark:disabled:to-gray-800",
+                    "disabled:text-gray-400 dark:disabled:text-gray-500",
                     "disabled:cursor-not-allowed disabled:opacity-70"
                   )}
                 >

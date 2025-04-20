@@ -258,8 +258,8 @@ export function DashboardCard({
       >
         <Card className="transition-all hover:shadow-md">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <div className="flex items-center space-x-2 flex-grow">
-              {/* <LayoutDashboard className="h-4 w-4 flex-shrink-0" /> */}
+            <div className="flex items-center space-x-2 grow">
+              {/* <LayoutDashboard className="h-4 w-4 shrink-0" /> */}
               {isEditing ? (
                 <div className="w-full space-y-2">
                   <Input
@@ -289,7 +289,7 @@ export function DashboardCard({
                   />
                 </div>
               ) : (
-                <div className="flex items-center gap-1 flex-grow">
+                <div className="flex items-center gap-1 grow">
                   <CardTitle className="text-sm font-medium">{title}</CardTitle>
                   {dashboard.description && (
                     <TooltipProvider>
@@ -410,8 +410,8 @@ export function DashboardCard({
     >
       <div className="flex items-center justify-between p-3 border rounded-lg hover:bg-accent/5 transition-colors">
         <div className="flex items-center space-x-3 flex-1">
-          <LayoutDashboard className="h-5 w-5 flex-shrink-0" />
-          <div className="flex-grow">
+          <LayoutDashboard className="h-5 w-5 shrink-0" />
+          <div className="grow">
             {isEditing ? (
               <div className="space-y-2">
                 <Input

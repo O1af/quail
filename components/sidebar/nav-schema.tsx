@@ -104,7 +104,7 @@ export function NavSchema() {
   };
 
   return (
-    <SidebarGroup className="flex flex-col flex-grow h-full">
+    <SidebarGroup className="flex flex-col grow h-full">
       <SidebarGroupLabel className="flex justify-between items-center mb-1">
         <div className="flex items-center gap-1.5">
           <Database className="h-3.5 w-3.5 text-muted-foreground" />
@@ -133,7 +133,7 @@ export function NavSchema() {
           </TooltipProvider>
         )}
       </SidebarGroupLabel>
-      <SidebarMenu className="flex-grow overflow-y-auto pr-1">
+      <SidebarMenu className="grow overflow-y-auto pr-1">
         {databaseStructure.schemas.map((schema) => (
           <Collapsible
             key={schema.name}

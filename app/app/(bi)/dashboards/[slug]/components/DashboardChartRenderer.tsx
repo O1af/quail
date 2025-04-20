@@ -115,7 +115,7 @@ export default function DashboardChartRenderer({
       className={cn(
         "flex flex-col h-full w-full overflow-hidden"
         // isEditing &&
-        //   "border-2 border-dashed border-primary/30 rounded-md shadow-sm border-blue-400",
+        //   "border-2 border-dashed border-primary/30 rounded-md shadow-xs border-blue-400",
         // className
       )}
     >
@@ -138,7 +138,7 @@ export default function DashboardChartRenderer({
             <TooltipProvider delayDuration={300}>
               <Tooltip>
                 <TooltipTrigger asChild>
-                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground ml-1 flex-shrink-0 absolute right-2 top-1/2 transform -translate-y-1/2" />
+                  <HelpCircle className="h-3.5 w-3.5 text-muted-foreground ml-1 shrink-0 absolute right-2 top-1/2 transform -translate-y-1/2" />
                 </TooltipTrigger>
                 <TooltipContent className="max-w-xs">
                   <p className="text-xs">{description}</p>

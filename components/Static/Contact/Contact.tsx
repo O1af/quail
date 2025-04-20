@@ -81,7 +81,7 @@ ${data.message}`;
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6 bg-card p-6 rounded-lg shadow-sm"
+              className="space-y-6 bg-card p-6 rounded-lg shadow-xs"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField

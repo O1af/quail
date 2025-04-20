@@ -20,7 +20,7 @@ interface DisplayProps {
 
 export function Display({ data, sql, columns }: DisplayProps) {
   return (
-    <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border shadow-sm">
+    <div className="w-full max-w-2xl mx-auto bg-card rounded-xl border shadow-xs">
       <Tabs defaultValue="data" className="w-full">
         <TabsList className="grid w-full grid-cols-3">
           <TabsTrigger value="data" className="flex gap-2 text-xs">

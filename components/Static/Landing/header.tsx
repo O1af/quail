@@ -36,7 +36,7 @@ export function Header() {
     <header
       className={`fixed top-0 left-0 right-0 z-50 transition-all duration-300 ${
         isScrolled
-          ? "bg-background/80 backdrop-blur-md border-b border-border/40 shadow-sm"
+          ? "bg-background/80 backdrop-blur-md border-b border-border/40 shadow-xs"
           : "bg-transparent"
       }`}
     >
@@ -84,7 +84,7 @@ export function Header() {
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (
-        <div className="md:hidden fixed inset-0 top-16 bg-background/95 backdrop-blur z-40">
+        <div className="md:hidden fixed inset-0 top-16 bg-background/95 backdrop-blur-sm z-40">
           <Container className="py-6">
             <nav className="flex flex-col gap-4">
               <div className="pt-4">

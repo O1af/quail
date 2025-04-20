@@ -41,7 +41,7 @@ export function DataTableViewOptions<TData>({
         <Button
           variant="outline"
           size="sm"
-          className="ml-auto h-8 gap-2 focus:outline-none focus:ring-1 focus:ring-ring focus-visible:ring-0"
+          className="ml-auto h-8 gap-2 focus:outline-hidden focus:ring-1 focus:ring-ring focus-visible:ring-0"
         >
           <Settings2 className="h-4 w-4" />
           View

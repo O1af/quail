@@ -97,7 +97,7 @@ export default function Page({
       )}
 
       {/* Main scrollable content area with top padding for better spacing */}
-      <div className="flex-grow overflow-y-auto p-4 pt-0">
+      <div className="grow overflow-y-auto p-4 pt-0">
         <DashboardContent
           dashboard={dashboard}
           chartData={chartData}

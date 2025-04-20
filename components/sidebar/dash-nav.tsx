@@ -82,12 +82,12 @@ export function DashNav() {
                       isActive={isActive(item.path)}
                       className={`rounded-md transition-all duration-200 ${
                         isActive(item.path)
-                          ? "bg-accent/60 shadow-sm"
+                          ? "bg-accent/60 shadow-xs"
                           : "hover:bg-muted"
                       }`}
                     >
                       <item.icon
-                        className={`h-4 w-4 mr-2 flex-shrink-0 ${item.color}`}
+                        className={`h-4 w-4 mr-2 shrink-0 ${item.color}`}
                       />
                       <span className="truncate">{item.label}</span>
                     </SidebarMenuButton>

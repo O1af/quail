@@ -159,7 +159,7 @@ export default function ChartPreviewPane({
     <div className="h-full w-full flex flex-col overflow-hidden">
       <div className="border-b p-3 flex items-center justify-between shrink-0">
         <div className="flex items-center">
-          <BarChart3 className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
+          <BarChart3 className="h-5 w-5 mr-2 text-primary shrink-0" />
           <div className="min-w-0 overflow-hidden">
             <h2 className="text-base font-medium leading-tight truncate">
               {isStreaming ? "Generating Chart..." : "Chart Preview"}

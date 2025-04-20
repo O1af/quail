@@ -20,9 +20,9 @@ export default function DataAndQueryViewer({
 
   const config = {
     icon: isDataViewer ? (
-      <Database className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
+      <Database className="h-5 w-5 mr-2 text-primary shrink-0" />
     ) : (
-      <Code className="h-5 w-5 mr-2 text-primary flex-shrink-0" />
+      <Code className="h-5 w-5 mr-2 text-primary shrink-0" />
     ),
     title: isDataViewer ? "Chart Data" : "SQL Query",
     description: isDataViewer
@@ -32,7 +32,7 @@ export default function DataAndQueryViewer({
 
   return (
     <div className="h-full flex flex-col overflow-hidden">
-      <div className="border-b p-3 flex items-center flex-shrink-0">
+      <div className="border-b p-3 flex items-center shrink-0">
         {config.icon}
         <div className="min-w-0 overflow-hidden">
           <h2 className="text-base font-medium leading-tight truncate">

@@ -189,7 +189,7 @@ export default function Chat({ className, chat_id }: ChatProps) {
         setMessages={setMessages}
         append={append}
         handleSubmit={handleSubmit}
-        className="border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/75"
+        className="border-t bg-background/95 backdrop-blur-sm supports-backdrop-filter:bg-background/75"
       />
     </div>
   );

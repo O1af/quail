@@ -196,7 +196,7 @@ export function BillingForm() {
             className={`flex flex-col h-full ${
               tier === plan.name
                 ? "border-primary bg-primary/5 shadow-md"
-                : "hover:border-primary/50 hover:shadow-sm"
+                : "hover:border-primary/50 hover:shadow-xs"
             }`}
           >
             <CardHeader className="pb-4 pt-6 px-4">
@@ -218,7 +218,7 @@ export function BillingForm() {
               </CardDescription>
             </CardHeader>
 
-            <CardContent className="flex-grow px-4 pb-4">
+            <CardContent className="grow px-4 pb-4">
               <ul className="space-y-2">
                 {plan.features.map((feature) => (
                   <TooltipProvider key={feature.name}>
@@ -230,9 +230,9 @@ export function BillingForm() {
                           }`}
                         >
                           {feature.included ? (
-                            <Check className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
+                            <Check className="h-4 w-4 text-primary mr-2 shrink-0" />
                           ) : (
-                            <X className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
+                            <X className="h-4 w-4 text-muted-foreground mr-2 shrink-0" />
                           )}
                           <span>{feature.name}</span>
                         </li>

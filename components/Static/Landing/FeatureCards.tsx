@@ -101,7 +101,7 @@ export default function FeatureCards() {
           </div>
 
           <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-6 leading-tight">
-            <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent inline-block pb-1">
+            <span className="bg-linear-to-r from-foreground to-foreground/80 bg-clip-text text-transparent inline-block pb-1">
               Everything You Need to Work With Data
             </span>
           </h2>
@@ -129,16 +129,16 @@ export default function FeatureCards() {
               >
                 {/* Gradient background */}
                 <div
-                  className={`absolute inset-0 bg-gradient-to-br ${feature.gradientClass} opacity-30 group-hover:opacity-50 transition-opacity duration-700`}
+                  className={`absolute inset-0 bg-linear-to-br ${feature.gradientClass} opacity-30 group-hover:opacity-50 transition-opacity duration-700`}
                 />
 
                 <CardHeader className="relative z-10">
                   <div
-                    className={`mb-4 flex h-14 w-14 items-center justify-center rounded-lg ${feature.iconColor} bg-gradient-to-br from-muted/80 to-muted group-hover:from-muted/60 group-hover:to-background transition-colors duration-300 shadow-sm`}
+                    className={`mb-4 flex h-14 w-14 items-center justify-center rounded-lg ${feature.iconColor} bg-linear-to-br from-muted/80 to-muted group-hover:from-muted/60 group-hover:to-background transition-colors duration-300 shadow-xs`}
                   >
                     <feature.icon className="h-7 w-7" />
                   </div>
-                  <CardTitle className="text-xl font-semibold bg-clip-text text-transparent bg-gradient-to-r from-foreground to-foreground/80">
+                  <CardTitle className="text-xl font-semibold bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/80">
                     {feature.title}
                   </CardTitle>
                   <CardDescription className="text-sm leading-relaxed">
@@ -146,7 +146,7 @@ export default function FeatureCards() {
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent className="p-4 space-y-4 flex-grow flex flex-col relative z-10">
+                <CardContent className="p-4 space-y-4 grow flex flex-col relative z-10">
                   {feature.component && <feature.component />}
                 </CardContent>
               </Card>

@@ -55,7 +55,7 @@ export function Marquee({
           viewport={{ once: true }}
           className="space-y-2"
         >
-          <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl bg-gradient-to-r from-foreground/90 to-foreground/70 bg-clip-text text-transparent inline-block pb-1">
+          <h2 className="text-2xl font-bold tracking-tighter sm:text-3xl bg-linear-to-r from-foreground/90 to-foreground/70 bg-clip-text text-transparent inline-block pb-1">
             Loved by Engineers at Leading Companies
           </h2>
         </motion.div>

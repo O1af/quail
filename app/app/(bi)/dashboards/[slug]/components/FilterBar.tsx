@@ -182,7 +182,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   ];
 
   return (
-    <div className="p-2 bg-white rounded-lg shadow-sm">
+    <div className="p-2 bg-white rounded-lg shadow-xs">
       <div className="flex items-center flex-wrap gap-2">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
@@ -559,7 +559,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   }
 
   return (
-    <div className="p-2 bg-white rounded-lg shadow-sm">
+    <div className="p-2 bg-white rounded-lg shadow-xs">
       <div className="flex items-center flex-wrap gap-2">
         {Object.entries(filterGroups).map(([groupName, groupFilters]) => (
           <div key={groupName} className="flex flex-col gap-1">

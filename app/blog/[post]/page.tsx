@@ -51,7 +51,7 @@ const components = {
     />
   ),
   p: (props: any) => (
-    <p className="my-5 leading-7 [&:not(:first-child)]:mt-6" {...props} />
+    <p className="my-5 leading-7 not-first:mt-6" {...props} />
   ),
   ul: (props: any) => (
     <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />

@@ -143,14 +143,14 @@ export const ConnectionCard = memo(function ConnectionCard({
         className={`transition-all ${
           isActive
             ? "border-primary bg-primary/5 shadow-md"
-            : "hover:border-muted-foreground/20 hover:shadow-sm"
+            : "hover:border-muted-foreground/20 hover:shadow-xs"
         }`}
       >
         <CardContent className="p-6">
           <div className="flex flex-wrap items-center justify-between gap-4 w-full">
             <div className="flex items-center gap-3 min-w-0">
               <div
-                className={`flex-shrink-0 p-2 rounded-full ${
+                className={`shrink-0 p-2 rounded-full ${
                   isActive ? "bg-primary/20" : "bg-muted"
                 }`}
               >
@@ -210,7 +210,7 @@ export const ConnectionCard = memo(function ConnectionCard({
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="h-8 w-8 rounded-full flex-shrink-0 hover:bg-muted"
+                    className="h-8 w-8 rounded-full shrink-0 hover:bg-muted"
                   >
                     <MoreHorizontal className="h-4 w-4" />
                     <span className="sr-only">Open menu</span>
