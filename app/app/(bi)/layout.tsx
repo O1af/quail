@@ -1,7 +1,7 @@
 "use client";
 import React from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ModeToggle } from "@/components/header/mode-toggle";
+import { ModeToggle } from "@/components/header/buttons/mode-toggle";
 import { UnifiedSidebar } from "@/components/sidebar/unified-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";

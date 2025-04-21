@@ -1,13 +1,13 @@
 "use client";
 import React, { useEffect } from "react";
-import { ResizableDisplay } from "@/components/ResizableDisplay";
-import { RunButton } from "@/components/header/run-button";
-import { DownloadButton } from "@/components/header/download-button";
+import { ResizableDisplay } from "@/components/EditorDisplay";
+import { RunButton } from "@/components/header/buttons/run-button";
+import { DownloadButton } from "@/components/header/buttons/download-button";
 import { ClearChat } from "@/components/header/clear-chat";
-import { UploadButton } from "@/components/header/upload-button";
+import { UploadButton } from "@/components/header/buttons/upload-button";
 import { useHeader } from "@/components/header/header-context";
 import { DbHeaderSwitcher } from "@/components/header/db-header-switcher";
-import { SpeedModeToggle } from "@/components/header/speed-mode-toggle";
+import { SpeedModeToggle } from "@/components/header/buttons/speed-mode-toggle";
 
 export default function Page() {
   const { setHeaderContent, setHeaderButtons } = useHeader();

@@ -11,7 +11,7 @@ import {
   NavigationMenuList,
   navigationMenuTriggerStyle,
 } from "@/components/ui/navigation-menu";
-import { ModeToggle } from "@/components/header/mode-toggle";
+import { ModeToggle } from "@/components/header/buttons/mode-toggle";
 import { APP_URL } from "@/lib/constants";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";

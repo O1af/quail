@@ -8,7 +8,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { useEditorStore } from "../stores/editor_store";
+import { useEditorStore } from "../../stores/editor_store";
 import { shallow } from "zustand/shallow";
 import { useToast } from "@/lib/hooks/use-toast";
 

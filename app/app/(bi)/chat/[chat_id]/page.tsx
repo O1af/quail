@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import Chat from "@/components/BI/Chat/Chat";
 import { useParams } from "next/navigation";
 import { useHeader } from "@/components/header/header-context";
-import { SpeedModeToggle } from "@/components/header/speed-mode-toggle";
+import { SpeedModeToggle } from "@/components/header/buttons/speed-mode-toggle";
 
 export default function Page() {
   const params = useParams<{ chat_id: string }>();

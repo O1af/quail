@@ -5,7 +5,7 @@ import {
   SidebarProvider,
   SidebarTrigger,
 } from "@/components/ui/sidebar";
-import { ModeToggle } from "@/components/header/mode-toggle";
+import { ModeToggle } from "@/components/header/buttons/mode-toggle";
 import { HeaderProvider } from "@/components/header/header-context";
 
 export default function Page() {

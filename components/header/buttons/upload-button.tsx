@@ -9,7 +9,7 @@ import {
 } from "@/components/ui/tooltip";
 import { useState, useRef } from "react";
 import React from "react";
-import { useEditorStore } from "../stores/editor_store";
+import { useEditorStore } from "../../stores/editor_store";
 
 export const UploadButton = React.memo(function UploadButton() {
   const setValue = useEditorStore((state) => state.setValue);

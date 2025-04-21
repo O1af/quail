@@ -9,8 +9,7 @@ export const baseOptions: BaseLayoutProps = {
       url: "/blog",
     },
   ],
-  theme: {
-    light: "fumadocs-light",
-    dark: "fumadocs-dark",
+  themeSwitch: {
+    enabled: true,
   },
 };

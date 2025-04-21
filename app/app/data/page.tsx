@@ -1,11 +1,11 @@
 "use client";
 import React, { useEffect, useState } from "react";
 import { SidebarTrigger } from "@/components/ui/sidebar";
-import { ModeToggle } from "@/components/header/mode-toggle";
+import { ModeToggle } from "@/components/header/buttons/mode-toggle";
 import Routes from "@/components/routes";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
-import { DataDownloadButton } from "@/components/header/data-download-button";
+import { DataDownloadButton } from "@/components/header/buttons/data-download-button";
 import { DevSidebar } from "@/components/sidebar/dev-sidebar";
 import { SidebarInset, SidebarProvider } from "@/components/ui/sidebar";
 import { BetterDataTable } from "@/components/Dev/DataTable/better-data-table";
