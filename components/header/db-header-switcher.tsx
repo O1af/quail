@@ -38,7 +38,7 @@ export function DbHeaderSwitcher() {
             className="h-9 gap-2 border-dashed"
             onClick={() => {
               const event = new CustomEvent("openSettings", {
-                detail: { section: "database" },
+                detail: { section: "connections" },
               });
               window.dispatchEvent(event);
             }}
