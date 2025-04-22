@@ -96,6 +96,25 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
           query: finalQuery,
         };
       }
+      //generate a unique title for the chart
+      const { data: chartTitle, error: titleError } = await tryCatch(
+        generateText({
+          model: provider("gpt-4o-mini"),
+          prompt: `Generate a unique title for this chart
+        based on this code: ${chartJsxData.text}`,
+          system: `You are a data visualization expert. 
+          Generate a unique title for the chart based on the provided code. 
+          Keep it concise and relevant. Dont add quotes or any other characters around it.`,
+        })
+      );
+      if (titleError || !chartTitle) {
+        return {
+          error: "Title generation failed",
+          data: resultData,
+          query: finalQuery,
+          chartJsx: chartJsxData.text,
+        };
+      }
 
       // Generate a chart ID
       const chartId = new ObjectId().toString();
@@ -105,6 +124,7 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
         data: resultData,
         query: finalQuery,
         chartJsx: chartJsxData.text,
+        chartTitle: chartTitle.text,
         chartId: chartId,
       };
 

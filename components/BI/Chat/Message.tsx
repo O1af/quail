@@ -67,6 +67,7 @@ export function Message({ message, savedCharts }: MessageProps) {
       vizData = {
         chartData: {
           chartJsx: lastResult.chartJsx,
+          title: lastResult.chartTitle,
           data: lastResult.data,
           query: lastResult.query,
         } as ChartData,

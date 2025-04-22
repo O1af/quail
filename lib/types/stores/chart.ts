@@ -4,6 +4,7 @@ export interface ChartData {
   chartJsx: string;
   data: PostgresResponse;
   query: string;
+  title: string;
 }
 
 export interface ChartDocument {
