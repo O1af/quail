@@ -14,7 +14,7 @@ export default function Page() {
       <SidebarProvider>
         <UnifiedSidebar mode="dash" />
         <SidebarInset className="h-screen max-h-screen flex flex-col overflow-hidden">
-          <header className="flex h-16 shrink-0 items-center border-b px-4">
+          <header className="flex h-14 shrink-0 items-center border-b px-4">
             <div className="flex items-center gap-2">
               <SidebarTrigger className="-ml-1" />
             </div>
