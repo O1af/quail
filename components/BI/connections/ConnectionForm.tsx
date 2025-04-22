@@ -17,15 +17,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import {
-  Loader2,
-  X,
-  CheckCircle,
-  ShieldCheck,
-  Server,
-  Database,
-  ServerCrash,
-} from "lucide-react";
+import { Loader2, X, ShieldCheck, Database, ServerCrash } from "lucide-react";
 import {
   Card,
   CardContent,
@@ -130,11 +122,8 @@ export function ConnectionForm({
   defaultValues,
   isEditing = false,
 }: ConnectionFormProps) {
-  const [testing, setTesting] = useState(false);
-  const [testResult, setTestResult] = useState<{
-    success?: boolean;
-    message?: string;
-  } | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [hasSSLInString, setHasSSLInString] = useState(false);
   const [ip, setIp] = useState<string>("");
 
@@ -154,13 +143,13 @@ export function ConnectionForm({
     },
   });
 
-  // Reset test results when form changes
+  // Reset error when form changes
   useEffect(() => {
     const subscription = form.watch(() => {
-      if (testResult) setTestResult(null);
+      if (connectionError) setConnectionError(null);
     });
     return () => subscription.unsubscribe();
-  }, [form, testResult]);
+  }, [form, connectionError]);
 
   // Check for SSL in connection string
   useEffect(() => {
@@ -178,52 +167,14 @@ export function ConnectionForm({
     }
   }, [form.watch("connectionString")]);
 
-  const dbType = form.watch("type"); // Get current DB type
+  const dbType = form.watch("type");
   const dbTypeInfo = DB_TYPES[dbType];
-
-  const handleTestConnection = async () => {
-    const values = form.getValues();
-    if (!values.connectionString) {
-      form.setError("connectionString", {
-        message: "Connection string is required",
-      });
-      return;
-    }
-
-    setTesting(true);
-    setTestResult(null);
-
-    try {
-      const { base, sslMode: existingSSL } = parseConnectionString(
-        values.connectionString
-      );
-      const finalSslMode = values.sslMode || existingSSL || "require";
-      const finalConnString = buildConnectionString(
-        base,
-        finalSslMode,
-        values.type
-      );
-
-      await testConnection(finalConnString, values.type);
-      setTestResult({
-        success: true,
-        message: "Connection successful!",
-      });
-    } catch (err) {
-      setTestResult({
-        success: false,
-        message: err instanceof Error ? err.message : String(err),
-      });
-    } finally {
-      setTesting(false);
-    }
-  };
 
   const handleSubmit = useCallback(
     async (values: FormValues) => {
       try {
-        setTesting(true);
-        setTestResult(null);
+        setIsSaving(true);
+        setConnectionError(null);
 
         const { base, sslMode: existingSSL } = parseConnectionString(
           values.connectionString
@@ -235,16 +186,14 @@ export function ConnectionForm({
           values.type
         );
 
+        // Still test connection before submitting
         await testConnection(finalConnString, values.type);
         onSubmit({ ...values, connectionString: finalConnString });
         form.reset();
       } catch (err) {
-        setTestResult({
-          success: false,
-          message: err instanceof Error ? err.message : String(err),
-        });
+        setConnectionError(err instanceof Error ? err.message : String(err));
       } finally {
-        setTesting(false);
+        setIsSaving(false);
       }
     },
     [onSubmit, form]
@@ -359,26 +308,11 @@ export function ConnectionForm({
               </div>
             )}
 
-            {testResult && (
-              <Alert
-                variant={testResult.success ? "default" : "destructive"}
-                className="mt-2"
-              >
-                {testResult.success ? (
-                  <>
-                    <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
-                    <AlertTitle>Connection Successful</AlertTitle>
-                    <AlertDescription>
-                      Successfully connected to your database.
-                    </AlertDescription>
-                  </>
-                ) : (
-                  <>
-                    <ServerCrash className="h-4 w-4 mr-2" />
-                    <AlertTitle>Connection Error</AlertTitle>
-                    <AlertDescription>{testResult.message}</AlertDescription>
-                  </>
-                )}
+            {connectionError && (
+              <Alert variant="destructive" className="mt-2">
+                <ServerCrash className="h-4 w-4 mr-2" />
+                <AlertTitle>Connection Error</AlertTitle>
+                <AlertDescription>{connectionError}</AlertDescription>
               </Alert>
             )}
 
@@ -396,39 +330,18 @@ export function ConnectionForm({
           </div>
         </CardContent>
 
-        <CardFooter className="flex justify-between border-t pt-4 px-5 gap-2">
-          <div className="flex gap-2">
-            <Button
-              variant="outline"
-              type="button"
-              onClick={onCancel}
-              size="sm"
-            >
-              Cancel
-            </Button>
-            <Button
-              type="button"
-              variant="secondary"
-              size="sm"
-              disabled={testing}
-              onClick={handleTestConnection}
-            >
-              {testing ? (
-                <>
-                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
-                  Testing...
-                </>
-              ) : (
-                <>
-                  <Server className="w-3.5 h-3.5 mr-1.5" />
-                  Test Connection
-                </>
-              )}
-            </Button>
-          </div>
-
-          <Button type="submit" size="sm" disabled={testing}>
-            {testing ? (
+        <CardFooter className="flex justify-end border-t pt-4 px-5 gap-2">
+          <Button
+            variant="outline"
+            type="button"
+            onClick={onCancel}
+            size="sm"
+            disabled={isSaving}
+          >
+            Cancel
+          </Button>
+          <Button type="submit" size="sm" disabled={isSaving}>
+            {isSaving ? (
               <>
                 <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
                 {isEditing ? "Saving..." : "Adding..."}
