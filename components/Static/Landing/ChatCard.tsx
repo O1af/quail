@@ -1,5 +1,4 @@
-import React, { useEffect, useState } from "react";
-import { Card, CardContent } from "@/components/ui/card";
+import { useEffect, useState } from "react";
 import { Avatar, AvatarImage, AvatarFallback } from "@/components/ui/avatar";
 import { useTheme } from "next-themes";
 
@@ -50,29 +49,25 @@ ORDER BY total_orders DESC`;
     let userIndex = 0;
     let sqlIndex = 0;
     let typingTimer: NodeJS.Timeout;
+    let sqlTypingTimer: NodeJS.Timeout | null = null;
 
     const typeCharacter = () => {
       if (userIndex < fullUserText.length) {
         setUserText(fullUserText.slice(0, userIndex + 1));
         userIndex++;
+        typingTimer = setTimeout(typeCharacter, 40);
       } else if (!isUserTypingDone) {
         setIsUserTypingDone(true);
-        // Add delay before starting SQL typing
         setTimeout(() => {
-          typingTimer = setInterval(() => {
+          sqlTypingTimer = setInterval(() => {
             if (sqlIndex < fullSqlQuery.length) {
               setSqlQuery(fullSqlQuery.slice(0, sqlIndex + 1));
               sqlIndex++;
             } else {
-              clearInterval(typingTimer);
+              if (sqlTypingTimer) clearInterval(sqlTypingTimer);
             }
           }, 40);
         }, 1000);
-        return;
-      }
-
-      if (!isUserTypingDone) {
-        typingTimer = setTimeout(typeCharacter, 40);
       }
     };
 
@@ -80,51 +75,44 @@ ORDER BY total_orders DESC`;
 
     return () => {
       clearTimeout(typingTimer);
+      if (sqlTypingTimer) clearInterval(sqlTypingTimer);
     };
-  }, []);
+  }, [isUserTypingDone]);
 
   return (
-    <div className="h-[200px] space-y-4">
-      <Card className="border-0 bg-muted/50">
-        <CardContent className="pt-4">
-          <div className="flex items-start gap-3">
-            <Avatar className="h-8 w-8">
-              <AvatarFallback className="bg-primary/20">U</AvatarFallback>
-            </Avatar>
-            <div className="flex-1">
-              <div className="rounded-md bg-card p-3">
-                {userText || " "}
-                {userText.length < fullUserText.length && (
-                  <span className="animate-pulse">|</span>
-                )}
-              </div>
-            </div>
+    <div className="space-y-3">
+      <div className="flex items-start gap-3">
+        <Avatar className="h-8 w-8">
+          <AvatarFallback className="bg-primary/20">U</AvatarFallback>
+        </Avatar>
+        <div className="flex-1">
+          <div className="rounded-md bg-muted/60 p-3 text-sm">
+            {userText || " "}
+            {userText.length < fullUserText.length && (
+              <span className="animate-pulse">|</span>
+            )}
           </div>
-        </CardContent>
-      </Card>
+        </div>
+      </div>
 
-      {sqlQuery && (
-        <Card className="border-0 bg-muted/50">
-          <CardContent className="pt-4">
-            <div className="flex items-start gap-3">
-              <Avatar className="h-8 w-8">
-                <AvatarImage src={avatarSrc} alt="QuailAI" />
-              </Avatar>
-              <div className="flex-1">
-                <div
-                  className="rounded-md bg-primary/10 p-3 font-mono text-sm whitespace-pre"
-                  dangerouslySetInnerHTML={{
-                    __html:
-                      formatSqlWithHighlighting(sqlQuery) +
-                      (sqlQuery.length < fullSqlQuery.length
-                        ? '<span class="animate-pulse">|</span>'
-                        : ""),
-                  }}
-                />
-              </div>
-            </div>
-          </CardContent>
-        </Card>
+      {isUserTypingDone && (
+        <div className="flex items-start gap-3">
+          <Avatar className="h-8 w-8">
+            <AvatarImage src={avatarSrc} alt="QuailAI" />
+          </Avatar>
+          <div className="flex-1">
+            <div
+              className="rounded-md bg-primary/10 p-3 font-mono text-xs whitespace-pre-wrap min-h-[80px]"
+              dangerouslySetInnerHTML={{
+                __html:
+                  formatSqlWithHighlighting(sqlQuery) +
+                  (sqlQuery.length < fullSqlQuery.length
+                    ? '<span class="animate-pulse">|</span>'
+                    : ""),
+              }}
+            />
+          </div>
+        </div>
       )}
     </div>
   );

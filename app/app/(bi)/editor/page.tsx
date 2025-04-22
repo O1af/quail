@@ -3,7 +3,7 @@ import React, { useEffect } from "react";
 import { ResizableDisplay } from "@/components/EditorDisplay";
 import { RunButton } from "@/components/header/buttons/run-button";
 import { DownloadButton } from "@/components/header/buttons/download-button";
-import { ClearChat } from "@/components/header/clear-chat";
+import { ClearChat } from "@/components/header/buttons/clear-chat";
 import { UploadButton } from "@/components/header/buttons/upload-button";
 import { useHeader } from "@/components/header/header-context";
 import { DbHeaderSwitcher } from "@/components/header/db-header-switcher";

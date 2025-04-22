@@ -19,12 +19,14 @@ const nextConfig = {
   experimental: {
     optimizeCss: false,
     optimizePackageImports: ["react-icons", "recharts"],
-    turbo: {
-      rules: {
-        "*.svg": {
-          loaders: ["@svgr/webpack"],
-          as: "*.js",
-        },
+  },
+
+  // Turbopack configuration
+  turbopack: {
+    rules: {
+      "*.svg": {
+        loaders: ["@svgr/webpack"],
+        as: "*.js",
       },
     },
   },

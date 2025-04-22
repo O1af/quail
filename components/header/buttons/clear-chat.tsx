@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useDbStoreWithAutoLoad } from "../stores/db_mongo_client";
+import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,

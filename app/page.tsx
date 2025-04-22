@@ -3,7 +3,6 @@ import dynamic from "next/dynamic";
 import { Header } from "@/components/Static/Landing/header";
 import { Hero } from "@/components/Static/Landing/hero";
 
-// Fix dynamic imports to use proper types
 const FeatureCards = dynamic(
   () =>
     import("@/components/Static/Landing/FeatureCards").then(
@@ -41,18 +40,24 @@ const Pricing = dynamic(
   }
 );
 
-const CTA = dynamic(() =>
-  import("@/components/Static/Landing/CTA").then((mod) => ({
-    default: mod.CTA,
-  }))
+const CTA = dynamic(
+  () =>
+    import("@/components/Static/Landing/CTA").then((mod) => ({
+      default: mod.CTA,
+    })),
+  { loading: () => <div className="h-[200px] animate-pulse bg-muted/50" /> }
 );
-const Footer = dynamic(() => import("@/components/Static/Footer"));
+
+const Footer = dynamic(
+  () => import("@/components/Static/Footer").then((mod) => mod.default),
+  { loading: () => <div className="h-[100px] animate-pulse bg-muted/50" /> }
+);
 
 const Marquee = dynamic(
   () =>
     import("@/components/Static/Landing/Marquee").then((mod) => mod.Marquee),
   {
-    loading: () => <div className="h-[400px] animate-pulse bg-muted/50" />,
+    loading: () => <div className="h-[100px] animate-pulse bg-muted/50" />,
   }
 );
 

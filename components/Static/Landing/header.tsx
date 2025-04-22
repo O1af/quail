@@ -4,13 +4,6 @@ import Image from "next/image";
 import { useTheme } from "next-themes";
 import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
-import {
-  NavigationMenu,
-  NavigationMenuItem,
-  NavigationMenuLink,
-  NavigationMenuList,
-  navigationMenuTriggerStyle,
-} from "@/components/ui/navigation-menu";
 import { ModeToggle } from "@/components/header/buttons/mode-toggle";
 import { APP_URL } from "@/lib/constants";
 import { Menu, X } from "lucide-react";
@@ -18,8 +11,6 @@ import { useState, useEffect } from "react";
 
 export function Header() {
   const { resolvedTheme } = useTheme();
-  const avatarSrc =
-    resolvedTheme === "dark" ? "/boticondark.png" : "/boticonlight.png";
   const [isScrolled, setIsScrolled] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
 
@@ -45,11 +36,13 @@ export function Header() {
           {/* Logo */}
           <Link href="/" className="flex items-center space-x-2 z-50">
             <Image
-              src={avatarSrc}
+              src="/quail_logo.svg"
               alt="Quail Logo"
-              width={24}
-              height={24}
-              className="size-7 transition-transform hover:scale-110"
+              width={42}
+              height={42}
+              className={`size-15 transition-transform hover:scale-110 ${
+                resolvedTheme === "dark" ? "brightness-0 invert" : ""
+              }`}
             />
             <span className="font-semibold text-lg">Quail</span>
           </Link>

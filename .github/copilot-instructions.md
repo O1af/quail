@@ -10,7 +10,6 @@ Quail is a Next.js app with AI-assisted SQL tools and data visualization.
 - Use TypeScript for all new code
 - Keep components small and focused
 - Use descriptive names for everything
-- Optimize only when necessary
 
 ## Technical Stack
 
@@ -18,7 +17,8 @@ Quail is a Next.js app with AI-assisted SQL tools and data visualization.
 - TypeScript
 - React functional components
 - shadcn UI components (from `/components/ui/`)
-- Tailwind CSS for styling
+- magic UI components (from `/components/magicui/`)
+- Tailwind v4 CSS for styling
 
 ## Component Guidelines
 
@@ -37,3 +37,7 @@ Quail is a Next.js app with AI-assisted SQL tools and data visualization.
 
 - Write clean code first, then optimize if needed
 - Use appropriate data fetching (SSR, ISR, client-side)
+
+## Tooling
+
+- **Context7:** Use whenever possible for up-to-date documentation or examples for libraries

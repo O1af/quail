@@ -1,8 +1,9 @@
 {
   "servers": {
-    "@magicuidesign/mcp": {
+    "Context7": {
+      "type": "stdio",
       "command": "npx",
-      "args": ["-y", "@magicuidesign/mcp@latest"]
+      "args": ["-y", "@upstash/context7-mcp@latest"]
     }
   }
 }

@@ -38,14 +38,16 @@ export function DBCard() {
   ]);
 
   useEffect(() => {
-    const timers = [
-      { status: "connected", delay: 2000 },
-      { status: "fetching", delay: 3500 },
-      { status: "ready", delay: 5000 },
+    const timers: NodeJS.Timeout[] = [];
+
+    const timeouts = [
+      { status: "connected", delay: 1500 },
+      { status: "fetching", delay: 3000 },
+      { status: "ready", delay: 4500 },
     ];
 
-    timers.forEach(({ status, delay }) => {
-      setTimeout(() => {
+    timeouts.forEach(({ status, delay }) => {
+      const timer = setTimeout(() => {
         setStatus(status as ConnectionStatus);
         setCompletedSteps((prev) => [
           ...prev.filter((s) => s !== status),
@@ -53,16 +55,19 @@ export function DBCard() {
         ]);
         if (status === "connected") setShowLock(true);
       }, delay);
+      timers.push(timer);
     });
 
-    return () => {};
+    return () => {
+      timers.forEach(clearTimeout);
+    };
   }, []);
 
   return (
-    <div className="h-[220px] rounded-lg border bg-card p-4 text-card-foreground">
-      <div className="flex items-center space-x-2 mb-4">
-        <Database className="h-5 w-5 text-primary" />
-        <span className="font-medium">localhost:1234/mydb</span>
+    <div className="space-y-3">
+      <div className="flex items-center space-x-2 mb-3 p-2 rounded-md bg-muted/60">
+        <Database className="h-4 w-4 text-primary" />
+        <span className="font-mono text-xs">localhost:1234/mydb</span>
       </div>
       <div className="space-y-2">
         {steps.map((step) => {
@@ -78,7 +83,7 @@ export function DBCard() {
                 }`}
               />
               <span
-                className={`text-sm ${
+                className={`text-xs ${
                   isActive || isCompleted
                     ? "text-muted-foreground"
                     : "text-muted-foreground/50"
@@ -88,7 +93,7 @@ export function DBCard() {
               </span>
               {(isActive || isCompleted) && (
                 <Icon
-                  className={`h-4 w-4 ${
+                  className={`h-3.5 w-3.5 ml-auto ${
                     isCompleted
                       ? "text-green-500"
                       : "text-primary animate-pulse"

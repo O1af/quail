@@ -1,27 +1,27 @@
 import { motion } from "framer-motion";
 import {
-  Card,
   CardContent,
   CardDescription,
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
 import { Container } from "@/components/ui/container";
 import { ChatCard } from "./ChatCard";
 import { DBCard } from "./DBCard";
 import { ChartCard } from "./ChartCard";
-import { ArrowRight, Bot, BarChartBig, Database, Sparkles } from "lucide-react";
+import { Bot, BarChartBig, Database, Sparkles } from "lucide-react";
+import { MagicCard } from "@/components/magicui/magic-card";
+import { cn } from "@/lib/utils";
+import { useTheme } from "next-themes";
 
 interface Feature {
   title: string;
   description: string;
   component?: React.FC;
   icon: React.ElementType;
-  color: string;
-  gradientClass: string;
   iconColor: string;
-  borderColor: string;
+  gradientFrom: string;
+  gradientTo: string;
 }
 
 const features: Feature[] = [
@@ -31,10 +31,9 @@ const features: Feature[] = [
       "Create and optimize SQL queries effortlessly with our intelligent, schema-aware assistant",
     component: ChatCard,
     icon: Bot,
-    color: "from-blue-500/20 to-cyan-400/10",
-    gradientClass: "from-blue-500/5 via-cyan-500/5 to-blue-500/5",
     iconColor: "text-blue-500",
-    borderColor: "group-hover:border-blue-400/30",
+    gradientFrom: "#3b82f6",
+    gradientTo: "#06b6d4",
   },
   {
     title: "Natural Language Data Analysis",
@@ -42,10 +41,9 @@ const features: Feature[] = [
       "Ask questions about your data in plain English and get visualized insights instantly",
     component: ChartCard,
     icon: BarChartBig,
-    color: "from-emerald-500/20 to-green-400/10",
-    gradientClass: "from-emerald-500/5 via-green-500/5 to-emerald-500/5",
     iconColor: "text-emerald-500",
-    borderColor: "group-hover:border-emerald-400/30",
+    gradientFrom: "#10b981",
+    gradientTo: "#22c55e",
   },
   {
     title: "Simple and Secure Integration",
@@ -53,10 +51,9 @@ const features: Feature[] = [
       "Link your databases in seconds with our secure, zero-configuration setup process",
     component: DBCard,
     icon: Database,
-    color: "from-violet-500/20 to-purple-400/10",
-    gradientClass: "from-violet-500/5 via-purple-500/5 to-violet-500/5",
     iconColor: "text-violet-500",
-    borderColor: "group-hover:border-violet-400/30",
+    gradientFrom: "#8b5cf6",
+    gradientTo: "#a855f7",
   },
 ];
 
@@ -81,6 +78,7 @@ const cardVariants = {
 };
 
 export default function FeatureCards() {
+  const { resolvedTheme } = useTheme();
   return (
     <section id="features" className="py-12 md:py-16 relative overflow-hidden">
       {/* Background decorations */}
@@ -124,21 +122,22 @@ export default function FeatureCards() {
               variants={cardVariants}
               whileHover={{ y: -8, transition: { duration: 0.2 } }}
             >
-              <Card
-                className={`group relative overflow-hidden transition-all duration-500 h-[500px] flex flex-col border border-muted hover:border-opacity-100 ${feature.borderColor} shadow-lg hover:shadow-xl`}
+              <MagicCard
+                className="flex flex-col overflow-hidden rounded-xl h-full border-[1.5px] border-border/40"
+                gradientFrom={feature.gradientFrom}
+                gradientTo={feature.gradientTo}
+                gradientColor={
+                  resolvedTheme === "dark" ? "#262626" : "#D9D9D955"
+                }
+                gradientSize={180}
               >
-                {/* Gradient background */}
-                <div
-                  className={`absolute inset-0 bg-linear-to-br ${feature.gradientClass} opacity-30 group-hover:opacity-50 transition-opacity duration-700`}
-                />
-
                 <CardHeader className="relative z-10">
                   <div
-                    className={`mb-4 flex h-14 w-14 items-center justify-center rounded-lg ${feature.iconColor} bg-linear-to-br from-muted/80 to-muted group-hover:from-muted/60 group-hover:to-background transition-colors duration-300 shadow-xs`}
+                    className={`mb-3 flex h-12 w-12 items-center justify-center rounded-lg ${feature.iconColor} bg-linear-to-br from-muted/80 to-muted group-hover:from-muted/60 group-hover:to-background transition-colors duration-300`}
                   >
-                    <feature.icon className="h-7 w-7" />
+                    <feature.icon className="h-6 w-6" />
                   </div>
-                  <CardTitle className="text-xl font-semibold bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/80">
+                  <CardTitle className="text-lg font-semibold bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/80">
                     {feature.title}
                   </CardTitle>
                   <CardDescription className="text-sm leading-relaxed">
@@ -146,10 +145,10 @@ export default function FeatureCards() {
                   </CardDescription>
                 </CardHeader>
 
-                <CardContent className="p-4 space-y-4 grow flex flex-col relative z-10">
+                <CardContent className="p-4 pt-0 grow flex flex-col relative z-10">
                   {feature.component && <feature.component />}
                 </CardContent>
-              </Card>
+              </MagicCard>
             </motion.div>
           ))}
         </motion.div>
