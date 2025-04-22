@@ -14,6 +14,12 @@ import { createAgentPrompt, createSystemPrompt } from "./prompts/mainAgent";
 import { updateStatus } from "./utils/workflow";
 import { optimizeMessages } from "./utils/format";
 import { type SpeedMode } from "@/components/stores/table_store";
+import {
+  getTier,
+  updateTokenUsage,
+  updateUsage,
+  getCurrentUsageColumn,
+} from "@/utils/metrics/AI"; // Added import
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -67,8 +73,9 @@ export async function DELETE(req: Request) {
 export const maxDuration = 120;
 
 export async function POST(req: Request) {
+  const supabase = await createClient(); // Moved supabase client creation up
   const { data: authData, error: authError } = await tryCatch(
-    createClient().then((sb) => sb.auth.getUser())
+    supabase.auth.getUser() // Use the already created client
   );
 
   if (authError || !authData.data?.user) {
@@ -82,12 +89,31 @@ export async function POST(req: Request) {
   if (!user?.user) {
     throw new Error("User not authenticated");
   }
+
+  // Check tier and usage limits
+  let userTier;
+  try {
+    const { tier } = await getTier(
+      supabase,
+      user.user.id,
+      getCurrentUsageColumn()
+    );
+    userTier = tier;
+  } catch (error) {
+    return new Response(
+      JSON.stringify({
+        message: error instanceof Error ? error.message : "Usage limit error",
+      }),
+      { status: 403 }
+    );
+  }
+
   const {
     messages,
     databaseStructure,
     dbType,
     connectionString,
-    userTier,
+    // userTier, // Removed as we fetch it above
     speedMode,
     id,
   } = await req.json();
@@ -132,7 +158,7 @@ export async function POST(req: Request) {
         },
         tools: {
           DataVisAgent: DataVisAgentTool({
-            supabase: await createClient(),
+            supabase: supabase, // Pass the existing supabase client
             messages,
             dbType,
             connectionString,
@@ -141,7 +167,32 @@ export async function POST(req: Request) {
             stream: dataStream,
           }),
         },
-        async onFinish({ response }) {
+        async onFinish({ response, usage }) { // Added usage parameter
+          // Update token usage and general usage
+          try {
+            await updateTokenUsage(
+              supabase,
+              user.user.id,
+              getCurrentUsageColumn(),
+              usage.totalTokens,
+              userTier
+            );
+
+            await updateUsage(
+              supabase,
+              user.user.id,
+              getCurrentUsageColumn(),
+              userTier
+            );
+          } catch (error) {
+            console.error("Failed to update usage metrics:", error);
+            // Optionally inform the client about the usage update failure
+            dataStream.writeData({
+              status: "Failed to update usage metrics",
+            });
+          }
+
+          // Save the chat
           const { error: saveError } = await tryCatch(
             saveChat(
               id,
