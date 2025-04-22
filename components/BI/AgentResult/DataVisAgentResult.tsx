@@ -52,12 +52,6 @@ const ActionButtons = memo(
     isAlreadySaved: boolean;
   }) => (
     <div className="flex flex-wrap justify-between items-center p-4 border-t gap-2">
-      <Button variant="outline" className="gap-2" onClick={onDrill}>
-        <ArrowDownUp className="h-4 w-4" />
-        <span className="hidden sm:inline">Drill Down/Up</span>
-        <span className="sm:hidden">Drill</span>
-      </Button>
-
       <div className="flex flex-wrap gap-2">
         {isAlreadySaved ? (
           <Button variant="outline" className="gap-2" disabled>

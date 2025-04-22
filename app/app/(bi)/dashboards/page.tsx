@@ -60,14 +60,11 @@ export default function DashboardsPage() {
   // Set up the search bar in the header
   useEffect(() => {
     setHeaderContent(
-      <div className="flex flex-1 justify-between items-center w-full">
-        <div>
-          <h1 className="text-xl font-semibold">Dashboards</h1>
-          <p className="text-sm text-muted-foreground">
-            Manage and visualize your data
-          </p>
-        </div>
-        <div className="w-full ml-4 max-w-lg mr-4">
+      <div className="flex flex-1 justify-between items-center w-full gap-4">
+        <h1 className="text-xl font-semibold">Dashboards</h1>
+        <div className="w-full max-w-sm">
+          {" "}
+          {/* Adjusted max-width */}
           <SearchBar
             placeholder="Search dashboards..."
             value={searchQuery}

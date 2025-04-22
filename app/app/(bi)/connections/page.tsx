@@ -15,9 +15,6 @@ export default function ConnectionsPage() {
     setHeaderContent(
       <div className="flex flex-col">
         <h1 className="text-xl font-semibold">Database Connections</h1>
-        <p className="text-sm text-muted-foreground">
-          Manage your database connections and credentials
-        </p>
       </div>
     );
 

@@ -100,6 +100,7 @@ export default function RootLayout({
           flexDirection: "column",
           minHeight: "100vh",
         }}
+        suppressHydrationWarning
       >
         <RootProvider>
           <ThemeProvider

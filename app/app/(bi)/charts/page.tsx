@@ -12,11 +12,8 @@ export default function Charts() {
   useEffect(() => {
     // Set custom header content
     setHeaderContent(
-      <div className="flex flex-col">
-        <h1 className="text-xl font-semibold">Your Charts</h1>
-        <p className="text-sm text-muted-foreground">
-          Visualize your data with customizable charts
-        </p>
+      <div className="flex flex-col space-y-1">
+        <h1 className="text-xl font-semibold">Charts</h1>
       </div>
     );
 
