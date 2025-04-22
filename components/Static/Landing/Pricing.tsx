@@ -19,7 +19,6 @@ import {
 import { cn } from "@/lib/utils";
 import { APP_URL } from "@/lib/constants";
 import { motion } from "framer-motion";
-import { BorderBeam } from "@/components/magicui/border-beam";
 
 const pricingPlans = [
   {
