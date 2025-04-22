@@ -131,7 +131,7 @@ export default function FeatureCards() {
                 }
                 gradientSize={180}
               >
-                <CardHeader className="relative z-10">
+                <CardHeader className="relative z-10 pt-6">
                   <div
                     className={`mb-3 flex h-12 w-12 items-center justify-center rounded-lg ${feature.iconColor} bg-linear-to-br from-muted/80 to-muted group-hover:from-muted/60 group-hover:to-background transition-colors duration-300`}
                   >

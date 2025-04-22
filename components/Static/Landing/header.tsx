@@ -8,6 +8,7 @@ import { ModeToggle } from "@/components/header/buttons/mode-toggle";
 import { APP_URL } from "@/lib/constants";
 import { Menu, X } from "lucide-react";
 import { useState, useEffect } from "react";
+import { ScrollProgress } from "@/components/magicui/scroll-progress";
 
 export function Header() {
   const { resolvedTheme } = useTheme();
@@ -74,6 +75,9 @@ export function Header() {
           </div>
         </div>
       </Container>
+
+      {/* Scroll Progress positioned below the navbar */}
+      <ScrollProgress className="top-16" />
 
       {/* Mobile Navigation */}
       {mobileMenuOpen && (

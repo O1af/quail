@@ -53,7 +53,7 @@ const securityCards = [
     icon: Key,
     title: "Database Credentials",
     description:
-      "Your database credentials are securely encrypted and stored exclusively on your local device. We maintain zero credential storage on our servers, using them solely for authenticated database connections during query execution.",
+      "Your database credentials are encrypted at all times using a unique key per user and stored securely on our servers. These credentials are used solely for establishing authenticated database connections during query execution.",
   },
   {
     icon: CreditCard,

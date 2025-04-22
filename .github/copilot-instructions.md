@@ -40,4 +40,4 @@ Quail is a Next.js app with AI-assisted SQL tools and data visualization.
 
 ## Tooling
 
-- **Context7:** Use whenever possible for up-to-date documentation or examples for libraries
+- **Context7:** Always use this tool when asked for information, documentation, or examples.
