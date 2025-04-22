@@ -17,7 +17,15 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Loader2, X, AlertCircle, ShieldCheck } from "lucide-react";
+import {
+  Loader2,
+  X,
+  CheckCircle,
+  ShieldCheck,
+  Server,
+  Database,
+  ServerCrash,
+} from "lucide-react";
 import {
   Card,
   CardContent,
@@ -26,10 +34,13 @@ import {
   CardTitle,
 } from "@/components/ui/card";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { SiPostgresql, SiMysql } from "react-icons/si";
+import { cn } from "@/lib/utils";
 
 const DB_TYPES = {
   postgres: {
     name: "PostgreSQL",
+    icon: <SiPostgresql className="h-5 w-5 text-[#336791]" />,
     formatExample:
       "postgresql://[username]:[password]@[host]:[port]/[database]",
     sslModes: [
@@ -43,6 +54,7 @@ const DB_TYPES = {
   },
   mysql: {
     name: "MySQL",
+    icon: <SiMysql className="h-5 w-5 text-[#00758F]" />,
     formatExample: "mysql://[username]:[password]@[host]:[port]/[database]",
     sslModes: [
       "true",
@@ -119,7 +131,10 @@ export function ConnectionForm({
   isEditing = false,
 }: ConnectionFormProps) {
   const [testing, setTesting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [testResult, setTestResult] = useState<{
+    success?: boolean;
+    message?: string;
+  } | null>(null);
   const [hasSSLInString, setHasSSLInString] = useState(false);
   const [ip, setIp] = useState<string>("");
 
@@ -138,6 +153,14 @@ export function ConnectionForm({
       sslMode: "require",
     },
   });
+
+  // Reset test results when form changes
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      if (testResult) setTestResult(null);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, testResult]);
 
   // Check for SSL in connection string
   useEffect(() => {
@@ -158,11 +181,49 @@ export function ConnectionForm({
   const dbType = form.watch("type"); // Get current DB type
   const dbTypeInfo = DB_TYPES[dbType];
 
+  const handleTestConnection = async () => {
+    const values = form.getValues();
+    if (!values.connectionString) {
+      form.setError("connectionString", {
+        message: "Connection string is required",
+      });
+      return;
+    }
+
+    setTesting(true);
+    setTestResult(null);
+
+    try {
+      const { base, sslMode: existingSSL } = parseConnectionString(
+        values.connectionString
+      );
+      const finalSslMode = values.sslMode || existingSSL || "require";
+      const finalConnString = buildConnectionString(
+        base,
+        finalSslMode,
+        values.type
+      );
+
+      await testConnection(finalConnString, values.type);
+      setTestResult({
+        success: true,
+        message: "Connection successful!",
+      });
+    } catch (err) {
+      setTestResult({
+        success: false,
+        message: err instanceof Error ? err.message : String(err),
+      });
+    } finally {
+      setTesting(false);
+    }
+  };
+
   const handleSubmit = useCallback(
     async (values: FormValues) => {
       try {
         setTesting(true);
-        setError(null);
+        setTestResult(null);
 
         const { base, sslMode: existingSSL } = parseConnectionString(
           values.connectionString
@@ -178,7 +239,10 @@ export function ConnectionForm({
         onSubmit({ ...values, connectionString: finalConnString });
         form.reset();
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setTestResult({
+          success: false,
+          message: err instanceof Error ? err.message : String(err),
+        });
       } finally {
         setTesting(false);
       }
@@ -187,116 +251,187 @@ export function ConnectionForm({
   );
 
   return (
-    <Card className="mb-6 border-primary/20 shadow-xs">
-      <CardHeader className="pb-3">
-        <CardTitle className="flex items-center gap-2">
-          {isEditing ? "Edit Connection" : "Add New Connection"}
+    <Card className="mb-5 border shadow-sm">
+      <CardHeader className="py-4 px-5">
+        <CardTitle className="flex items-center justify-between">
+          <span className="flex items-center gap-2">
+            <Database className="h-4 w-4" />
+            {isEditing ? "Edit Connection" : "New Connection"}
+          </span>
+          <Button
+            variant="ghost"
+            size="icon"
+            className="h-7 w-7 rounded-md -mr-2"
+            onClick={onCancel}
+          >
+            <X className="h-4 w-4" />
+            <span className="sr-only">Close</span>
+          </Button>
         </CardTitle>
       </CardHeader>
       <form onSubmit={form.handleSubmit(handleSubmit)}>
-        <CardContent className="space-y-5">
-          <div className="grid grid-cols-2 gap-4">
+        <CardContent className="space-y-5 px-5">
+          <div className="space-y-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label htmlFor="name">Connection Name</Label>
+                <Input
+                  id="name"
+                  {...form.register("name")}
+                  placeholder="My Database"
+                  autoFocus
+                  className={cn(
+                    form.formState.errors.name && "border-destructive"
+                  )}
+                />
+                {form.formState.errors.name && (
+                  <p className="text-xs text-destructive mt-1">
+                    {form.formState.errors.name.message}
+                  </p>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Database Type</Label>
+                <div className="flex gap-2">
+                  {(Object.keys(DB_TYPES) as Array<keyof typeof DB_TYPES>).map(
+                    (type) => (
+                      <Button
+                        key={type}
+                        type="button"
+                        variant={
+                          form.watch("type") === type ? "default" : "outline"
+                        }
+                        className="flex-1 gap-2"
+                        onClick={() => form.setValue("type", type)}
+                      >
+                        {DB_TYPES[type].icon}
+                        {DB_TYPES[type].name}
+                      </Button>
+                    )
+                  )}
+                </div>
+              </div>
+            </div>
+
             <div className="space-y-2">
-              <Label htmlFor="name">Connection Name</Label>
+              <Label htmlFor="connection">Connection String</Label>
               <Input
-                id="name"
-                {...form.register("name")}
-                placeholder="My Database"
-                autoFocus
+                id="connection"
+                placeholder={dbTypeInfo.formatExample}
+                {...form.register("connectionString")}
+                className={cn(
+                  "font-mono text-sm",
+                  form.formState.errors.connectionString && "border-destructive"
+                )}
               />
-              {form.formState.errors.name && (
-                <p className="text-sm text-destructive">
-                  {form.formState.errors.name.message}
+              {form.formState.errors.connectionString && (
+                <p className="text-xs text-destructive mt-1">
+                  {form.formState.errors.connectionString.message}
                 </p>
               )}
-            </div>
-            <div className="space-y-2">
-              <Label>Database Type</Label>
-              <Select
-                value={form.watch("type")}
-                onValueChange={(value: "postgres" | "mysql") =>
-                  form.setValue("type", value)
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="postgres">PostgreSQL</SelectItem>
-                  <SelectItem value="mysql">MySQL</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="connection">Connection String</Label>
-            <Input
-              id="connection"
-              placeholder={dbTypeInfo.formatExample}
-              {...form.register("connectionString")}
-              className="font-mono text-sm"
-            />
-            {form.formState.errors.connectionString && (
-              <p className="text-sm text-destructive">
-                {form.formState.errors.connectionString.message}
+              <p className="text-xs text-muted-foreground mt-1">
+                Format: {dbTypeInfo.formatExample}
               </p>
+            </div>
+
+            {!hasSSLInString && (
+              <div className="space-y-2">
+                <Label>SSL Mode</Label>
+                <Select
+                  value={form.watch("sslMode")}
+                  onValueChange={(value) => form.setValue("sslMode", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dbTypeInfo.sslModes.map((mode) => (
+                      <SelectItem key={mode} value={mode}>
+                        {mode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <p className="text-xs text-muted-foreground">
+                  Choose the SSL connection security level
+                </p>
+              </div>
             )}
-            <p className="text-xs text-muted-foreground">
-              Example: {dbTypeInfo.formatExample}
-            </p>
-          </div>
-          {!hasSSLInString && (
-            <div className="space-y-2">
-              <Label>SSL Mode</Label>
-              <Select
-                value={form.watch("sslMode")}
-                onValueChange={(value) => form.setValue("sslMode", value)}
+
+            {testResult && (
+              <Alert
+                variant={testResult.success ? "default" : "destructive"}
+                className="mt-2"
               >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {dbTypeInfo.sslModes.map((mode) => (
-                    <SelectItem key={mode} value={mode}>
-                      {mode}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-              <p className="text-xs text-muted-foreground">
-                Choose how to handle SSL for this connection
-              </p>
-            </div>
-          )}
-          {error && (
-            <Alert variant="destructive">
-              <AlertCircle className="h-4 w-4 mr-2" />
-              <AlertTitle>Connection Error</AlertTitle>
-              <AlertDescription>{error}</AlertDescription>
-            </Alert>
-          )}
-          {ip && (
-            <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700">
-              <ShieldCheck className="h-4 w-4 mr-2 text-amber-600 dark:text-amber-400" />
-              <AlertDescription className="text-amber-800 dark:text-amber-400">
-                Make sure to add this IP to your database allow list:{" "}
-                <code className="bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded text-xs">
-                  {ip}
-                </code>
-              </AlertDescription>
-            </Alert>
-          )}
+                {testResult.success ? (
+                  <>
+                    <CheckCircle className="h-4 w-4 mr-2 text-green-500" />
+                    <AlertTitle>Connection Successful</AlertTitle>
+                    <AlertDescription>
+                      Successfully connected to your database.
+                    </AlertDescription>
+                  </>
+                ) : (
+                  <>
+                    <ServerCrash className="h-4 w-4 mr-2" />
+                    <AlertTitle>Connection Error</AlertTitle>
+                    <AlertDescription>{testResult.message}</AlertDescription>
+                  </>
+                )}
+              </Alert>
+            )}
+
+            {ip && (
+              <Alert className="bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700">
+                <ShieldCheck className="h-4 w-4 mr-2 text-amber-600 dark:text-amber-400" />
+                <AlertDescription className="text-amber-800 dark:text-amber-400 text-xs">
+                  Add this IP to your database allowlist:&nbsp;
+                  <code className="bg-amber-100 dark:bg-amber-900/50 px-1.5 py-0.5 rounded">
+                    {ip}
+                  </code>
+                </AlertDescription>
+              </Alert>
+            )}
+          </div>
         </CardContent>
 
-        <CardFooter className="flex justify-between border-t pt-4">
-          <Button variant="ghost" type="button" onClick={onCancel}>
-            Cancel
-          </Button>
-          <Button type="submit" disabled={testing}>
+        <CardFooter className="flex justify-between border-t pt-4 px-5 gap-2">
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              type="button"
+              onClick={onCancel}
+              size="sm"
+            >
+              Cancel
+            </Button>
+            <Button
+              type="button"
+              variant="secondary"
+              size="sm"
+              disabled={testing}
+              onClick={handleTestConnection}
+            >
+              {testing ? (
+                <>
+                  <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                  Testing...
+                </>
+              ) : (
+                <>
+                  <Server className="w-3.5 h-3.5 mr-1.5" />
+                  Test Connection
+                </>
+              )}
+            </Button>
+          </div>
+
+          <Button type="submit" size="sm" disabled={testing}>
             {testing ? (
               <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                Testing connection...
+                <Loader2 className="w-3.5 h-3.5 mr-1.5 animate-spin" />
+                {isEditing ? "Saving..." : "Adding..."}
               </>
             ) : isEditing ? (
               "Save Changes"

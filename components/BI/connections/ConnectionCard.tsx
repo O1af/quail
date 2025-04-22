@@ -4,20 +4,13 @@ import { queryMetadata } from "@/components/stores/utils/query";
 import { useTableStore } from "@/components/stores/table_store";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useDbStore } from "@/components/stores/db_mongo_client";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-} from "@/components/ui/card";
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
-import { Badge } from "@/components/ui/badge";
 import {
   MoreHorizontal,
   Edit,
   Trash2,
   CheckCircle,
-  Database,
   ArrowRightCircle,
   Loader2,
   ServerOff,
@@ -42,6 +35,12 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipProvider,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -59,43 +58,43 @@ const getDatabaseIcon = (connection: DatabaseConfig) => {
     // Check if it's a special service
     if (connection.connectionString?.includes("neon.tech")) {
       return (
-        <div className="w-6 h-6">
+        <div className="w-5 h-5 flex items-center justify-center">
           <Image
             src="/logos/neon-light.svg"
             alt="Neon Database"
-            width={24}
-            height={24}
+            width={20}
+            height={20}
             className="dark:hidden"
           />
           <Image
             src="/logos/neon-dark.svg"
             alt="Neon Database"
-            width={24}
-            height={24}
+            width={20}
+            height={20}
             className="hidden dark:block"
           />
         </div>
       );
     } else if (connection.connectionString?.includes("supabase")) {
-      return <SiSupabase className="h-6 w-6 text-[#3ECF8E]" />;
+      return <SiSupabase className="h-5 w-5 text-[#3ECF8E]" />;
     } else if (
       connection.connectionString?.includes("aws") ||
       connection.connectionString?.includes("rds")
     ) {
       return (
-        <div className="w-6 h-6">
-          <Image src="/logos/aws.svg" alt="AWS RDS" width={24} height={24} />
+        <div className="w-5 h-5 flex items-center justify-center">
+          <Image src="/logos/aws.svg" alt="AWS RDS" width={20} height={20} />
         </div>
       );
     }
     // Default PostgreSQL icon
-    return <SiPostgresql className="h-6 w-6 text-[#336791]" />;
+    return <SiPostgresql className="h-5 w-5 text-[#336791]" />;
   } else if (connection.type === "mysql") {
-    return <SiMysql className="h-6 w-6 text-[#00758F]" />;
+    return <SiMysql className="h-5 w-5 text-[#00758F]" />;
   }
 
   // Fallback database icon
-  return <Database className="h-6 w-6" />;
+  return <Server className="h-5 w-5" />;
 };
 
 export const ConnectionCard = memo(function ConnectionCard({
@@ -140,114 +139,135 @@ export const ConnectionCard = memo(function ConnectionCard({
   return (
     <>
       <Card
-        className={`transition-all ${
+        className={`transition-all border ${
           isActive
-            ? "border-primary bg-primary/5 shadow-md"
+            ? "border-primary/50 bg-primary/[0.03] shadow-sm"
             : "hover:border-muted-foreground/20 hover:shadow-xs"
         }`}
       >
-        <CardContent className="p-6">
-          <div className="flex flex-wrap items-center justify-between gap-4 w-full">
-            <div className="flex items-center gap-3 min-w-0">
+        <CardContent className="p-4">
+          <div className="flex items-center justify-between gap-2">
+            <div className="flex items-center gap-3 min-w-0 flex-1">
               <div
-                className={`shrink-0 p-2 rounded-full ${
-                  isActive ? "bg-primary/20" : "bg-muted"
+                className={`shrink-0 p-1.5 rounded-md ${
+                  isActive ? "bg-primary/10" : "bg-muted"
                 }`}
               >
                 {DatabaseIcon}
               </div>
-              <div className="min-w-0 overflow-hidden">
-                <div className="flex items-center gap-2 mb-0.5">
-                  <h3 className="font-medium truncate">{connection.name}</h3>
-                </div>
-                <CardDescription className="truncate flex items-center gap-1">
+              <div className="min-w-0 flex-1">
+                <TooltipProvider delayDuration={300}>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <h3 className="font-medium truncate text-sm">
+                        {connection.name}
+                      </h3>
+                    </TooltipTrigger>
+                    <TooltipContent side="top" align="start">
+                      {connection.name}
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
                   <Server className="h-3 w-3 opacity-70" />
-                  {dbTypeLabel} database
-                </CardDescription>
+                  {dbTypeLabel}
+                </div>
               </div>
             </div>
 
-            <div className="flex items-center gap-2 shrink-0 ml-auto">
+            <div className="flex items-center gap-1.5 shrink-0">
               {isActive && (
                 <Link href="/connections/schema" passHref>
                   <Button
                     variant="outline"
                     size="sm"
-                    className="h-8 gap-1 text-xs"
+                    className="h-7 gap-1 text-xs"
                   >
-                    <TableProperties className="h-3.5 w-3.5" />
-                    Schema Explorer
+                    <TableProperties className="h-3 w-3" />
+                    Schema
                   </Button>
                 </Link>
               )}
               <Button
                 variant={isActive ? "secondary" : "default"}
                 size="sm"
-                className={`transition-all duration-200 ${
-                  isActive
-                    ? "pointer-events-none opacity-90"
-                    : "hover:scale-[1.02]"
+                className={`h-7 transition-all ${
+                  isActive ? "pointer-events-none opacity-90" : ""
                 }`}
                 disabled={activating}
                 onClick={handleSetActive}
               >
                 {activating ? (
-                  <Loader2 className="h-3.5 w-3.5 animate-spin mr-1.5" />
+                  <Loader2 className="h-3 w-3 animate-spin mr-1" />
                 ) : isActive ? (
-                  <CheckCircle className="h-3.5 w-3.5 mr-1.5" />
+                  <CheckCircle className="h-3 w-3 mr-1" />
                 ) : (
-                  <ArrowRightCircle className="h-3.5 w-3.5 mr-1.5" />
+                  <ArrowRightCircle className="h-3 w-3 mr-1" />
                 )}
-                {activating
-                  ? "Connecting..."
-                  : isActive
-                  ? "Active"
-                  : "Activate"}
+                {isActive ? "Active" : "Connect"}
               </Button>
 
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <Button
                     variant="ghost"
-                    size="icon"
-                    className="h-8 w-8 rounded-full shrink-0 hover:bg-muted"
+                    size="sm"
+                    className="h-7 w-7 p-0 rounded-md"
                   >
-                    <MoreHorizontal className="h-4 w-4" />
-                    <span className="sr-only">Open menu</span>
+                    <MoreHorizontal className="h-3.5 w-3.5" />
+                    <span className="sr-only">Actions</span>
                   </Button>
                 </DropdownMenuTrigger>
-                <DropdownMenuContent align="end">
+                <DropdownMenuContent align="end" className="w-40">
                   <DropdownMenuItem
                     onClick={() => onUpdate(connection.id)}
                     className="cursor-pointer"
                   >
-                    <Edit className="mr-2 h-4 w-4" />
-                    Edit connection
+                    <Edit className="mr-2 h-3.5 w-3.5" />
+                    Edit
                   </DropdownMenuItem>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive cursor-pointer"
                     onClick={() => setIsDeleting(true)}
                   >
-                    <Trash2 className="mr-2 h-4 w-4" />
-                    Delete connection
+                    <Trash2 className="mr-2 h-3.5 w-3.5" />
+                    Delete
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
           </div>
         </CardContent>
+
         <CardFooter
-          className={`px-6 py-3 bg-muted/40 text-xs text-muted-foreground font-mono border-t ${
+          className={`px-4 py-2 bg-muted/30 text-xs text-muted-foreground font-mono border-t ${
             isActive ? "border-primary/20" : "border-border"
-          } truncate flex items-center gap-1.5`}
+          } flex items-center gap-1.5`}
         >
-          {isActive ? (
-            <CheckCircle className="h-3.5 w-3.5 text-primary/70" />
-          ) : (
-            <ServerOff className="h-3.5 w-3.5 opacity-50" />
-          )}
-          {formatConnectionString(connection.connectionString)}
+          <TooltipProvider delayDuration={300}>
+            <Tooltip>
+              <TooltipTrigger asChild>
+                <div className="truncate flex items-center gap-1.5">
+                  {isActive ? (
+                    <CheckCircle className="h-3 w-3 text-primary/70 shrink-0" />
+                  ) : (
+                    <ServerOff className="h-3 w-3 opacity-50 shrink-0" />
+                  )}
+                  <span className="truncate">
+                    {formatConnectionString(connection.connectionString)}
+                  </span>
+                </div>
+              </TooltipTrigger>
+              <TooltipContent
+                side="top"
+                align="start"
+                className="max-w-md font-mono"
+              >
+                {formatConnectionString(connection.connectionString, 1000)}
+              </TooltipContent>
+            </Tooltip>
+          </TooltipProvider>
         </CardFooter>
       </Card>
 
@@ -256,8 +276,8 @@ export const ConnectionCard = memo(function ConnectionCard({
           <AlertDialogHeader>
             <AlertDialogTitle>Delete Connection</AlertDialogTitle>
             <AlertDialogDescription>
-              Are you sure you want to delete the connection "{connection.name}
-              "? This action cannot be undone.
+              Are you sure you want to delete "{connection.name}"? This action
+              cannot be undone.
             </AlertDialogDescription>
           </AlertDialogHeader>
           <AlertDialogFooter>
@@ -269,7 +289,7 @@ export const ConnectionCard = memo(function ConnectionCard({
               }}
               className="bg-destructive hover:bg-destructive/90"
             >
-              Delete Connection
+              Delete
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>

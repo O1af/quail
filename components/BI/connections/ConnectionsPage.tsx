@@ -6,6 +6,7 @@ import { ConnectionsList } from "./ConnectionsList";
 import { ConnectionForm } from "./ConnectionForm";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useConnectionsState } from "@/lib/hooks/useConnectionsState";
+import { AnimatePresence, motion } from "framer-motion";
 
 export const Connections = memo(function Connections() {
   const [isDbLoading, setIsDbLoading] = useState(true);
@@ -41,7 +42,7 @@ export const Connections = memo(function Connections() {
       ? databases.find((db) => db.id === editingConnectionId)
       : undefined;
 
-  // Database operations with error handling patterns
+  // Database operations with error handling
   const databaseOperations = {
     add: useCallback(
       async (data: any) => {
@@ -103,40 +104,40 @@ export const Connections = memo(function Connections() {
     ),
   };
 
-  if (isDbLoading) {
-    // Optimistic UI
-    return (
-      <div className="opacity-50 transition-opacity">
-        <ConnectionsList
-          connections={[]}
-          currentConnectionId={null}
-          onUpdate={() => {}}
-          onRemove={() => {}}
-          onAddNew={() => {}}
-        />
-      </div>
-    );
-  }
+  const formVisible = isCreating || editingConnectionId !== null;
 
   return (
-    <div className="space-y-6">
-      {isCreating && (
-        <ConnectionForm
-          onSubmit={databaseOperations.add}
-          onCancel={closeConnectionForm}
-        />
-      )}
+    <div className="flex flex-col h-full overflow-hidden px-6 py-4">
+      <AnimatePresence mode="wait">
+        {formVisible && (
+          <motion.div
+            key="form"
+            initial={{ opacity: 0, y: -10 }}
+            animate={{ opacity: 1, y: 0 }}
+            exit={{ opacity: 0, height: 0 }}
+            transition={{ duration: 0.2 }}
+            className="mb-5"
+          >
+            {isCreating && (
+              <ConnectionForm
+                onSubmit={databaseOperations.add}
+                onCancel={closeConnectionForm}
+              />
+            )}
 
-      {editingConnectionId !== null && connectionBeingEdited && (
-        <ConnectionForm
-          onSubmit={(data) =>
-            databaseOperations.update(editingConnectionId, data)
-          }
-          onCancel={closeConnectionForm}
-          defaultValues={connectionBeingEdited}
-          isEditing={true}
-        />
-      )}
+            {editingConnectionId !== null && connectionBeingEdited && (
+              <ConnectionForm
+                onSubmit={(data) =>
+                  databaseOperations.update(editingConnectionId, data)
+                }
+                onCancel={closeConnectionForm}
+                defaultValues={connectionBeingEdited}
+                isEditing={true}
+              />
+            )}
+          </motion.div>
+        )}
+      </AnimatePresence>
 
       <ConnectionsList
         connections={databases}
@@ -144,6 +145,7 @@ export const Connections = memo(function Connections() {
         onUpdate={openEditConnectionForm}
         onRemove={databaseOperations.remove}
         onAddNew={openAddConnectionForm}
+        isLoading={isDbLoading}
       />
     </div>
   );
