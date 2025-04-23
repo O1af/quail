@@ -54,7 +54,7 @@ export function DataTable() {
   // Initialize sorting only once when component mounts
   React.useEffect(() => {
     setSorting([]);
-  }, []); // Empty dependency array
+  }, [setSorting]); // Add setSorting as dependency
 
   const handleSortingChange = React.useCallback(
     (updater: any) => {

@@ -66,7 +66,7 @@ export const RunButton = React.memo(function RunButton() {
       const timer = setTimeout(() => setDisplayError(false), 3000);
       return () => clearTimeout(timer);
     }
-  }, [error]);
+  }, [error, toast]);
 
   useEffect(() => {
     if (success) {
@@ -80,7 +80,7 @@ export const RunButton = React.memo(function RunButton() {
     executeQuery().then(() => {
       if (!error) setSuccess(true);
     });
-  }, [executeQuery, error]);
+  }, [executeQuery, error, clearError]);
 
   return (
     <TooltipProvider>

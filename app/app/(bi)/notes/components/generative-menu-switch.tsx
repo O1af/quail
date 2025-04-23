@@ -17,20 +17,28 @@ const GenerativeMenuSwitch = ({
   const { editor } = useEditor();
 
   useEffect(() => {
-    if (!open) removeAIHighlight(editor);
-  }, [open]);
+    if (!open && editor) {
+      removeAIHighlight(editor);
+    }
+  }, [open, editor]);
+
   return (
     <EditorBubble
       tippyOptions={{
         placement: open ? "bottom-start" : "top",
         onHidden: () => {
           onOpenChange(false);
-          editor.chain().unsetHighlight().run();
+          editor?.chain().unsetHighlight().run();
         },
       }}
       className="flex w-fit max-w-[90vw] overflow-hidden rounded-md border border-muted bg-background shadow-xl"
     >
-      {open && <div open={open} onOpenChange={onOpenChange} />}
+      {open && (
+        <div className="p-1">
+          {/* Placeholder for AI selector component */}
+          {/* Replace this with your actual AI component */}
+        </div>
+      )}
       {!open && (
         <Fragment>
           <Button

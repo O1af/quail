@@ -25,6 +25,7 @@ const EmptyState = memo(() => (
     No data available
   </div>
 ));
+EmptyState.displayName = "EmptyState";
 
 // Memoize table header component
 const TableHeaderRow = memo(({ keys }: { keys: string[] }) => (
@@ -39,6 +40,7 @@ const TableHeaderRow = memo(({ keys }: { keys: string[] }) => (
     ))}
   </TableRow>
 ));
+TableHeaderRow.displayName = "TableHeaderRow";
 
 // Memoize table cell component
 const MemoizedTableCell = memo(
@@ -70,18 +72,18 @@ const MemoizedTableCell = memo(
     );
   }
 );
+MemoizedTableCell.displayName = "MemoizedTableCell";
 
 export function DataVisTable({ data }: DataVisTableProps) {
-  // Early return for empty data
-  if (!data?.rows?.length) {
-    return <EmptyState />;
-  }
+  // Move memoize headers before early return to fix conditional hook call
+  const headers = useMemo(() => {
+    if (!data?.rows?.length) return [];
+    return Object.keys(data.rows[0]);
+  }, [data?.rows]);
 
-  // Memoize headers to avoid recalculation
-  const headers = useMemo(() => Object.keys(data.rows[0]), [data.rows]);
-
-  // Memoize the CSV generation function
+  // Memoize the CSV generation function before early return
   const generateCSV = useCallback(() => {
+    if (!data?.rows?.length || headers.length === 0) return "";
     const csvRows = [
       headers.join(","),
       ...data.rows.map((row) =>
@@ -96,11 +98,13 @@ export function DataVisTable({ data }: DataVisTableProps) {
       ),
     ];
     return csvRows.join("\n");
-  }, [data.rows, headers]);
+  }, [data?.rows, headers]);
 
-  // Download CSV function
+  // Download CSV function before early return
   const downloadCSV = useCallback(() => {
     const csvContent = generateCSV();
+    if (!csvContent) return;
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -108,6 +112,11 @@ export function DataVisTable({ data }: DataVisTableProps) {
     link.setAttribute("download", "data_export.csv");
     link.click();
   }, [generateCSV]);
+
+  // Early return for empty data
+  if (!data?.rows?.length) {
+    return <EmptyState />;
+  }
 
   return (
     <div className="h-full flex flex-col gap-2">

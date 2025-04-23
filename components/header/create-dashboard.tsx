@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Button } from "@/components/ui/button";
 import {
   Dialog,
@@ -17,15 +17,19 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { createClient } from "@/utils/supabase/client";
-import { Chart, loadUserCharts } from "../stores/dashboard_store";
+import {
+  loadUserCharts,
+  createDashboard,
+  Dashboard,
+} from "../stores/dashboard_store";
+import { ChartDocument } from "@/lib/types/stores/chart";
 import Select from "react-select";
-import { createDashboard } from "../stores/dashboard_store";
 import { useTheme } from "next-themes";
 
 export function CreateDashboard() {
   const [open, setOpen] = useState(false);
   const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
-  const [availableCharts, setAvailableCharts] = useState<Chart[]>([]);
+  const [availableCharts, setAvailableCharts] = useState<ChartDocument[]>([]);
   const supabase = createClient();
   const [user, setUser] = useState<any>(null);
   const { theme } = useTheme();
@@ -49,20 +53,21 @@ export function CreateDashboard() {
   // Fetch available charts when dialog opens
   const [isLoading, setIsLoading] = useState(false);
 
-  const fetchAvailableCharts = async () => {
+  // Memoize fetchAvailableCharts to avoid dependency issues
+  const fetchAvailableCharts = useCallback(async () => {
     if (!user) return;
 
     setIsLoading(true);
     try {
       const fetchedCharts = await loadUserCharts(user.id);
       setAvailableCharts(fetchedCharts);
-      console.log(availableCharts);
+      console.log(fetchedCharts);
     } catch (error) {
       console.error("Failed to fetch charts:", error);
     } finally {
       setIsLoading(false);
     }
-  };
+  }, [user]);
 
   // Reset selections and fetch charts when dialog opens
   useEffect(() => {
@@ -71,12 +76,11 @@ export function CreateDashboard() {
       if (isOpen) {
         setSelectedCharts([]);
         fetchAvailableCharts();
-        console.log(availableCharts);
       }
     };
 
     handleDialogOpen(open);
-  }, [user, open]);
+  }, [user, open, fetchAvailableCharts]);
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
@@ -136,6 +140,11 @@ export function CreateDashboard() {
                 title,
                 userId: user.id,
                 layout,
+                permissions: {
+                  publicView: false,
+                  viewers: [],
+                  editors: [],
+                },
               });
 
               console.log(newDashboard);

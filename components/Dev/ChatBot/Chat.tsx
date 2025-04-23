@@ -67,7 +67,7 @@ export default function Chat() {
         },
       ]);
     }
-  }, [chatError]);
+  }, [chatError, messages, setMessages]);
 
   return (
     <div className="flex flex-col min-w-0 h-[91dvh] bg-background">

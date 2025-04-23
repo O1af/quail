@@ -54,18 +54,18 @@ function PureMultimodalInput({
   const { width } = useWindowSize();
   const { toast } = useToast();
 
-  useEffect(() => {
-    if (textareaRef.current) {
-      adjustHeight();
-    }
-  }, []);
-
-  const adjustHeight = () => {
+  const adjustHeight = useCallback(() => {
     if (textareaRef.current) {
       textareaRef.current.style.height = "auto";
       textareaRef.current.style.height = `${textareaRef.current.scrollHeight}px`;
     }
-  };
+  }, []);
+
+  useEffect(() => {
+    if (textareaRef.current) {
+      adjustHeight();
+    }
+  }, [adjustHeight]);
 
   const [localStorageInput, setLocalStorageInput] = useLocalStorage(
     "input",
@@ -80,7 +80,7 @@ function PureMultimodalInput({
       setInput(finalValue);
       adjustHeight();
     }
-  }, []);
+  }, [localStorageInput, setInput, adjustHeight]);
 
   useEffect(() => {
     setLocalStorageInput(input);

@@ -145,27 +145,28 @@ export function ConnectionForm({
 
   // Reset error when form changes
   useEffect(() => {
-    const subscription = form.watch(() => {
+    const watchMethod = form.watch;
+    const subscription = watchMethod(() => {
       if (connectionError) setConnectionError(null);
     });
     return () => subscription.unsubscribe();
-  }, [form, connectionError]);
+  }, [form, connectionError, form.watch]);
 
   // Check for SSL in connection string
   useEffect(() => {
-    const connString = form.watch("connectionString");
-    if (!connString) {
+    const connectionString = form.watch("connectionString");
+    if (!connectionString) {
       setHasSSLInString(false);
       return;
     }
 
     try {
-      const { sslMode } = parseConnectionString(connString);
+      const { sslMode } = parseConnectionString(connectionString);
       setHasSSLInString(!!sslMode);
     } catch {
       setHasSSLInString(false);
     }
-  }, [form.watch("connectionString")]);
+  }, [form, form.watch]);
 
   const dbType = form.watch("type");
   const dbTypeInfo = DB_TYPES[dbType];
