@@ -97,6 +97,7 @@ export function DashboardCard({
         title: `${dashboard.title} (Copy)`,
         charts: dashboard.charts || [],
         layout: dashboard.layout || [],
+        permissions: dashboard.permissions,
         description: dashboard.description,
       });
 

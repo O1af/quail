@@ -105,6 +105,7 @@ export function CreateDashboardDialog({
         description: description.trim() || undefined,
         charts: selectedCharts,
         layout: [],
+        permissions: { publicView: false, viewers: [], editors: [] },
       });
 
       if (newDashboard) {
