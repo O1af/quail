@@ -73,7 +73,7 @@ export const DashboardContent: React.FC<DashboardContentProps> = ({
       charts: isEditing ? tempChartsRef.current : dashboard.charts,
       layout: isEditing ? tempLayoutsRef.current : dashboard.layout,
     };
-  }, [dashboard, isEditing, tempChartsRef, tempLayoutsRef]);
+  }, [dashboard, isEditing, chartUpdateCounter, tempChartsRef, tempLayoutsRef]);
 
   // Rest of your component remains the same
   if (!dashboard?.charts) {

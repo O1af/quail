@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useCallback } from "react";
+import { useState, useEffect } from "react";
 import Fuse from "fuse.js";
 import { createClient } from "@/utils/supabase/client";
 import {
@@ -108,8 +108,16 @@ export default function DashboardsPage() {
     };
   }, [setHeaderContent, setHeaderButtons, searchQuery, viewMode]);
 
-  // Refresh data function - wrapped in useCallback
-  const fetchData = useCallback(async () => {
+  // Fetch dashboards when user is loaded
+  useEffect(() => {
+    if (user?.id) {
+      fetchData();
+      fetchSharedData();
+    }
+  }, [user]);
+
+  // Refresh data function
+  const fetchData = async () => {
     if (!user?.id) return;
 
     setIsLoading(true);
@@ -121,10 +129,10 @@ export default function DashboardsPage() {
     } finally {
       setIsLoading(false);
     }
-  }, [user?.id]); // Dependency: user.id
+  };
 
-  // Fetch shared dashboards - wrapped in useCallback
-  const fetchSharedData = useCallback(async () => {
+  // Fetch shared dashboards
+  const fetchSharedData = async () => {
     if (!user?.email) return;
 
     setIsLoadingShared(true);
@@ -136,15 +144,7 @@ export default function DashboardsPage() {
     } finally {
       setIsLoadingShared(false);
     }
-  }, [user?.email]); // Dependency: user.email
-
-  // Fetch dashboards when user is loaded
-  useEffect(() => {
-    if (user?.id) {
-      fetchData();
-      fetchSharedData();
-    }
-  }, [user, fetchData, fetchSharedData]); // Add fetchData and fetchSharedData
+  };
 
   // Filter dashboards based on search query
   const getFilteredDashboards = (dashboardList: Dashboard[]) => {
@@ -182,7 +182,7 @@ export default function DashboardsPage() {
         );
       };
     }
-  }, [fetchData, fetchSharedData]); // Add fetchData and fetchSharedData
+  }, []);
 
   // Render the dashboard content based on loading state
   const renderDashboardContent = () => {

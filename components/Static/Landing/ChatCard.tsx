@@ -77,7 +77,7 @@ ORDER BY total_orders DESC`;
       clearTimeout(typingTimer);
       if (sqlTypingTimer) clearInterval(sqlTypingTimer);
     };
-  }, [isUserTypingDone, fullSqlQuery, fullUserText]);
+  }, [isUserTypingDone]);
 
   return (
     <div className="space-y-3">

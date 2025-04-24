@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useCallback } from "react";
+import { useEffect } from "react";
 import {
   ChevronRight,
   Database,
@@ -48,8 +48,17 @@ export function NavSchema() {
   const executeQuery = useEditorStore((state) => state.executeQuery);
   const setValue = useEditorStore((state) => state.setValue);
 
-  // Memoize handleRefresh to avoid circular dependency
-  const handleRefresh = useCallback(async () => {
+  useEffect(() => {
+    // Only run refresh when loading is complete and we have a database
+    if (!isLoading) {
+      const currentDb = getCurrentDatabase();
+      if (currentDb) {
+        handleRefresh();
+      }
+    }
+  }, [isLoading, getCurrentDatabase]); // Re-run when loading state changes
+
+  const handleRefresh = async () => {
     const currentDb = getCurrentDatabase();
     if (refreshing || !currentDb) return;
 
@@ -68,17 +77,7 @@ export function NavSchema() {
     } finally {
       setRefreshing(false);
     }
-  }, [getCurrentDatabase, refreshing, toast]);
-
-  useEffect(() => {
-    // Only run refresh when loading is complete and we have a database
-    if (!isLoading) {
-      const currentDb = getCurrentDatabase();
-      if (currentDb) {
-        handleRefresh();
-      }
-    }
-  }, [isLoading, getCurrentDatabase, handleRefresh]);
+  };
 
   const handleTableClick = async (schemaName: string, tableName: string) => {
     const currentDb = getCurrentDatabase();

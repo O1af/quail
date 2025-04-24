@@ -160,7 +160,7 @@ export function useDbStoreWithAutoLoad() {
         setHasInitialized(true);
       });
     }
-  }, [hasInitialized, store]);
+  }, [hasInitialized]);
 
   return store;
 }

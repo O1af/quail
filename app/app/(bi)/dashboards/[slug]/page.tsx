@@ -9,13 +9,14 @@ import { ManageChartsModal } from "./components/ManageChartsModal";
 import { ShareDialog } from "./components/ShareDialog";
 import { PermissionBadgeDisplay } from "./components/PermissionBadgeDisplay";
 
-// Define the props type for the page component
-type Props = {
-  params: { slug: string };
-};
-
-export default function Page({ params }: Props) {
-  const { slug } = params;
+export default function Page({
+  params,
+}: {
+  params: Promise<{ slug: string }> | { slug: string };
+}) {
+  // Unwrap params promise
+  const resolvedParams = React.use(params as Promise<{ slug: string }>);
+  const { slug } = resolvedParams;
 
   // Modal states
   const [isManageChartsOpen, setIsManageChartsOpen] = useState(false);

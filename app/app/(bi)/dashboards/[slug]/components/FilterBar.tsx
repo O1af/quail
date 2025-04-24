@@ -30,7 +30,6 @@ import {
 import { Separator } from "@/components/ui/separator";
 import { format } from "date-fns";
 import { cn } from "@/lib/utils";
-import { DateRange as RDPDateRange } from "react-day-picker";
 
 interface Filter {
   id: string;
@@ -44,9 +43,14 @@ interface FilterBarProps {
   onFilterChange: (filters: Filter[]) => void;
 }
 
+interface DateRange {
+  from: Date | undefined;
+  to: Date | undefined;
+}
+
 interface DateRangeFilterProps {
-  dateRange: RDPDateRange;
-  onDateRangeChange: (dateRange: RDPDateRange) => void;
+  dateRange: DateRange;
+  onDateRangeChange: (dateRange: DateRange) => void;
 }
 
 // Add KeywordFilter component
@@ -269,7 +273,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
   onKeywordChange,
 }) => {
   // Create a local state for filters to allow confirmation/cancellation
-  const [localDateRange, setLocalDateRange] = useState<RDPDateRange>(dateRange);
+  const [localDateRange, setLocalDateRange] = useState<DateRange>(dateRange);
   const [localKeyword, setLocalKeyword] = useState(keyword);
 
   // Update local state when props change (when dialog opens)

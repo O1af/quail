@@ -47,7 +47,7 @@ const TailwindAdvancedEditor = () => {
   const highlightCodeblocks = (content: string) => {
     const doc = new DOMParser().parseFromString(content, "text/html");
     doc.querySelectorAll("pre code").forEach((el) => {
-      // @ts-expect-error - highlightjs is globally available but TypeScript doesn't know
+      // @ts-ignore
       // https://highlightjs.readthedocs.io/en/latest/api.html?highlight=highlightElement#highlightelement
       hljs.highlightElement(el);
     });

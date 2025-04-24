@@ -155,23 +155,21 @@ export const DatabaseDialog = memo(function DatabaseDialog({
     return () => subscription.unsubscribe();
   }, [form, connectionError]);
 
-  // Extract form.watch outside of useEffect to make it statically checkable
-  const connectionString = form.watch("connectionString");
-
   // Check for SSL in connection string
   useEffect(() => {
-    if (!connectionString) {
+    const connString = form.watch("connectionString");
+    if (!connString) {
       setHasSSLInString(false);
       return;
     }
 
     try {
-      const { sslMode } = parseConnectionString(connectionString);
+      const { sslMode } = parseConnectionString(connString);
       setHasSSLInString(!!sslMode);
     } catch {
       setHasSSLInString(false);
     }
-  }, [connectionString]);
+  }, [form.watch("connectionString")]);
 
   const handleSubmit = useCallback(
     async (values: FormValues) => {

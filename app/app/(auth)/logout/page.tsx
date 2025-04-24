@@ -6,7 +6,7 @@ const LogoutPage = () => {
   const router = useRouter();
   useEffect(() => {
     setTimeout(() => router.push("/login"), 2000);
-  }, [router]);
+  }, []);
   return (
     <div className="flex h-screen w-full items-center justify-center">
       <div className="flex flex-col items-center space-y-4">

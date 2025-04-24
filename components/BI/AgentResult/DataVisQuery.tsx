@@ -12,7 +12,6 @@ const EmptyState = memo(() => (
     No query available
   </div>
 ));
-EmptyState.displayName = "EmptyState";
 
 export function DataVisQuery({ query }: DataVisQueryProps) {
   // Memoize the highlighted code to avoid unnecessary processing

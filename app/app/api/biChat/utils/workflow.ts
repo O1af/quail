@@ -41,12 +41,7 @@ export async function executeQueryWithErrorHandling({
   stream: DataStreamWriter;
   dbSchema?: DatabaseStructure;
   provider?: any;
-  createQueryValidationPrompt?: (params: {
-    originalQuery: string;
-    errorMessage: string;
-    dbType: string;
-    databaseStructure: DatabaseStructure;
-  }) => string;
+  createQueryValidationPrompt?: Function;
 }) {
   let currentQuery = query;
   let attempts = 0;

@@ -101,8 +101,24 @@ export default function NaturalLanguageInput() {
     textarea.style.height = `${newHeight}px`;
   }, [naturalLanguagePrompt]);
 
-  // Submit the prompt - moved above handleKeyDown to fix reference error
-  const handleSubmit = useCallback(async () => {
+  // Handle Enter key press
+  const handleKeyDown = useCallback(
+    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
+      if (
+        e.key === "Enter" &&
+        !e.shiftKey &&
+        naturalLanguagePrompt.trim() &&
+        !isProcessing
+      ) {
+        e.preventDefault();
+        handleSubmit();
+      }
+    },
+    [naturalLanguagePrompt, isProcessing]
+  );
+
+  // Submit the prompt
+  const handleSubmit = async () => {
     if (!naturalLanguagePrompt.trim() || isProcessing) return;
 
     try {
@@ -121,23 +137,7 @@ export default function NaturalLanguageInput() {
       console.error("Failed to send prompt:", error);
       setIsStreaming(false);
     }
-  }, [naturalLanguagePrompt, isProcessing, setIsStreaming, setNewJsx, append]);
-
-  // Handle Enter key press
-  const handleKeyDown = useCallback(
-    (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (
-        e.key === "Enter" &&
-        !e.shiftKey &&
-        naturalLanguagePrompt.trim() &&
-        !isProcessing
-      ) {
-        e.preventDefault();
-        handleSubmit();
-      }
-    },
-    [naturalLanguagePrompt, isProcessing, handleSubmit]
-  );
+  };
 
   // Stop generation
   const handleStop = () => {

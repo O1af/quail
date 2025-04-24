@@ -46,7 +46,6 @@ const DatabaseButton = memo(({ onClick }: { onClick: () => void }) => (
     <Database size={14} />
   </Button>
 ));
-DatabaseButton.displayName = "DatabaseButton";
 
 const StopButton = memo(
   ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
@@ -58,7 +57,6 @@ const StopButton = memo(
     </Button>
   )
 );
-StopButton.displayName = "StopButton";
 
 const SubmitButton = memo(
   ({
@@ -77,7 +75,6 @@ const SubmitButton = memo(
     </Button>
   )
 );
-SubmitButton.displayName = "SubmitButton";
 
 function PureInput({
   input,
@@ -114,7 +111,7 @@ function PureInput({
       setInput(finalValue);
       adjustHeight();
     }
-  }, [adjustHeight, localStorageInput, setInput]);
+  }, []);
 
   useEffect(() => {
     setLocalStorageInput(input);
