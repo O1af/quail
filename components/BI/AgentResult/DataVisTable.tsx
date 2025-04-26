@@ -25,6 +25,7 @@ const EmptyState = memo(() => (
     No data available
   </div>
 ));
+EmptyState.displayName = "EmptyState";
 
 // Memoize table header component
 const TableHeaderRow = memo(({ keys }: { keys: string[] }) => (
@@ -39,49 +40,49 @@ const TableHeaderRow = memo(({ keys }: { keys: string[] }) => (
     ))}
   </TableRow>
 ));
+TableHeaderRow.displayName = "TableHeaderRow";
 
 // Memoize table cell component
-const MemoizedTableCell = memo(
-  ({ value, keyName }: { value: any; keyName: string }) => {
-    const displayValue = useMemo(() => {
-      const isObject = typeof value === "object";
-      const stringValue = isObject ? JSON.stringify(value) : String(value);
+const MemoizedTableCell = memo(({ value }: { value: any }) => {
+  const displayValue = useMemo(() => {
+    const isObject = typeof value === "object";
+    const stringValue = isObject ? JSON.stringify(value) : String(value);
 
-      if (isObject) {
-        return (
-          <Badge variant="outline" className="font-mono text-xs">
-            {stringValue.substring(0, 30)}
-            {stringValue.length > 30 ? "..." : ""}
-          </Badge>
-        );
-      }
+    if (isObject) {
+      return (
+        <Badge variant="outline" className="font-mono text-xs">
+          {stringValue.substring(0, 30)}
+          {stringValue.length > 30 ? "..." : ""}
+        </Badge>
+      );
+    }
 
-      return stringValue;
-    }, [value]);
+    return stringValue;
+  }, [value]);
 
-    const titleValue = useMemo(() => {
-      return typeof value === "object" ? JSON.stringify(value) : String(value);
-    }, [value]);
+  const titleValue = useMemo(() => {
+    return typeof value === "object" ? JSON.stringify(value) : String(value);
+  }, [value]);
 
-    return (
-      <TableCell className="truncate max-w-[200px]" title={titleValue}>
-        {displayValue}
-      </TableCell>
-    );
-  }
-);
+  return (
+    <TableCell className="truncate max-w-[200px]" title={titleValue}>
+      {displayValue}
+    </TableCell>
+  );
+});
+MemoizedTableCell.displayName = "MemoizedTableCell";
 
 export function DataVisTable({ data }: DataVisTableProps) {
-  // Early return for empty data
-  if (!data?.rows?.length) {
-    return <EmptyState />;
-  }
-
   // Memoize headers to avoid recalculation
-  const headers = useMemo(() => Object.keys(data.rows[0]), [data.rows]);
+  const headers = useMemo(
+    () => (data?.rows?.length ? Object.keys(data.rows[0]) : []),
+    [data?.rows]
+  );
 
   // Memoize the CSV generation function
   const generateCSV = useCallback(() => {
+    if (!data?.rows?.length) return "";
+
     const csvRows = [
       headers.join(","),
       ...data.rows.map((row) =>
@@ -96,11 +97,13 @@ export function DataVisTable({ data }: DataVisTableProps) {
       ),
     ];
     return csvRows.join("\n");
-  }, [data.rows, headers]);
+  }, [data?.rows, headers]);
 
   // Download CSV function
   const downloadCSV = useCallback(() => {
     const csvContent = generateCSV();
+    if (!csvContent) return;
+
     const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" });
     const url = URL.createObjectURL(blob);
     const link = document.createElement("a");
@@ -108,6 +111,11 @@ export function DataVisTable({ data }: DataVisTableProps) {
     link.setAttribute("download", "data_export.csv");
     link.click();
   }, [generateCSV]);
+
+  // Early return for empty data
+  if (!data?.rows?.length) {
+    return <EmptyState />;
+  }
 
   return (
     <div className="h-full flex flex-col gap-2">
@@ -130,7 +138,7 @@ export function DataVisTable({ data }: DataVisTableProps) {
             {data.rows.map((row, i) => (
               <TableRow key={i}>
                 {headers.map((key, j) => (
-                  <MemoizedTableCell key={j} value={row[key]} keyName={key} />
+                  <MemoizedTableCell key={j} value={row[key]} />
                 ))}
               </TableRow>
             ))}

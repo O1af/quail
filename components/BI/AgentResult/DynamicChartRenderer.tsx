@@ -137,6 +137,7 @@ const ErrorDisplay = memo(
     </div>
   )
 );
+ErrorDisplay.displayName = "ErrorDisplay";
 
 // Create memoized empty state component
 const EmptyState = memo(() => (
@@ -144,6 +145,7 @@ const EmptyState = memo(() => (
     Missing chart code or data
   </div>
 ));
+EmptyState.displayName = "EmptyState";
 
 function DynamicChartRenderer({
   jsxString,
@@ -162,10 +164,6 @@ function DynamicChartRenderer({
     const isDarkMode = resolvedTheme === "dark";
     configureChartDefaults(isDarkMode);
   }, [resolvedTheme]);
-
-  if (!jsxString || !data) {
-    return <EmptyState />;
-  }
 
   // Enhanced error handler to capture and propagate errors
   const handleError = useCallback(
@@ -188,6 +186,10 @@ function DynamicChartRenderer({
     }),
     [data, resolvedTheme]
   );
+
+  if (!jsxString || !data) {
+    return <EmptyState />;
+  }
 
   // If we have an error, display it
   if (error) {

@@ -46,7 +46,7 @@ const DatabaseButton = memo(({ onClick }: { onClick: () => void }) => (
     <Database size={14} />
   </Button>
 ));
-
+DatabaseButton.displayName = "DatabaseButton";
 const StopButton = memo(
   ({ onClick }: { onClick: (e: React.MouseEvent) => void }) => (
     <Button
@@ -58,6 +58,7 @@ const StopButton = memo(
   )
 );
 
+StopButton.displayName = "StopButton";
 const SubmitButton = memo(
   ({
     onClick,
@@ -75,17 +76,18 @@ const SubmitButton = memo(
     </Button>
   )
 );
+SubmitButton.displayName = "SubmitButton";
 
-function PureInput({
+const PureInput: React.FunctionComponent<InputProps> = ({
   input,
   setInput,
   status,
   stop,
-  messages,
+  // messages,
   setMessages,
   handleSubmit,
   className,
-}: InputProps) {
+}) => {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const { width } = useWindowSize();
   const { toast } = useToast();
@@ -111,7 +113,7 @@ function PureInput({
       setInput(finalValue);
       adjustHeight();
     }
-  }, []);
+  }, [adjustHeight, localStorageInput, setInput]);
 
   useEffect(() => {
     setLocalStorageInput(input);
@@ -205,10 +207,11 @@ function PureInput({
       </div>
     </div>
   );
-}
+};
+
+PureInput.displayName = "PureInput";
 
 export const Input = memo(PureInput, (prevProps, nextProps) => {
-  // Only re-render when these crucial props change
   return (
     prevProps.input === nextProps.input && prevProps.status === nextProps.status
   );

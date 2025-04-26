@@ -35,6 +35,7 @@ const EmptyState = memo(({ message }: { message: string }) => (
     {message}
   </div>
 ));
+EmptyState.displayName = "EmptyState";
 
 // Memoize action buttons
 const ActionButtons = memo(
@@ -84,6 +85,7 @@ const ActionButtons = memo(
     </div>
   )
 );
+ActionButtons.displayName = "ActionButtons";
 
 export function DataVisAgentResult({
   chartData,
