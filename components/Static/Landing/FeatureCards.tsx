@@ -26,7 +26,7 @@ interface Feature {
 
 const features: Feature[] = [
   {
-    title: "AI Data Query Editor",
+    title: "AI SQL Query Editor",
     description:
       "Create and optimize SQL queries effortlessly with our intelligent, schema-aware assistant",
     component: ChatCard,

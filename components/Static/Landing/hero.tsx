@@ -13,7 +13,7 @@ import { cn } from "@/lib/utils";
 
 export const Hero = memo(function Hero() {
   return (
-    <section className="relative overflow-hidden py-20 md:py-28 lg:py-36 min-h-[70vh] flex items-center justify-center bg-background">
+    <section className="relative overflow-hidden pt-16 pb-20 md:pt-24 md:pb-28 lg:pt-32 lg:pb-36 min-h-[70vh] flex items-center justify-center bg-background">
       <Meteors
         number={3}
         minDelay={1.5}
