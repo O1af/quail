@@ -1,0 +1,6 @@
+{
+  "title": "Fumadocs",
+  "icon": "Book",
+  "pages": ["index", "fumadocs-components"],
+  "defaultOpen": true
+}

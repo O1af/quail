@@ -7,6 +7,7 @@ import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/context/AuthContext";
 import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";
+import { Banner } from "fumadocs-ui/components/banner";
 
 const inter = Inter({
   variable: "--font-inter",
@@ -102,6 +103,9 @@ export default function RootLayout({
         }}
         suppressHydrationWarning
       >
+        <Banner id="quail-release" variant="rainbow" changeLayout={false}>
+          Quail V0 has released
+        </Banner>
         <RootProvider>
           <ThemeProvider
             attribute="class"
