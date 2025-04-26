@@ -24,6 +24,7 @@ const components = {
       {...props}
       className="rounded-lg my-6 shadow-md"
       sizes="(max-width: 768px) 100vw, 700px"
+      alt={props.alt || "Image"}
     />
   ),
   h1: (props: any) => (
@@ -50,9 +51,7 @@ const components = {
       {...props}
     />
   ),
-  p: (props: any) => (
-    <p className="my-5 leading-7 not-first:mt-6" {...props} />
-  ),
+  p: (props: any) => <p className="my-5 leading-7 not-first:mt-6" {...props} />,
   ul: (props: any) => (
     <ul className="my-6 ml-6 list-disc [&>li]:mt-2" {...props} />
   ),
