@@ -46,9 +46,10 @@ export function Header() {
             <Image
               src="/quail_logo.svg"
               alt="Quail Logo"
-              width={42}
-              height={42}
-              className={`size-15 transition-transform hover:scale-110 ${
+              width={35} // Reduced size
+              height={35} // Reduced size
+              className={`transition-transform hover:scale-110 ${
+                // Removed size-15
                 resolvedTheme === "dark" ? "brightness-0 invert" : ""
               }`}
             />

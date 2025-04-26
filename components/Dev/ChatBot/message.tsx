@@ -42,7 +42,7 @@ const PurePreviewMessage = ({
           )}
         >
           {message.role === "assistant" && (
-            <div className="size-12 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
+            <div className="size-12 flex items-center rounded-full justify-center shrink-0 bg-background">
               <div className="translate-y-px">
                 <Avatar className="w-12 h-12">
                   <AvatarImage
@@ -113,7 +113,7 @@ export const ThinkingMessage = () => {
           }
         )}
       >
-        <div className="size-12 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
+        <div className="size-12 flex items-center rounded-full justify-center shrink-0">
           <Avatar className="w-12 h-12">
             <AvatarImage
               src="/quail_logo.svg"

@@ -27,7 +27,6 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { SettingsDialog } from "@/components/settings/Settings";
 
 interface UnifiedSidebarProps extends React.ComponentProps<typeof Sidebar> {
   mode: "dash" | "dev";
@@ -73,11 +72,7 @@ export function UnifiedSidebar({ mode, ...props }: UnifiedSidebarProps) {
         <div className="shrink-0">
           <DashNav />
         </div>
-        <div
-          className={`${
-            mode === "dev" ? "grow" : ""
-          } overflow-y-auto mt-1`}
-        >
+        <div className={`${mode === "dev" ? "grow" : ""} overflow-y-auto mt-1`}>
           {mode === "dash" ? <NavChats /> : <NavSchema />}
         </div>
       </SidebarContent>

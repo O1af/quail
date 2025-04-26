@@ -12,9 +12,13 @@ export function DashSidebarHeader() {
   const router = useRouter();
 
   return (
-    <SidebarHeader className="px-3 py-2.5 border-b">
+    <SidebarHeader className="px-3 py-1.5 border-b">
+      {" "}
+      {/* Reduced py-2.5 to py-1.5 */}
       <Link href="/" className="flex items-center gap-2.5 cursor-pointer">
-        <div className="relative h-12 w-12 shrink-0 overflow-hidden">
+        <div className="relative h-8 w-8 shrink-0 overflow-hidden">
+          {" "}
+          {/* Reduced h-12 w-12 to h-8 w-8 */}
           <Image
             src="/quail_logo.svg"
             alt="Quail Logo"
