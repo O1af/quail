@@ -49,8 +49,7 @@ function getStepDetails(step: number) {
 }
 
 const StatusMessageUI = ({ step }: StatusMessageProps) => {
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const { resolvedTheme } = useTheme();
   const { message, icon, color } = getStepDetails(step);
 
   return (
@@ -61,8 +60,12 @@ const StatusMessageUI = ({ step }: StatusMessageProps) => {
       transition={{ duration: 0.3 }}
     >
       <div className="flex gap-4 items-start">
-        <Avatar className="w-8 h-8 mt-1">
-          <AvatarImage src={avatarSrc} alt="AI" />
+        <Avatar className="w-12 h-12 mt-1">
+          <AvatarImage
+            src="/quail_logo.svg"
+            alt="AI"
+            className={resolvedTheme === "dark" ? "brightness-0 invert" : ""}
+          />
         </Avatar>
 
         <div

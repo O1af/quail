@@ -23,8 +23,7 @@ export function ChartCard() {
   const [data, setData] = useState<typeof finalData>([]);
   const [userText, setUserText] = useState("");
   const [isUserTypingDone, setIsUserTypingDone] = useState(false);
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const { resolvedTheme } = useTheme();
   const fullUserText = "Analyze revenue vs targets YTD 📊";
 
   useEffect(() => {
@@ -76,7 +75,7 @@ export function ChartCard() {
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
-        <Avatar className="h-8 w-8">
+        <Avatar className="h-12 w-12">
           <AvatarFallback className="bg-primary/20">U</AvatarFallback>
         </Avatar>
         <div className="flex-1">
@@ -91,8 +90,12 @@ export function ChartCard() {
 
       {isUserTypingDone && (
         <div className="flex items-start gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarSrc} alt="QuailAI" />
+          <Avatar className="h-12 w-12">
+            <AvatarImage
+              src="/quail_logo.svg"
+              alt="QuailAI"
+              className={resolvedTheme === "dark" ? "brightness-0 invert" : ""}
+            />
           </Avatar>
           <div className="flex-1">
             <div className="h-[120px] rounded-md bg-muted/60 p-2">

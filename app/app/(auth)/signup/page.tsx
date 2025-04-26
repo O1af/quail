@@ -11,6 +11,8 @@ const SignUpPage = () => {
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -24,9 +26,6 @@ const SignUpPage = () => {
     fetchUser();
   }, [router, supabase]);
 
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
-
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
       <div className="flex w-full max-w-sm flex-col gap-6">
@@ -34,12 +33,14 @@ const SignUpPage = () => {
           href={Routes.Home}
           className="flex items-center gap-2 self-center font-medium"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <div className="relative h-full w-full">
               <Image
-                src={avatarSrc}
+                src="/quail_logo.svg"
                 fill
-                className="object-contain"
+                className={`object-contain ${
+                  resolvedTheme === "dark" ? "brightness-0 invert" : ""
+                }`}
                 alt="Avatar"
               />
             </div>

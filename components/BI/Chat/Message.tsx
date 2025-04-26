@@ -18,8 +18,7 @@ export interface MessageProps {
 }
 
 export function Message({ message, savedCharts }: MessageProps) {
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const { resolvedTheme } = useTheme();
 
   // Memoize message content extraction for performance
   const { textContent, visualizationData, errorData } = useMemo(() => {
@@ -99,8 +98,12 @@ export function Message({ message, savedCharts }: MessageProps) {
         )}
       >
         {message.role === "assistant" && (
-          <Avatar className="w-8 h-8">
-            <AvatarImage src={avatarSrc} alt="AI" />
+          <Avatar className="w-12 h-12">
+            <AvatarImage
+              src="/quail_logo.svg"
+              alt="AI"
+              className={resolvedTheme === "dark" ? "brightness-0 invert" : ""}
+            />
           </Avatar>
         )}
 

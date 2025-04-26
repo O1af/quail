@@ -6,8 +6,7 @@ export function ChatCard() {
   const [userText, setUserText] = useState("");
   const [sqlQuery, setSqlQuery] = useState("");
   const [isUserTypingDone, setIsUserTypingDone] = useState(false);
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const { resolvedTheme } = useTheme();
   const fullUserText = "Count orders by product type";
   const fullSqlQuery = `SELECT product_type,
     COUNT(*) as total_orders
@@ -82,7 +81,7 @@ ORDER BY total_orders DESC`;
   return (
     <div className="space-y-3">
       <div className="flex items-start gap-3">
-        <Avatar className="h-8 w-8">
+        <Avatar className="h-12 w-12">
           <AvatarFallback className="bg-primary/20">U</AvatarFallback>
         </Avatar>
         <div className="flex-1">
@@ -97,8 +96,12 @@ ORDER BY total_orders DESC`;
 
       {isUserTypingDone && (
         <div className="flex items-start gap-3">
-          <Avatar className="h-8 w-8">
-            <AvatarImage src={avatarSrc} alt="QuailAI" />
+          <Avatar className="h-12 w-12">
+            <AvatarImage
+              src="/quail_logo.svg"
+              alt="QuailAI"
+              className={resolvedTheme === "dark" ? "brightness-0 invert" : ""}
+            />
           </Avatar>
           <div className="flex-1">
             <div

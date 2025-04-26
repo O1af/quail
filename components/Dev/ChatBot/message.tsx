@@ -5,11 +5,11 @@ import cx from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { AvatarImage, Avatar } from "@/components/ui/avatar";
 import { memo, useState } from "react";
+import { useTheme } from "next-themes";
 
 import { Markdown } from "./markdown";
 import { MessageActions } from "./message-actions";
 import { cn } from "@/lib/utils";
-import { useTheme } from "next-themes";
 
 const PurePreviewMessage = ({
   message,
@@ -22,9 +22,7 @@ const PurePreviewMessage = ({
   ) => Promise<string | null | undefined>;
 }) => {
   const [mode, setMode] = useState<"view" | "edit">("view");
-
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const { resolvedTheme } = useTheme();
 
   return (
     <AnimatePresence>
@@ -44,10 +42,16 @@ const PurePreviewMessage = ({
           )}
         >
           {message.role === "assistant" && (
-            <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
+            <div className="size-12 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border bg-background">
               <div className="translate-y-px">
-                <Avatar className="w-8 h-">
-                  <AvatarImage src={avatarSrc} alt="QuailAI" />
+                <Avatar className="w-12 h-12">
+                  <AvatarImage
+                    src="/quail_logo.svg"
+                    alt="QuailAI"
+                    className={
+                      resolvedTheme === "dark" ? "brightness-0 invert" : ""
+                    }
+                  />
                 </Avatar>
               </div>
             </div>
@@ -92,8 +96,7 @@ export const PreviewMessage = memo(
 
 export const ThinkingMessage = () => {
   const role = "assistant";
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const { resolvedTheme } = useTheme();
 
   return (
     <motion.div
@@ -110,9 +113,13 @@ export const ThinkingMessage = () => {
           }
         )}
       >
-        <div className="size-8 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
-          <Avatar className="w-6 h-6">
-            <AvatarImage src={avatarSrc} alt="QuailAI" />
+        <div className="size-12 flex items-center rounded-full justify-center ring-1 shrink-0 ring-border">
+          <Avatar className="w-12 h-12">
+            <AvatarImage
+              src="/quail_logo.svg"
+              alt="QuailAI"
+              className={resolvedTheme === "dark" ? "brightness-0 invert" : ""}
+            />
           </Avatar>
         </div>
 
