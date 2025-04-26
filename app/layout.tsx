@@ -103,9 +103,9 @@ export default function RootLayout({
         }}
         suppressHydrationWarning
       >
-        <Banner id="quail-release" variant="rainbow" changeLayout={false}>
+        {/* <Banner id="quail-release" variant="rainbow" changeLayout={false}>
           Quail V0 has released
-        </Banner>
+        </Banner> */}
         <RootProvider>
           <ThemeProvider
             attribute="class"
