@@ -13,23 +13,25 @@ At Quail, while developing our AI-powered data visualization tools, we encounter
 - Slow response times affecting user experience
 - Hallucinations where the model generates incorrect outputs
 
-To address these challenges, we adopted an approach we termed Agentic Hydration. 
+To address these challenges, we adopted an approach we termed Agentic Hydration.
 Although we didn't invent this approach, we're sharing it as a useful framework for developers aiming to build faster, more accurate, and efficient AI systems.
 
 ## What is Agentic Hydration?
+
 At a high level, Agentic Hydration is a two-step pattern for component generation:
 
-1. Generate: Leverage the structured properties of your data to reduce the information the model must directly process and generate. 
+1. Generate: Leverage the structured properties of your data to reduce the information the model must directly process and generate.
    This is done by creating a scaffold that describes the component's structure and behavior.
-2. Hydrate: Populate the generated scaffold with the actual data. 
+2. Hydrate: Populate the generated scaffold with the actual data.
 
-The intuition behind this approach is to allow the LLM to remain efficient, focused, and less prone to errors by minimizing its exposure to raw data. 
+The intuition behind this approach is to allow the LLM to remain efficient, focused, and less prone to errors by minimizing its exposure to raw data.
 This significantly improves both the speed and reliability of the final output.
 
 ## Example: Chart Generation
 
 To illustrate the Agentic Hydration pattern, let's consider a use case that is relevant to our workflow: generating a chart based on user input and data.
 In this example, we will create a simplified chart component that visualizes data based on user queries.
+
 ### Traditional Approach
 
 Typically, you'd prompt an LLM to generate the entire chart component at once.
@@ -38,8 +40,8 @@ This might look something like this:
 ```typescript
 export async function generateChart(results: any[], userQuery: string) {
   const { chart } = await generateText({
-    model: openai('gpt-4o'),
-    system: 'You are a data visualization expert.',
+    model: openai("gpt-4o"),
+    system: "You are a data visualization expert.",
     prompt: `Generate a chart for User Query: "${userQuery}" 
     with data points: ${JSON.stringify(results)}. 
     Return JSX code for visualization.`,
@@ -50,6 +52,7 @@ export async function generateChart(results: any[], userQuery: string) {
 ```
 
 Problems with this approach:
+
 - High token usage: Sending large datasets to the LLM consumes many tokens
 - Increased likelihood of hallucinations: The LLM may misinterpret or misrepresent the data
 - Increased latency and cost: Processing large datasets takes more time and resources
@@ -63,28 +66,23 @@ Instead, we split the process into two distinct steps:
 First, generate only the metadata needed for visualization decisions:
 
 ```typescript
-import { generateObject } from 'ai';
-import { z } from 'zod';
+import { generateObject } from "ai";
+import { z } from "zod";
 
 // Define a schema to constrain and structure the LLM's output
 export const configSchema = z.object({
-  type: z.enum(['bar', 'line', 'area', 'pie'])
-    .describe('Type of chart'),
-  xKey: z.string()
-    .describe('Key for x-axis'),
-  yKeys: z.array(z.string())
-    .describe('Keys for y-axis'),
-  description: z.string()
-    .describe('Brief description of the chart'),
-  title: z.string()
-    .describe('Title of the chart'),
+  type: z.enum(["bar", "line", "area", "pie"]).describe("Type of chart"),
+  xKey: z.string().describe("Key for x-axis"),
+  yKeys: z.array(z.string()).describe("Keys for y-axis"),
+  description: z.string().describe("Brief description of the chart"),
+  title: z.string().describe("Title of the chart"),
 });
 
 export async function generateChartConfig(results: any[], userQuery: string) {
   // Note: We only send a SAMPLE of the data, not the entire dataset
   const { object: config } = await generateObject({
-    model: openai('gpt-4o'),
-    system: 'You are a data visualization expert.',
+    model: openai("gpt-4o"),
+    system: "You are a data visualization expert.",
     prompt: `Generate minimal chart config for "${userQuery}" 
       with columns: ${JSON.stringify(results[0])}`,
     schema: configSchema,
@@ -99,8 +97,8 @@ export async function generateChartConfig(results: any[], userQuery: string) {
 Then, use the configuration to render the chart with the complete dataset:
 
 ```typescript
-import { LineChart, Line, XAxis, YAxis, Tooltip } from 'recharts';
-import { generateChartConfig } from './actions';
+import { LineChart, Line, XAxis, YAxis, Tooltip } from "recharts";
+import { generateChartConfig } from "./actions";
 
 export default async function DynamicChart({ results, userQuery }) {
   // Get the chart configuration with minimal token usage
