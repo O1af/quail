@@ -9,14 +9,14 @@ import {
   useSpeedMode,
 } from "@/components/stores/table_store";
 import { useEffect } from "react";
-import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
+import { useDatabase } from "@/lib/hooks/use-database";
 import { useEditorStore } from "@/components/stores/editor_store";
 export const maxDuration = 30;
 
 export default function Chat() {
   const databaseStructure = useDatabaseStructure();
   const { getCurrentDatabase, isDatabaseChanged, resetDatabaseChange } =
-    useDbStoreWithAutoLoad();
+    useDatabase();
   const { value, error } = useEditorStore();
   const speedMode = useSpeedMode();
 

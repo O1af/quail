@@ -3,17 +3,21 @@ import { useTableStore } from "../table_store";
 import { runPostgres, runMySQL } from "@/utils/actions/runSQL";
 import { ColumnDef } from "@tanstack/react-table";
 import { SQLData } from "../table_store";
-import { useDbStore } from "../db_mongo_client";
+import { useQueryClient } from "@tanstack/react-query";
+import { dbQueryKeys } from "@/lib/hooks/use-database";
+import { DbState } from "@/lib/types/stores/dbConnections";
 import { DatabaseStructure, Schema, Column, Index } from "../table_store";
 import { mysqlMeta, pgMeta } from "./metadataQueries";
 
+import { getCurrentDatabaseConnection } from "@/lib/actions/database-connection";
+
 async function getDbConnection() {
-  const currentDb = useDbStore.getState().getCurrentDatabase();
-  if (!currentDb) {
-    throw new Error("No database selected");
+  try {
+    return await getCurrentDatabaseConnection();
+  } catch (error) {
+    console.error("Error getting DB connection:", error);
+    throw error;
   }
-  console.log("Current DB:", currentDb);
-  return { connectionString: currentDb.connectionString, type: currentDb.type };
 }
 
 export async function executeQuery(

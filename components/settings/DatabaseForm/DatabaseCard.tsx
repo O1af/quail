@@ -1,4 +1,4 @@
-import { DatabaseConfig, useDbStore } from "../../stores/db_mongo_client";
+import { DatabaseConfig, useDatabase } from "@/lib/hooks/use-database";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { useState, memo } from "react";
@@ -47,7 +47,7 @@ export const DatabaseCard = memo(function DatabaseCard({
   const [activating, setActivating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
-  const { currentDatabaseId, setCurrentDatabase } = useDbStore();
+  const { currentDatabaseId, setCurrentDatabase } = useDatabase();
   const clearTableData = useTableStore((state) => state.clearTableData);
   const isActive = db.id === currentDatabaseId;
 

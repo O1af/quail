@@ -3,7 +3,7 @@
 import * as React from "react";
 import { ChevronsUpDown, Database, Loader2 } from "lucide-react";
 import { SiPostgresql, SiMysql } from "react-icons/si";
-import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
+import { useDatabase } from "@/lib/hooks/use-database";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -24,7 +24,7 @@ const getDatabaseIcon = (type?: string) => {
 };
 
 export function DbHeaderSwitcher() {
-  const { databases, currentDatabaseId, isLoading } = useDbStoreWithAutoLoad();
+  const { databases, currentDatabaseId, isLoading } = useDatabase();
 
   const currentDatabase = databases.find((db) => db.id === currentDatabaseId);
 

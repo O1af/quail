@@ -1,9 +1,8 @@
 import { useState, memo } from "react";
-import { DatabaseConfig } from "@/lib/types/stores/dbConnections";
 import { queryMetadata } from "@/components/stores/utils/query";
 import { useTableStore } from "@/components/stores/table_store";
 import { useToast } from "@/lib/hooks/use-toast";
-import { useDbStore } from "@/components/stores/db_mongo_client";
+import { DatabaseConfig, useDatabase } from "@/lib/hooks/use-database";
 import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import {
@@ -106,7 +105,7 @@ export const ConnectionCard = memo(function ConnectionCard({
   const [activating, setActivating] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
-  const { setCurrentDatabase } = useDbStore();
+  const { setCurrentDatabase } = useDatabase();
   const clearTableData = useTableStore((state) => state.clearTableData);
 
   const handleSetActive = async () => {

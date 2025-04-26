@@ -5,6 +5,7 @@ import type { ReactNode } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
 import { AuthProvider } from "@/lib/context/AuthContext";
+import { ReactQueryProvider } from "@/lib/providers/react-query-provider";
 import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";
 import { Banner } from "fumadocs-ui/components/banner";
@@ -113,7 +114,9 @@ export default function RootLayout({
             enableSystem
             disableTransitionOnChange
           >
-            <AuthProvider>{children}</AuthProvider>
+            <ReactQueryProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </ReactQueryProvider>
           </ThemeProvider>
           <Toaster />
           {process.env.NODE_ENV === "production" && (

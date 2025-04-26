@@ -1,6 +1,6 @@
 "use client";
 
-import { useDbStore } from "../../stores/db_mongo_client";
+import { useDatabase } from "@/lib/hooks/use-database";
 import { DatabaseCard } from "./DatabaseCard";
 import { DatabaseDialog } from "./DatabaseDialog";
 import { useEffect, useState, memo, useMemo } from "react";
@@ -17,15 +17,14 @@ export const DatabasesForm = memo(function DatabasesForm() {
     updateDatabase,
     currentDatabaseId,
     loadDatabases,
-  } = useDbStore();
+    isLoading: queryIsLoading,
+  } = useDatabase();
   const [isLoading, setIsLoading] = useState(true);
 
-  // Load databases on component mount
+  // Set loading state based on react-query's isLoading
   useEffect(() => {
-    loadDatabases()
-      .catch(console.error)
-      .finally(() => setIsLoading(false));
-  }, [loadDatabases]);
+    setIsLoading(queryIsLoading);
+  }, [queryIsLoading]);
 
   // Sort databases: active one first, then alphabetically
   const sortedDatabases = useMemo(

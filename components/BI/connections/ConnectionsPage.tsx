@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useCallback, memo, useEffect } from "react";
-import { useDbStore } from "@/components/stores/db_mongo_client";
+import { useDatabase } from "@/lib/hooks/use-database";
 import { ConnectionsList } from "./ConnectionsList";
 import { ConnectionForm } from "./ConnectionForm";
 import { useToast } from "@/lib/hooks/use-toast";
@@ -17,7 +17,8 @@ export const Connections = memo(function Connections() {
     updateDatabase,
     currentDatabaseId,
     loadDatabases,
-  } = useDbStore();
+    isLoading,
+  } = useDatabase();
 
   const {
     isCreating,
@@ -29,12 +30,10 @@ export const Connections = memo(function Connections() {
 
   const { toast } = useToast();
 
-  // Load databases once on component mount
+  // Set loading state based on react-query's isLoading
   useEffect(() => {
-    loadDatabases()
-      .catch(console.error)
-      .finally(() => setIsDbLoading(false));
-  }, [loadDatabases]);
+    setIsDbLoading(isLoading);
+  }, [isLoading]);
 
   // Get connection being edited if any
   const connectionBeingEdited =

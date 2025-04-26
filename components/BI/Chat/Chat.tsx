@@ -10,7 +10,7 @@ import { Skeleton } from "@/components/ui/skeleton";
 import { Welcome } from "./Welcome";
 import { useInitializeChat } from "@/lib/hooks/useInitializeChat";
 import { loadChat } from "@/components/stores/chat_store";
-import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
+import { useDatabase } from "@/lib/hooks/use-database";
 import {
   useDatabaseStructure,
   useSpeedMode,
@@ -36,7 +36,8 @@ export default function Chat({ className, chat_id }: ChatProps) {
   }, [localId, setTitle]);
 
   // Get current database info
-  const currentDB = useDbStoreWithAutoLoad().getCurrentDatabase();
+  const { getCurrentDatabase } = useDatabase();
+  const currentDB = getCurrentDatabase();
   const databaseStructure = useDatabaseStructure();
   const speedMode = useSpeedMode();
 

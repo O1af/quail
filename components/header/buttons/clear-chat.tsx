@@ -1,6 +1,6 @@
 "use client";
 import React from "react";
-import { useDbStoreWithAutoLoad } from "@/components/stores/db_mongo_client";
+import { useDatabase } from "@/lib/hooks/use-database";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -11,7 +11,7 @@ import {
 import { MessageCircleOff } from "lucide-react";
 
 export function ClearChat() {
-  const { setDatabaseChange } = useDbStoreWithAutoLoad();
+  const { setDatabaseChange } = useDatabase();
 
   return (
     <TooltipProvider>
