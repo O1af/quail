@@ -2,6 +2,7 @@
 
 import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
+import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
 import { Switch } from "@/components/ui/switch";
 import {
@@ -20,11 +21,19 @@ export function GeneralForm() {
   const [mounted, setMounted] = useState(false);
   const [showCode, setShowCode] = useState(false);
   const [showSuggestions, setShowSuggestions] = useState(true);
-  const [usageStats, setUsageStats] = useState<{
-    queries: number;
-    limit: number;
-  } | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
+
+  // Fetch usage stats with React Query
+  const {
+    data: usageStats,
+    isLoading: isUsageLoading,
+    error: usageError,
+  } = useQuery({
+    queryKey: ["usageStats"],
+    queryFn: getUserUsageStats,
+    staleTime: 5 * 60 * 1000, // 5 minutes - Keep data fresh but allow refetching
+    refetchOnMount: true, // Refetch when component mounts (default is true)
+    refetchOnWindowFocus: true, // Refetch when window gains focus
+  });
 
   // Prevent hydration mismatch by waiting until client-side
   useEffect(() => {
@@ -41,20 +50,6 @@ export function GeneralForm() {
     if (savedShowSuggestions !== null) {
       setShowSuggestions(savedShowSuggestions === "true");
     }
-
-    // Fetch usage stats
-    const fetchUsageStats = async () => {
-      try {
-        const stats = await getUserUsageStats();
-        setUsageStats(stats);
-      } catch (error) {
-        console.error("Error fetching usage stats:", error);
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchUsageStats();
   }, []);
 
   // Save preferences to localStorage when they change
@@ -124,10 +119,12 @@ export function GeneralForm() {
 
       <div>
         <h3 className="text-lg font-medium mb-4">Usage</h3>
-        {isLoading ? (
+        {isUsageLoading ? (
           <div className="flex justify-center py-6">
             <Loader2 className="w-8 h-8 animate-spin text-primary" />
           </div>
+        ) : usageError ? (
+          <p className="text-destructive">Error loading usage data.</p>
         ) : usageStats ? (
           <div className="space-y-2">
             <div className="flex justify-between">

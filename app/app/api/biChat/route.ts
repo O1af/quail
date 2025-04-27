@@ -6,7 +6,11 @@ import {
 } from "ai";
 import { createAzure } from "@ai-sdk/azure";
 import { createClient } from "@/utils/supabase/server";
-import { saveChat, deleteChat } from "@/components/stores/chat_store";
+import {
+  saveChat,
+  deleteChat,
+  generateId,
+} from "@/components/stores/chat_store"; // Added generateId
 import { generateTitleFromUserMessage } from "./utils/title";
 import { DataVisAgentTool } from "./DataVisAgent";
 import { tryCatch } from "@/lib/trycatch";
@@ -19,7 +23,7 @@ import {
   updateTokenUsage,
   updateUsage,
   getCurrentUsageColumn,
-} from "@/utils/metrics/AI"; // Added import
+} from "@/utils/metrics/AI";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -38,6 +42,40 @@ function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
   } else {
     return azure("gpt-4o-mini");
   }
+}
+
+// API route to generate a new chat ID
+export async function GET(req: Request) {
+  const { searchParams } = new URL(req.url);
+  // Check for a specific action, like requesting an ID
+  // Corrected endpoint to match useInitializeChat fetch call
+  if (req.url.endsWith("/api/biChat/id")) {
+    try {
+      const newId = await generateId();
+      return new Response(JSON.stringify({ id: newId }), {
+        status: 200,
+        headers: { "Content-Type": "application/json" },
+      });
+    } catch (error) {
+      console.error("Failed to generate chat ID:", error);
+      return new Response(
+        JSON.stringify({ message: "Failed to generate chat ID" }),
+        {
+          status: 500,
+          headers: { "Content-Type": "application/json" },
+        }
+      );
+    }
+  }
+
+  // Handle other GET requests or return method not allowed
+  return new Response(
+    JSON.stringify({ message: "Method Not Allowed or Invalid Action" }),
+    {
+      status: 405,
+      headers: { "Content-Type": "application/json" },
+    }
+  );
 }
 
 export async function DELETE(req: Request) {
@@ -113,10 +151,16 @@ export async function POST(req: Request) {
     databaseStructure,
     dbType,
     connectionString,
-    // userTier, // Removed as we fetch it above
     speedMode,
-    id,
+    id, // The chat ID passed from the client
   } = await req.json();
+
+  // Ensure we have a valid chat ID
+  if (!id) {
+    return new Response(JSON.stringify({ message: "Missing chat ID" }), {
+      status: 400,
+    });
+  }
 
   // Verify database connection information is present
   if (!connectionString || !dbType) {
@@ -134,12 +178,19 @@ export async function POST(req: Request) {
       // First, update with understanding status (step 0)
       await updateStatus(dataStream, 0);
 
-      const { data: title, error: titleError } =
-        messages.length === 1
-          ? await tryCatch(
-              generateTitleFromUserMessage({ message: messages[0], azure })
-            )
-          : { data: undefined, error: null };
+      // Check if title needs generation (only for the very first user message)
+      const isFirstUserMessage =
+        messages.length === 1 && messages[0].role === "user";
+      const { data: title, error: titleError } = isFirstUserMessage
+        ? await tryCatch(
+            generateTitleFromUserMessage({ message: messages[0], azure })
+          )
+        : { data: undefined, error: null };
+
+      if (titleError) {
+        console.warn("Failed to generate title:", titleError);
+        // Proceed without title generation error stopping the chat
+      }
 
       // Select model based on speed mode
       const modelToUse = getModelBySpeedMode(speedMode);
@@ -155,6 +206,12 @@ export async function POST(req: Request) {
         experimental_transform: smoothStream({ chunking: "word" }),
         onError(error) {
           console.log("Error in request:", error);
+          dataStream.writeData({
+            status: "Error during AI processing",
+            // Type check error before accessing message
+            error: error instanceof Error ? error.message : String(error),
+          });
+          // Removed: dataStream.close(); // Stream closes automatically on error/completion
         },
         tools: {
           DataVisAgent: DataVisAgentTool({
@@ -167,7 +224,8 @@ export async function POST(req: Request) {
             stream: dataStream,
           }),
         },
-        async onFinish({ response, usage }) { // Added usage parameter
+        async onFinish({ response, usage }) {
+          // Added usage parameter
           // Update token usage and general usage
           try {
             await updateTokenUsage(
@@ -192,31 +250,40 @@ export async function POST(req: Request) {
             });
           }
 
-          // Save the chat
+          // Save the chat, potentially updating the title if generated
+          const finalMessages = appendResponseMessages({
+            messages,
+            responseMessages: response.messages,
+          });
+
           const { error: saveError } = await tryCatch(
             saveChat(
-              id,
-              appendResponseMessages({
-                messages,
-                responseMessages: response.messages,
-              }),
+              id, // Use the ID passed from the client
+              finalMessages,
               user.user.id,
+              // Ensure title is string | undefined, converting null if necessary
               title ?? undefined
             )
           );
 
           if (saveError) {
+            console.error("Failed to save chat:", saveError);
             dataStream.writeData({
               status: "Failed to save chat",
             });
-            return;
+          } else {
+            // Optionally send final status
+            dataStream.writeData({ status: "Chat saved successfully" });
           }
+
+          // Removed: dataStream.close(); // Stream closes automatically on error/completion
         },
       });
 
       stream.mergeIntoDataStream(dataStream);
     },
     onError(error) {
+      console.error("Data stream error:", error);
       return error instanceof Error
         ? error.message
         : "An unexpected error occurred";

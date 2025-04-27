@@ -2,6 +2,7 @@
 
 import { useEffect, useState } from "react";
 import { useRouter, usePathname } from "next/navigation";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Import React Query hooks
 import {
   MessageSquare,
   MoreHorizontal,
@@ -56,112 +57,139 @@ import {
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 
+async function fetchChats() {
+  const supabase = createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+  if (!user) throw new Error("User not authenticated");
+  return listChats(user.id);
+}
+
+async function deleteChatMutation({
+  chatId,
+  userId,
+}: {
+  chatId: string;
+  userId: string;
+}) {
+  await deleteChat(chatId, userId);
+  return chatId;
+}
+
+async function renameChatMutation({
+  chatId,
+  userId,
+  newTitle,
+}: {
+  chatId: string;
+  userId: string;
+  newTitle: string;
+}) {
+  await renameChat(chatId, userId, newTitle);
+  return { chatId, newTitle };
+}
+
 export function NavChats() {
-  const [chats, setChats] = useState<ChatListResponse[]>([]);
-  const [loading, setLoading] = useState(true);
+  const queryClient = useQueryClient(); // Get query client instance
   const [isRenameDialogOpen, setIsRenameDialogOpen] = useState(false);
-  const [selectedChatId, setSelectedChatId] = useState<string>("");
+  const [selectedChat, setSelectedChat] = useState<ChatListResponse | null>(
+    null
+  );
   const [newTitle, setNewTitle] = useState("");
-  const [isRenaming, setIsRenaming] = useState(false);
   const [isOpen, setIsOpen] = useState(true);
   const router = useRouter();
   const pathname = usePathname();
   const { isMobile } = useSidebar();
 
-  useEffect(() => {
-    const loadChats = async () => {
-      try {
-        const supabase = createClient();
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        if (user) {
-          const chatList = await listChats(user.id);
-          setChats(chatList);
-        }
-      } catch (error) {
-        console.error("Failed to load chats:", error);
-      } finally {
-        setLoading(false);
-      }
-    };
+  // Fetch chats using React Query
+  const {
+    data: chats = [],
+    isLoading: loading,
+    error,
+  } = useQuery<ChatListResponse[], Error>({
+    queryKey: ["chats"],
+    queryFn: fetchChats,
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
+  });
 
-    loadChats();
-  }, [pathname]); // Reload when pathname changes (new chat created)
-
-  // Add listener for chat updates
+  // Get user ID for mutations
+  const [userId, setUserId] = useState<string | null>(null);
   useEffect(() => {
-    const handleChatUpdate = async () => {
+    const getUser = async () => {
       const supabase = createClient();
       const {
         data: { user },
       } = await supabase.auth.getUser();
-      if (user) {
-        const chatList = await listChats(user.id);
-        setChats(chatList);
-      }
+      setUserId(user?.id ?? null);
     };
-    window.addEventListener("chatUpdated", handleChatUpdate);
-    return () => window.removeEventListener("chatUpdated", handleChatUpdate);
+    getUser();
   }, []);
+
+  // Mutation for deleting a chat
+  const deleteMutation = useMutation({
+    mutationFn: deleteChatMutation,
+    onSuccess: (deletedChatId) => {
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
+      // If user is currently viewing this chat, redirect to /chat
+      if (pathname === `/chat/${deletedChatId}`) {
+        router.push("/chat");
+      }
+    },
+    onError: (error) => {
+      console.error("Failed to delete chat:", error);
+      // TODO: Show error notification to user
+    },
+  });
+
+  // Mutation for renaming a chat
+  const renameMutation = useMutation({
+    mutationFn: renameChatMutation,
+    onSuccess: () => {
+      queryClient.invalidateQueries({ queryKey: ["chats"] });
+      setIsRenameDialogOpen(false);
+      setNewTitle("");
+      setSelectedChat(null);
+    },
+    onError: (error) => {
+      console.error("Failed to rename chat:", error);
+      // TODO: Show error notification to user
+    },
+  });
 
   const handleNewChat = () => {
     router.push("/chat");
   };
 
-  const handleDeleteChat = async (chatId: string) => {
-    try {
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        await deleteChat(chatId, user.id);
-        // Remove the chat from the state
-        setChats(chats.filter((chat) => chat._id !== chatId));
-        // If user is currently viewing this chat, redirect to /chat
-        if (pathname === `/chat/${chatId}`) {
-          router.push("/chat");
-        }
-      }
-    } catch (error) {
-      console.error("Failed to delete chat:", error);
-    }
+  const handleDeleteChat = (chatId: string) => {
+    if (!userId) return;
+    deleteMutation.mutate({ chatId, userId });
   };
 
-  const handleRenameChat = async (chatId: string) => {
-    const chat = chats.find((c) => c._id === chatId);
-    setSelectedChatId(chatId);
-    setNewTitle(chat?.title || "");
+  const handleRenameChat = (chat: ChatListResponse) => {
+    setSelectedChat(chat);
+    setNewTitle(chat.title || "");
     setIsRenameDialogOpen(true);
   };
 
-  const handleRenameSubmit = async () => {
-    try {
-      setIsRenaming(true);
-      const supabase = createClient();
-      const {
-        data: { user },
-      } = await supabase.auth.getUser();
-      if (user) {
-        await renameChat(selectedChatId, user.id, newTitle);
-        // Update the chat title in the local state
-        setChats(
-          chats.map((chat) =>
-            chat._id === selectedChatId ? { ...chat, title: newTitle } : chat
-          )
-        );
-        setIsRenameDialogOpen(false);
-      }
-    } catch (error) {
-      console.error("Failed to rename chat:", error);
-    } finally {
-      setIsRenaming(false);
-    }
+  const handleRenameSubmit = () => {
+    if (!userId || !selectedChat) return;
+    renameMutation.mutate({
+      chatId: selectedChat._id,
+      userId,
+      newTitle: newTitle.trim() || "New Chat", // Ensure title is not empty
+    });
   };
 
   const isCurrentChat = (id: string) => pathname === `/chat/${id}`;
   const isNewChat = pathname === "/chat";
+
+  // Handle error state
+  if (error) {
+    // Optionally render an error message or component
+    console.error("Error loading chats:", error.message);
+  }
 
   return (
     <Collapsible open={isOpen} onOpenChange={setIsOpen} className="w-full mb-2">
@@ -239,8 +267,9 @@ export function NavChats() {
                       >
                         <DropdownMenuItem
                           onClick={() => {
-                            handleRenameChat(chat._id);
+                            handleRenameChat(chat); // Pass the whole chat object
                           }}
+                          disabled={renameMutation.isPending}
                         >
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Rename</span>
@@ -249,8 +278,14 @@ export function NavChats() {
                         <DropdownMenuItem
                           onClick={() => handleDeleteChat(chat._id)}
                           className="text-red-600"
+                          disabled={deleteMutation.isPending}
                         >
-                          <Trash2 className="mr-2 h-4 w-4" />
+                          {deleteMutation.isPending &&
+                          deleteMutation.variables?.chatId === chat._id ? (
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          ) : (
+                            <Trash2 className="mr-2 h-4 w-4" />
+                          )}
                           <span>Delete</span>
                         </DropdownMenuItem>
                       </DropdownMenuContent>
@@ -263,7 +298,16 @@ export function NavChats() {
         </CollapsibleContent>
       </SidebarGroup>
 
-      <Dialog open={isRenameDialogOpen} onOpenChange={setIsRenameDialogOpen}>
+      <Dialog
+        open={isRenameDialogOpen}
+        onOpenChange={(open) => {
+          if (!open) {
+            setSelectedChat(null); // Clear selection when closing
+            setNewTitle("");
+          }
+          setIsRenameDialogOpen(open);
+        }}
+      >
         <DialogContent>
           <DialogHeader>
             <DialogTitle>Rename Chat</DialogTitle>
@@ -272,18 +316,28 @@ export function NavChats() {
             value={newTitle}
             onChange={(e) => setNewTitle(e.target.value)}
             placeholder="Enter new title"
-            disabled={isRenaming}
+            disabled={renameMutation.isPending}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !renameMutation.isPending) {
+                handleRenameSubmit();
+              }
+            }}
           />
           <DialogFooter>
             <Button
               variant="ghost"
               onClick={() => setIsRenameDialogOpen(false)}
-              disabled={isRenaming}
+              disabled={renameMutation.isPending}
             >
               Cancel
             </Button>
-            <Button onClick={handleRenameSubmit} disabled={isRenaming}>
-              {isRenaming && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            <Button
+              onClick={handleRenameSubmit}
+              disabled={renameMutation.isPending || !newTitle.trim()}
+            >
+              {renameMutation.isPending && (
+                <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+              )}
               Save
             </Button>
           </DialogFooter>
