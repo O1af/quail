@@ -1,14 +1,15 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react"; // Added useMemo
 import Fuse from "fuse.js";
-import { createClient } from "@/utils/supabase/client";
+// Removed createClient import as it's not directly used here
 import {
   loadUserDashboards,
   loadSharedDashboards,
   Dashboard,
 } from "@/components/stores/dashboard_store";
 import { useAuthCheck } from "@/hooks/useAuthCheck";
+import { useQuery, useQueryClient } from "@tanstack/react-query"; // Added React Query imports
 
 // UI Components
 import { Button } from "@/components/ui/button";
@@ -24,40 +25,83 @@ import {
   Search,
   CirclePlus,
   Share2,
+  RefreshCw, // Added for potential error state action
 } from "lucide-react";
 
 // Local components
 import { EmptyState } from "@/app/app/(bi)/dashboards/components/EmptyState";
 import { DashboardCard } from "./components/DashboardCard";
 import { CreateDashboardDialog } from "./components/CreateDashboardDialog";
-
-// Types
-enum ViewMode {
-  Grid = "grid",
-  List = "list",
-}
+import { ViewMode } from "./types"; // Import ViewMode from types.ts
 
 export default function DashboardsPage() {
-  // State hooks
+  // State hooks for UI
   const [viewMode, setViewMode] = useState<ViewMode>(ViewMode.Grid);
   const [searchQuery, setSearchQuery] = useState("");
-  const [dashboards, setDashboards] = useState<Dashboard[]>([]);
-  const [sharedDashboards, setSharedDashboards] = useState<Dashboard[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isLoadingShared, setIsLoadingShared] = useState(true);
   const { user } = useAuthCheck({ redirectPath: "/login" });
   const { setHeaderContent, setHeaderButtons } = useHeader();
   const [activeTab, setActiveTab] = useState("my-dashboards");
-
-  // Create dashboard dialog state
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+
+  // React Query Client
+  const queryClient = useQueryClient();
+
+  // --- React Query Data Fetching ---
+
+  // Query for user's dashboards
+  const userDashboardsQuery = useQuery({
+    queryKey: ["userDashboards", user?.id],
+    queryFn: () => {
+      if (!user?.id) throw new Error("User ID not available");
+      return loadUserDashboards(user.id);
+    },
+    enabled: !!user?.id, // Only run when user ID is available
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
+  });
+
+  // Query for dashboards shared with the user
+  const sharedDashboardsQuery = useQuery({
+    queryKey: ["sharedDashboards", user?.email],
+    queryFn: () => {
+      if (!user?.email) throw new Error("User email not available");
+      return loadSharedDashboards(user.email);
+    },
+    enabled: !!user?.email, // Only run when user email is available
+    staleTime: 5 * 60 * 1000, // 5 minutes
+    refetchOnWindowFocus: true,
+  });
+
+  // --- Derived Data & Filtering ---
+
+  // Memoize Fuse instances and filtered results
+  const fuseOptions = {
+    keys: ["title", "description"],
+    threshold: 0.5,
+  };
+
+  const filteredDashboards = useMemo(() => {
+    const dashboards = userDashboardsQuery.data ?? [];
+    if (searchQuery.trim() === "") return dashboards;
+    const fuse = new Fuse(dashboards, fuseOptions);
+    return fuse.search(searchQuery).map((res) => res.item);
+  }, [userDashboardsQuery.data, searchQuery]);
+
+  const filteredSharedDashboards = useMemo(() => {
+    const dashboards = sharedDashboardsQuery.data ?? [];
+    if (searchQuery.trim() === "") return dashboards;
+    const fuse = new Fuse(dashboards, fuseOptions);
+    return fuse.search(searchQuery).map((res) => res.item);
+  }, [sharedDashboardsQuery.data, searchQuery]);
+
+  // --- Event Handlers & Effects ---
 
   // Function to handle search updates
   const handleSearch = (query: string) => {
     setSearchQuery(query);
   };
 
-  // Set up the search bar in the header
+  // Set up the header content and buttons
   useEffect(() => {
     setHeaderContent(
       <div className="flex flex-1 justify-between items-center w-full gap-4">
@@ -108,64 +152,24 @@ export default function DashboardsPage() {
     };
   }, [setHeaderContent, setHeaderButtons, searchQuery, viewMode]);
 
-  // Fetch dashboards when user is loaded
-  useEffect(() => {
-    if (user?.id) {
-      fetchData();
-      fetchSharedData();
-    }
-  }, [user]);
+  // --- Invalidate Queries ---
 
-  // Refresh data function
-  const fetchData = async () => {
-    if (!user?.id) return;
-
-    setIsLoading(true);
-    try {
-      const fetchedDashboards = await loadUserDashboards(user.id);
-      setDashboards(fetchedDashboards);
-    } catch (error) {
-      console.error("Error refreshing dashboards:", error);
-    } finally {
-      setIsLoading(false);
-    }
+  // Invalidate queries function (used for refreshing)
+  const invalidateUserDashboards = () => {
+    queryClient.invalidateQueries({ queryKey: ["userDashboards", user?.id] });
   };
 
-  // Fetch shared dashboards
-  const fetchSharedData = async () => {
-    if (!user?.email) return;
-
-    setIsLoadingShared(true);
-    try {
-      const fetchedDashboards = await loadSharedDashboards(user.email);
-      setSharedDashboards(fetchedDashboards);
-    } catch (error) {
-      console.error("Error refreshing shared dashboards:", error);
-    } finally {
-      setIsLoadingShared(false);
-    }
+  const invalidateSharedDashboards = () => {
+    queryClient.invalidateQueries({
+      queryKey: ["sharedDashboards", user?.email],
+    });
   };
 
-  // Filter dashboards based on search query
-  const getFilteredDashboards = (dashboardList: Dashboard[]) => {
-    if (searchQuery.trim() !== "") {
-      const fuse = new Fuse(dashboardList, {
-        keys: ["title", "description"],
-        threshold: 0.5,
-      });
-      return fuse.search(searchQuery).map((res) => res.item);
-    }
-    return dashboardList;
-  };
-
-  const filteredDashboards = getFilteredDashboards(dashboards);
-  const filteredSharedDashboards = getFilteredDashboards(sharedDashboards);
-
-  // Handle dashboard duplication event
+  // Handle dashboard duplication event using query invalidation
   useEffect(() => {
     const handleDashboardDuplicated = () => {
-      fetchData();
-      fetchSharedData();
+      invalidateUserDashboards();
+      invalidateSharedDashboards();
     };
 
     // Subscribe to events from dashboard cards
@@ -182,20 +186,38 @@ export default function DashboardsPage() {
         );
       };
     }
-  }, []);
+  }, [user?.id, user?.email]); // Add dependencies
 
-  // Render the dashboard content based on loading state
+  // --- Rendering Logic ---
+
+  // Generic loading indicator
+  const LoadingIndicator = () => (
+    <div className="flex w-full items-center justify-center py-8">
+      <div className="flex flex-col items-center space-y-4">
+        <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-12 w-12" />
+        <p className="text-gray-500 dark:text-gray-400">Loading...</p>
+      </div>
+    </div>
+  );
+
+  // Generic error state
+  const ErrorIndicator = ({ onRetry }: { onRetry: () => void }) => (
+    <EmptyState
+      title="Failed to load dashboards"
+      description="There was an error fetching the dashboards. Please try again."
+      actionText="Retry"
+      icon={<RefreshCw className="h-10 w-10 mb-2 text-destructive" />}
+      onAction={onRetry}
+    />
+  );
+
+  // Render the dashboard content based on query state
   const renderDashboardContent = () => {
-    if (isLoading) {
-      return (
-        <div className="flex w-full items-center justify-center py-8">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-12 w-12" />
-            <p className="text-gray-500 dark:text-gray-400">Loading...</p>
-          </div>
-        </div>
-      );
-    }
+    if (userDashboardsQuery.isLoading) return <LoadingIndicator />;
+    if (userDashboardsQuery.isError)
+      return <ErrorIndicator onRetry={invalidateUserDashboards} />;
+
+    const dashboards = userDashboardsQuery.data ?? [];
 
     // If there's a search query but no results found
     if (searchQuery.trim() !== "" && filteredDashboards.length === 0) {
@@ -224,7 +246,7 @@ export default function DashboardsPage() {
             key={dashboard._id}
             dashboard={dashboard}
             viewMode={viewMode}
-            onRefresh={fetchData}
+            onRefresh={invalidateUserDashboards} // Use invalidation for refresh
           />
         ))}
       </div>
@@ -243,18 +265,13 @@ export default function DashboardsPage() {
     );
   };
 
-  // Render the shared dashboard content based on loading state
+  // Render the shared dashboard content based on query state
   const renderSharedDashboardContent = () => {
-    if (isLoadingShared) {
-      return (
-        <div className="flex w-full items-center justify-center py-8">
-          <div className="flex flex-col items-center space-y-4">
-            <div className="animate-spin rounded-full border-4 border-gray-300 border-t-gray-900 h-12 w-12" />
-            <p className="text-gray-500 dark:text-gray-400">Loading...</p>
-          </div>
-        </div>
-      );
-    }
+    if (sharedDashboardsQuery.isLoading) return <LoadingIndicator />;
+    if (sharedDashboardsQuery.isError)
+      return <ErrorIndicator onRetry={invalidateSharedDashboards} />;
+
+    const dashboards = sharedDashboardsQuery.data ?? [];
 
     // If there's a search query but no results found
     if (searchQuery.trim() !== "" && filteredSharedDashboards.length === 0) {
@@ -270,8 +287,7 @@ export default function DashboardsPage() {
     }
 
     // Display shared dashboards
-    return sharedDashboards.length > 0 &&
-      filteredSharedDashboards.length > 0 ? (
+    return dashboards.length > 0 && filteredSharedDashboards.length > 0 ? (
       <div
         className={
           viewMode === ViewMode.Grid
@@ -284,7 +300,7 @@ export default function DashboardsPage() {
             key={dashboard._id}
             dashboard={dashboard}
             viewMode={viewMode}
-            onRefresh={fetchSharedData}
+            onRefresh={invalidateSharedDashboards} // Use invalidation for refresh
             isShared={true}
           />
         ))}
@@ -312,9 +328,10 @@ export default function DashboardsPage() {
             <TabsTrigger value="my-dashboards">My Dashboards</TabsTrigger>
             <TabsTrigger value="shared-dashboards">
               Shared With Me
-              {sharedDashboards.length > 0 && (
+              {/* Use data from query for count */}
+              {(sharedDashboardsQuery.data?.length ?? 0) > 0 && (
                 <span className="ml-2 bg-primary/20 text-xs rounded-full px-2 py-0.5">
-                  {sharedDashboards.length}
+                  {sharedDashboardsQuery.data?.length}
                 </span>
               )}
             </TabsTrigger>
@@ -334,7 +351,7 @@ export default function DashboardsPage() {
       <CreateDashboardDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
-        onDashboardCreated={fetchData}
+        onDashboardCreated={invalidateUserDashboards} // Invalidate on creation
         userId={user?.id || ""}
       />
     </div>

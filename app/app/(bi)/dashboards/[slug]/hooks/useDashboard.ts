@@ -4,149 +4,210 @@ import {
   loadDashboard,
   Dashboard,
   updateDashboard,
+  LayoutItem, // Import LayoutItem type
 } from "@/components/stores/dashboard_store";
 import { loadChart } from "@/components/stores/chart_store";
 import { ChartDocument } from "@/lib/types/stores/chart";
 import { useToast } from "@/lib/hooks/use-toast";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
+import { User } from "@supabase/supabase-js";
+import { useIsAuthenticated } from "@/lib/hooks/use-authenticated-query"; // Import useIsAuthenticated
 
 type Permission = "owner" | "editor" | "viewer" | "public" | "anonymous" | null;
 
+// Define the structure returned by the queryFn
+interface DashboardQueryResult {
+  dashboard: Dashboard;
+  charts: Map<string, ChartDocument | null>;
+}
+
 interface UseDashboardReturn {
-  user: any;
-  dashboard: Dashboard | null;
-  isLoading: boolean;
-  isAuthLoading: boolean;
-  isSaving: boolean;
-  error: string | null;
-  chartData: Map<string, ChartDocument | null>;
+  user: User | null; // Keep user state for now, though useIsAuthenticated provides ID
+  dashboard: Dashboard | undefined; // Data from query
+  isLoading: boolean; // Combined loading state
+  isAuthLoading: boolean; // From useIsAuthenticated
+  isSaving: boolean; // Keep for mutation pending state
+  error: Error | null; // Use Error type from React Query
+  chartData: Map<string, ChartDocument | null>; // Local state, synced with query
   userPermission: Permission;
   tempTitle: string;
   tempDescription: string;
   isEditing: boolean;
   hasUnsavedChanges: boolean;
   chartUpdateCounter: number;
-  tempLayoutsRef: React.MutableRefObject<any[]>;
+  tempLayoutsRef: React.MutableRefObject<LayoutItem[]>; // Use LayoutItem[]
   tempChartsRef: React.MutableRefObject<string[]>;
   handleTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDescriptionChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleEdit: () => void;
   handleSave: () => Promise<void>;
   handleCancel: () => void;
-  handleLayoutChange: (layout: any) => void;
+  handleLayoutChange: (layout: LayoutItem[]) => void; // Use LayoutItem[]
   handleChartsChange: (newCharts: string[], apply: boolean) => void;
   handleUpdatePermissions: (
     newPermissions: Dashboard["permissions"]
   ) => Promise<void>;
 }
 
+// Helper function to check permissions (can be moved outside if preferred)
+const checkUserPermissions = (
+  dashboard: Dashboard,
+  userEmail?: string,
+  userId?: string
+): Permission => {
+  if (!userId) return null;
+  if (dashboard.userId === userId) return "owner";
+  if (userEmail && dashboard.permissions?.editors?.includes(userEmail))
+    return "editor";
+  if (userEmail && dashboard.permissions?.viewers?.includes(userEmail))
+    return "viewer";
+  if (dashboard.permissions?.publicView) return "public";
+  return null;
+};
+
 export function useDashboard(slug: string): UseDashboardReturn {
-  const [user, setUser] = useState<any>(null);
-  const [dashboard, setDashboard] = useState<Dashboard | null>(null);
-  const [isLoading, setIsLoading] = useState(true);
-  const [isAuthLoading, setIsAuthLoading] = useState(true);
-  const [isSaving, setIsSaving] = useState(false);
-  const [error, setError] = useState<string | null>(null);
-  const [chartData, setChartData] = useState<Map<string, ChartDocument | null>>(
-    new Map()
-  );
+  // Still keep user state if needed for email/metadata, though ID comes from useIsAuthenticated
+  const [user, setUser] = useState<User | null>(null);
+  const {
+    isAuthenticated,
+    isLoading: isAuthLoading,
+    userId,
+  } = useIsAuthenticated(); // Use the hook
+
   const [userPermission, setUserPermission] = useState<Permission>(null);
   const [isEditing, setIsEditing] = useState(false);
   const [tempTitle, setTempTitle] = useState("");
   const [tempDescription, setTempDescription] = useState("");
   const [hasUnsavedChanges, setHasUnsavedChanges] = useState(false);
   const [chartUpdateCounter, setChartUpdateCounter] = useState(0);
+  const [chartData, setChartData] = useState<Map<string, ChartDocument | null>>(
+    new Map()
+  );
 
-  const tempLayoutsRef = useRef<any[]>([]);
+  const tempLayoutsRef = useRef<LayoutItem[]>([]); // Use LayoutItem[]
   const tempChartsRef = useRef<string[]>([]);
 
   const { toast } = useToast();
-  const supabase = createClient();
+  const supabase = createClient(); // Keep for fetching full user object if needed
+  const queryClient = useQueryClient();
 
-  // Title change handler
-  const handleTitleChange = useCallback(
-    (e: React.ChangeEvent<HTMLInputElement>) => {
-      setTempTitle(e.target.value);
-    },
-    []
-  );
-
-  // Description change handler
-  const handleDescriptionChange = useCallback(
-    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
-      setTempDescription(e.target.value);
-    },
-    []
-  );
-
-  // Start editing
-  const handleEdit = useCallback(() => {
-    if (dashboard?.layout) {
-      tempLayoutsRef.current = [...dashboard.layout];
-    }
-    if (dashboard?.charts) {
-      tempChartsRef.current = [...dashboard.charts];
-    }
-    setTempTitle(dashboard?.title || "Dashboard");
-    setTempDescription(dashboard?.description || "");
-    setIsEditing(true);
-    setHasUnsavedChanges(false);
-  }, [dashboard]);
-
-  // Save changes
-  const handleSave = useCallback(async () => {
-    if (!dashboard || !user) return;
-
-    const trimmedTitle = tempTitle.trim() || "Dashboard";
-    const trimmedDescription = tempDescription.trim();
-
-    setIsSaving(true);
-    try {
-      await updateDashboard(slug, dashboard.userId, {
-        title: trimmedTitle,
-        description: trimmedDescription,
-        layout: tempLayoutsRef.current,
-        charts: tempChartsRef.current,
-      });
-
-      setDashboard((prev) => {
-        if (!prev) return null;
-        return {
-          ...prev,
-          title: trimmedTitle,
-          description: trimmedDescription,
-          layout: tempLayoutsRef.current,
-          charts: tempChartsRef.current,
-        };
-      });
-
-      // Update chart data for newly added charts
-      const currentChartIds = Array.from(chartData.keys());
-      const newChartIds = tempChartsRef.current.filter(
-        (id) => !currentChartIds.includes(id)
-      );
-
-      if (newChartIds.length > 0) {
-        const newChartDataMap = new Map(chartData);
-        for (const chartId of newChartIds) {
-          try {
-            const chart = await loadChart(chartId);
-            newChartDataMap.set(chartId, chart);
-          } catch (err) {
-            console.error(`Failed to load chart ${chartId}:`, err);
-            newChartDataMap.set(chartId, null);
-          }
+  // --- User Authentication ---
+  // Fetch full user object once authenticated (optional, if needed beyond ID/email)
+  useEffect(() => {
+    const fetchFullUser = async () => {
+      if (isAuthenticated) {
+        try {
+          const {
+            data: { user: fetchedUser },
+          } = await supabase.auth.getUser();
+          setUser(fetchedUser); // Store the full user object
+        } catch (err) {
+          console.error("Error fetching full user object:", err);
+          setUser(null);
         }
-        setChartData(newChartDataMap);
+      } else {
+        setUser(null); // Clear user if not authenticated
+      }
+    };
+    fetchFullUser();
+  }, [isAuthenticated, supabase]);
+
+  // --- Data Fetching with React Query ---
+  const dashboardQueryKey = ["dashboard", slug];
+
+  const {
+    data: queryResult,
+    isLoading: isDashboardLoading,
+    error: dashboardError,
+    isSuccess: isDashboardSuccess,
+  } = useQuery<DashboardQueryResult, Error>({
+    queryKey: dashboardQueryKey,
+    queryFn: async (): Promise<DashboardQueryResult> => {
+      // userId is guaranteed by the 'enabled' flag
+      if (!userId) throw new Error("User not authenticated");
+
+      const dashboardData = await loadDashboard(slug);
+      if (!dashboardData) {
+        throw new Error("Dashboard not found");
       }
 
+      // Fetch user email if needed for permissions check (can be optimized)
+      const userEmail = user?.email; // Get email from the fetched user state
+
+      const permissionLevel = checkUserPermissions(
+        dashboardData,
+        userEmail, // Pass email
+        userId // Pass ID from useIsAuthenticated
+      );
+
+      if (permissionLevel === null) {
+        throw new Error("You don't have permission to view this dashboard");
+      }
+
+      setUserPermission(permissionLevel);
+
+      // Load chart data associated with the dashboard
+      const chartDataMap = new Map<string, ChartDocument | null>();
+      if (dashboardData.charts && dashboardData.charts.length > 0) {
+        const chartPromises = dashboardData.charts.map(async (chartId) => {
+          try {
+            const chart = await loadChart(chartId);
+            return { chartId, chart };
+          } catch (err) {
+            console.error(`Error loading chart ${chartId}:`, err);
+            return { chartId, chart: null };
+          }
+        });
+        const chartResults = await Promise.all(chartPromises);
+        chartResults.forEach(({ chartId, chart }) => {
+          chartDataMap.set(chartId, chart);
+        });
+      }
+      // Return both dashboard and chart data
+      return { dashboard: dashboardData, charts: chartDataMap };
+    },
+    // Enable only when authentication check is complete and successful
+    enabled: isAuthenticated === true,
+    staleTime: 5 * 60 * 1000,
+    refetchOnWindowFocus: true,
+    retry: 1,
+  });
+
+  // Extract dashboard data from the query result
+  const dashboard = queryResult?.dashboard;
+
+  // Effect to sync local chartData state with fetched data from React Query
+  useEffect(() => {
+    if (isDashboardSuccess && queryResult?.charts) {
+      // Only update local state if not currently editing to avoid overwriting temp changes
+      if (!isEditing) {
+        setChartData(new Map(queryResult.charts)); // Create a new map instance
+      }
+    }
+  }, [queryResult, isDashboardSuccess, isEditing]); // Add isEditing dependency
+
+  // --- Mutations with React Query ---
+  const updateDashboardMutation = useMutation({
+    mutationFn: (updatedData: Partial<Dashboard>) => {
+      const currentDashboard = queryResult?.dashboard;
+      // Use userId from useIsAuthenticated
+      if (!currentDashboard || !userId)
+        throw new Error("Dashboard or user ID not available for saving");
+      return updateDashboard(slug, userId, updatedData); // Use userId
+    },
+    onSuccess: (updatedData, variables) => {
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
       toast({
         title: "Dashboard saved",
         description: "Your changes have been saved successfully.",
         duration: 3000,
       });
+      setIsEditing(false);
       setHasUnsavedChanges(false);
-    } catch (err) {
-      console.error("Failed to save dashboard changes:", err);
+      // No need to manually update chartData state here, invalidation handles it.
+    },
+    onError: (error) => {
+      console.error("Failed to save dashboard changes:", error);
       toast({
         title: "Save failed",
         description:
@@ -154,61 +215,179 @@ export function useDashboard(slug: string): UseDashboardReturn {
         variant: "destructive",
         duration: 5000,
       });
-    } finally {
-      setIsSaving(false);
-      setIsEditing(false);
+      // Optionally: Rollback optimistic update if implemented
+      // queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+    },
+  });
+
+  const updatePermissionsMutation = useMutation({
+    mutationFn: (newPermissions: Dashboard["permissions"]) => {
+      const currentDashboard = queryResult?.dashboard;
+      // Use userId from useIsAuthenticated
+      if (!currentDashboard || !userId)
+        throw new Error(
+          "Dashboard or user ID not available for permission update"
+        );
+      return updateDashboard(slug, userId, { permissions: newPermissions }); // Use userId
+    },
+    onSuccess: (updatedData, variables) => {
+      queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
+      toast({
+        title: "Permissions updated",
+        duration: 3000,
+      });
+    },
+    onError: (error) => {
+      console.error("Failed to update dashboard permissions:", error);
+      toast({
+        title: "Permission update failed",
+        description: "Could not update permissions. Please try again.",
+        variant: "destructive",
+        duration: 5000,
+      });
+    },
+  });
+
+  // --- Event Handlers ---
+
+  const handleTitleChange = useCallback(
+    (e: React.ChangeEvent<HTMLInputElement>) => {
+      setTempTitle(e.target.value);
+      setHasUnsavedChanges(true); // Mark changes when title is edited
+    },
+    []
+  );
+
+  const handleDescriptionChange = useCallback(
+    (e: React.ChangeEvent<HTMLTextAreaElement>) => {
+      setTempDescription(e.target.value);
+      setHasUnsavedChanges(true); // Mark changes when description is edited
+    },
+    []
+  );
+
+  const handleEdit = useCallback(() => {
+    // Use dashboard from the query result for initialization
+    const currentDashboard = queryResult?.dashboard;
+    if (currentDashboard) {
+      tempLayoutsRef.current = [...(currentDashboard.layout || [])];
+      tempChartsRef.current = [...(currentDashboard.charts || [])];
+      setTempTitle(currentDashboard.title || "Dashboard");
+      setTempDescription(currentDashboard.description || "");
+      // Ensure local chartData reflects the current state when starting edit
+      setChartData(new Map(queryResult?.charts || []));
+      setIsEditing(true);
+      setHasUnsavedChanges(false);
     }
-  }, [dashboard, user, slug, tempTitle, tempDescription, chartData, toast]);
+  }, [queryResult]); // Depend on queryResult
 
-  // Cancel editing
+  const handleSave = useCallback(async () => {
+    const currentDashboard = queryResult?.dashboard;
+    // Use userId from useIsAuthenticated
+    if (!currentDashboard || !userId) return;
+
+    const trimmedTitle = tempTitle.trim() || "Dashboard";
+    const trimmedDescription = tempDescription.trim();
+
+    // Compare against the dashboard data from the query result
+    const didTitleChange = trimmedTitle !== currentDashboard.title;
+    const didDescriptionChange =
+      trimmedDescription !== currentDashboard.description;
+    const didLayoutChange =
+      JSON.stringify(tempLayoutsRef.current) !==
+      JSON.stringify(currentDashboard.layout);
+    const didChartsChange =
+      JSON.stringify(tempChartsRef.current) !==
+      JSON.stringify(currentDashboard.charts);
+
+    if (
+      didTitleChange ||
+      didDescriptionChange ||
+      didLayoutChange ||
+      didChartsChange
+    ) {
+      updateDashboardMutation.mutate({
+        title: trimmedTitle,
+        description: trimmedDescription,
+        layout: tempLayoutsRef.current,
+        charts: tempChartsRef.current,
+      });
+    } else {
+      setIsEditing(false);
+      setHasUnsavedChanges(false);
+      toast({
+        title: "No changes",
+        description: "No changes were detected to save.",
+        duration: 2000,
+      });
+    }
+  }, [
+    queryResult,
+    userId, // Use userId
+    tempTitle,
+    tempDescription,
+    updateDashboardMutation,
+    toast,
+  ]);
+
   const handleCancel = useCallback(() => {
-    // if (hasUnsavedChanges) {
-    //   const confirmed = window.confirm(
-    //     "You have unsaved changes. Are you sure you want to discard them?"
-    //   );
-    //   if (!confirmed) return;
-    // }
-
-    tempLayoutsRef.current = dashboard?.layout || [];
-    tempChartsRef.current = dashboard?.charts || [];
-    setTempTitle(dashboard?.title || "Dashboard");
-    setTempDescription(dashboard?.description || "");
     setIsEditing(false);
     setHasUnsavedChanges(false);
+    // Reset local chart data state to reflect the last fetched data
+    if (queryResult?.charts) {
+      setChartData(new Map(queryResult.charts));
+    }
+    // Optionally reset temp refs if needed before next edit
+    const currentDashboard = queryResult?.dashboard;
+    if (currentDashboard) {
+      tempLayoutsRef.current = currentDashboard.layout || [];
+      tempChartsRef.current = currentDashboard.charts || [];
+    }
 
     toast({
       title: "Changes discarded",
-      description: "Your changes have been discarded.",
+      description: "Editing cancelled.",
       duration: 3000,
     });
-  }, [dashboard, toast]);
+  }, [queryResult, toast]); // Depend on queryResult
 
-  // Update layout
   const handleLayoutChange = useCallback(
-    (layout: any) => {
+    (layout: LayoutItem[]) => {
+      // Use LayoutItem[]
       if (isEditing) {
-        tempLayoutsRef.current = layout;
-        setHasUnsavedChanges(true);
+        // Check if layout actually changed compared to the ref
+        if (JSON.stringify(layout) !== JSON.stringify(tempLayoutsRef.current)) {
+          tempLayoutsRef.current = layout;
+          setHasUnsavedChanges(true);
+        }
       }
     },
     [isEditing]
   );
 
-  // Chart management
+  // handleChartsChange remains largely the same, operating on the local chartData state
   const handleChartsChange = useCallback(
     (newCharts: string[], apply: boolean) => {
-      if (apply) {
-        const existingChartIds = new Set(tempChartsRef.current);
-        const addedCharts = newCharts.filter(
-          (chartId) => !existingChartIds.has(chartId)
+      if (apply && isEditing) {
+        const currentChartsSet = new Set(tempChartsRef.current);
+        const newChartsSet = new Set(newCharts);
+
+        const addedCharts = newCharts.filter((id) => !currentChartsSet.has(id));
+        const removedCharts = tempChartsRef.current.filter(
+          (id) => !newChartsSet.has(id)
         );
+
+        if (addedCharts.length === 0 && removedCharts.length === 0) {
+          // No actual change in charts
+          return;
+        }
 
         // Update charts reference
         tempChartsRef.current = newCharts;
 
-        // Clean up layouts
+        // Clean up layouts: Remove layouts for removed charts
         tempLayoutsRef.current = tempLayoutsRef.current.filter((item) =>
-          newCharts.includes(item.i)
+          newChartsSet.has(item.i)
         );
 
         // Add default layout items for new charts
@@ -222,10 +401,10 @@ export function useDashboard(slug: string): UseDashboardReturn {
 
           const newLayoutItems = addedCharts.map((chartId, index) => ({
             i: chartId,
-            x: 0,
-            y: maxY + index * 4,
-            w: 12,
-            h: 9,
+            x: (index * 6) % 12, // Basic positioning
+            y: maxY + Math.floor((index * 6) / 12) * 9,
+            w: 6, // Default width
+            h: 9, // Default height
             minW: 3,
             minH: 3,
           }));
@@ -235,195 +414,79 @@ export function useDashboard(slug: string): UseDashboardReturn {
             ...newLayoutItems,
           ];
 
-          // Load data for new charts
+          // Load data for new charts immediately into local state
           const loadNewChartData = async () => {
+            // Use the current local chartData state
             const newChartDataMap = new Map(chartData);
             for (const chartId of addedCharts) {
-              try {
-                const chart = await loadChart(chartId);
-                newChartDataMap.set(chartId, chart);
-              } catch (err) {
-                console.error(`Failed to load chart ${chartId}:`, err);
-                newChartDataMap.set(chartId, null);
+              if (!newChartDataMap.has(chartId)) {
+                // Avoid reloading if already present
+                try {
+                  const chart = await loadChart(chartId);
+                  newChartDataMap.set(chartId, chart);
+                } catch (err) {
+                  console.error(`Failed to load chart ${chartId}:`, err);
+                  newChartDataMap.set(chartId, null);
+                }
               }
             }
-            setChartData(newChartDataMap);
+            setChartData(newChartDataMap); // Update local state
           };
-
-          loadNewChartData();
+          if (addedCharts.length > 0) {
+            loadNewChartData();
+          }
         }
 
-        setChartUpdateCounter((prev) => prev + 1);
-
-        // Notify user about changes
-        const addedCount = addedCharts.length;
-        const removedCount =
-          existingChartIds.size - (newCharts.length - addedCharts.length);
-
-        if (addedCount > 0 || removedCount > 0) {
-          let message = "";
-          if (addedCount > 0)
-            message += `Added ${addedCount} chart${
-              addedCount !== 1 ? "s" : ""
-            }. `;
-          if (removedCount > 0)
-            message += `Removed ${removedCount} chart${
-              removedCount !== 1 ? "s" : ""
-            }.`;
-
-          toast({
-            title: "Charts updated",
-            description: message.trim(),
-            duration: 3000,
+        // Remove chart data for removed charts from local state
+        if (removedCharts.length > 0) {
+          setChartData((prevMap) => {
+            const newMap = new Map(prevMap);
+            removedCharts.forEach((id) => newMap.delete(id));
+            return newMap;
           });
-
-          setHasUnsavedChanges(true);
         }
+
+        setChartUpdateCounter((prev) => prev + 1); // Trigger grid re-render if needed
+        setHasUnsavedChanges(true); // Mark changes
+
+        // Notify user
+        let message = "";
+        if (addedCharts.length > 0)
+          message += `Added ${addedCharts.length} chart${
+            addedCharts.length !== 1 ? "s" : ""
+          }. `;
+        if (removedCharts.length > 0)
+          message += `Removed ${removedCharts.length} chart${
+            removedCharts.length !== 1 ? "s" : ""
+          }.`;
+        toast({
+          title: "Charts updated (unsaved)",
+          description: message.trim(),
+          duration: 3000,
+        });
       }
     },
-    [chartData, toast]
-  );
-
-  // Permission management
-  const checkUserPermissions = useCallback(
-    (dashboard: Dashboard, userEmail?: string, userId?: string): Permission => {
-      if (!userId) return null;
-
-      if (dashboard.userId === userId) return "owner";
-
-      if (userEmail && dashboard.permissions?.editors?.includes(userEmail))
-        return "editor";
-
-      if (userEmail && dashboard.permissions?.viewers?.includes(userEmail))
-        return "viewer";
-
-      if (dashboard.permissions?.publicView) return "public";
-
-      return null;
-    },
-    []
+    [isEditing, chartData, toast] // Keep chartData dependency for local updates
   );
 
   const handleUpdatePermissions = useCallback(
     async (newPermissions: Dashboard["permissions"]) => {
-      if (!dashboard || !user) return;
-
-      setIsLoading(true);
-      try {
-        await updateDashboard(slug, user.id, {
-          permissions: newPermissions,
-        });
-
-        setDashboard((prev) => {
-          if (!prev) return null;
-          return { ...prev, permissions: newPermissions };
-        });
-      } catch (err) {
-        console.error("Failed to update dashboard permissions:", err);
-        throw err;
-      } finally {
-        setIsLoading(false);
-      }
+      const currentDashboard = queryResult?.dashboard;
+      // Use userId from useIsAuthenticated
+      if (!currentDashboard || !userId) return;
+      await updatePermissionsMutation.mutateAsync(newPermissions);
     },
-    [dashboard, user, slug]
+    [queryResult, userId, updatePermissionsMutation] // Use userId
   );
 
-  // Fetch user
-  useEffect(() => {
-    const fetchUser = async () => {
-      setIsAuthLoading(true);
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-        setUser(user);
-      } catch (err) {
-        console.error("Error fetching user:", err);
-      } finally {
-        setIsAuthLoading(false);
-      }
-    };
-
-    fetchUser();
-  }, [supabase]);
-
-  // Fetch dashboard data
-  useEffect(() => {
-    if (isAuthLoading) return;
-
-    const fetchDashboard = async () => {
-      try {
-        setIsLoading(true);
-
-        if (!user) {
-          window.location.href = `${process.env.NEXT_PUBLIC_APP_URL}/login`;
-          return;
-        }
-
-        const dashboardData = await loadDashboard(slug);
-
-        if (!dashboardData) {
-          setError("Dashboard not found");
-          setIsLoading(false);
-          return;
-        }
-
-        const permissionLevel = checkUserPermissions(
-          dashboardData,
-          user.email,
-          user.id
-        );
-
-        if (permissionLevel === null) {
-          setError("You don't have permission to view this dashboard");
-          setIsLoading(false);
-          return;
-        }
-
-        setUserPermission(permissionLevel);
-        setDashboard(dashboardData);
-
-        if (permissionLevel !== "owner" && permissionLevel !== "editor") {
-          setIsEditing(false);
-        }
-
-        // Load chart data
-        const chartDataMap = new Map<string, ChartDocument | null>();
-
-        const chartPromises = dashboardData.charts.map(async (chartId) => {
-          try {
-            const chart = await loadChart(chartId);
-            return { chartId, chart };
-          } catch (err) {
-            console.error(`Error loading chart ${chartId}:`, err);
-            return { chartId, chart: null };
-          }
-        });
-
-        const chartResults = await Promise.all(chartPromises);
-        chartResults.forEach(({ chartId, chart }) => {
-          chartDataMap.set(chartId, chart);
-        });
-
-        setChartData(chartDataMap);
-      } catch (err) {
-        console.error("Error loading dashboard:", err);
-        setError("Failed to load dashboard");
-      } finally {
-        setIsLoading(false);
-      }
-    };
-
-    fetchDashboard();
-  }, [slug, user, checkUserPermissions, isAuthLoading]);
-
+  // --- Return Values ---
   return {
-    user,
+    user, // Return the full user object if needed
     dashboard,
-    isLoading,
-    isAuthLoading,
-    isSaving,
-    error,
+    isLoading: isAuthLoading || isDashboardLoading, // Combined loading
+    isAuthLoading, // Expose auth loading state
+    isSaving: updateDashboardMutation.isPending,
+    error: dashboardError,
     chartData,
     userPermission,
     tempTitle,
