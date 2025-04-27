@@ -1,267 +1,142 @@
+// filepath: /Users/olaf/Documents/Quail/quail/components/stores/chartEditor_store.ts
 import { create } from "zustand";
-import { ChartData } from "@/lib/types/stores/chart";
-import { loadChart, saveChart } from "./chart_store";
-import { createClient } from "@/utils/supabase/client";
-import { tryCatch } from "@/lib/trycatch";
 
+// UI state interface - focused on editor state, not server state
 interface ChartEditorState {
-  // Core data
+  // Core editor content
   chartId: string | null;
-  chartData: ChartData | null;
-  currJsx: string; // Current JSX code displayed in editor
-  newJsx: string | null; // New JSX code from streaming
-  title: string;
+  currJsx: string; // Current JSX code displayed/edited
+  newJsx: string | null; // New JSX code from streaming AI
+  title: string; // Current title being edited
 
-  // UI state
-  isLoading: boolean;
-  isSaving: boolean;
-  hasUnsavedChanges: boolean;
-  error: string | null;
+  // Original content loaded from server (for comparison)
+  originalJsx: string;
+  originalTitle: string;
 
-  // Natural language processing state
-  isStreaming: boolean;
-  showDiffView: boolean; // Controls diff view visibility
+  // UI state flags
+  hasUnsavedChanges: boolean; // Derived from comparing current vs original
+  error: string | null; // For displaying UI-related errors (e.g., render errors)
+  isStreaming: boolean; // AI is generating code
+  showDiffView: boolean; // Diff editor is visible
 
   // Actions
-  setChartId: (id: string) => void;
+  setChartId: (id: string | null) => void;
   setCurrJsx: (code: string) => void;
   setNewJsx: (code: string | null) => void;
   setTitle: (title: string) => void;
-  setHasUnsavedChanges: (hasChanges: boolean) => void;
   setIsStreaming: (streaming: boolean) => void;
   setShowDiffView: (show: boolean) => void;
+  setError: (error: string | null) => void;
   clearError: () => void;
   processIncomingMessage: (message: string) => void;
   acceptChanges: () => void;
   rejectChanges: () => void;
-
-  // Operations
-  loadChartData: (chartId: string) => Promise<void>;
-  saveChanges: () => Promise<void>;
-  resetEditor: () => void;
+  setOriginalContent: (jsx: string, title: string) => void; // Initialize state from fetched data
+  resetEditor: () => void; // Reset UI state on unmount or navigation
 }
 
 const initialState = {
   chartId: null,
-  chartData: null,
   currJsx: "",
   newJsx: null,
   title: "Untitled Chart",
-  isLoading: true,
-  isSaving: false,
+  originalJsx: "",
+  originalTitle: "Untitled Chart",
   hasUnsavedChanges: false,
   error: null,
-  showUnsavedDialog: false,
   isStreaming: false,
   showDiffView: false,
 };
 
 const useChartEditorStore = create<ChartEditorState>((set, get) => ({
-  // Initial state
   ...initialState,
 
-  // Basic setters
-  setChartId: (id) => set({ chartId: id }),
+  setChartId: (id: string | null) => set({ chartId: id }),
 
-  setCurrJsx: (code) =>
-    set((state) => {
-      const originalJsx = state.chartData?.chartJsx || "";
-      const originalTitle = state.title || "Untitled Chart";
+  setCurrJsx: (code: string) =>
+    set((state) => ({
+      currJsx: code,
+      hasUnsavedChanges:
+        code !== state.originalJsx || state.title !== state.originalTitle,
+    })),
 
-      // Only update if code actually changed to prevent unnecessary renders
-      if (code === state.currJsx) return {};
+  setNewJsx: (code: string | null) => set({ newJsx: code }),
 
-      return {
-        currJsx: code,
-        hasUnsavedChanges:
-          code !== originalJsx || state.title !== originalTitle,
-      };
-    }),
+  setTitle: (title: string) =>
+    set((state) => ({
+      title,
+      hasUnsavedChanges:
+        state.currJsx !== state.originalJsx || title !== state.originalTitle,
+    })),
 
-  setNewJsx: (code) => set({ newJsx: code }),
-
-  setTitle: (title) =>
-    set((state) => {
-      const originalTitle = state.title || "Untitled Chart";
-      const originalJsx = state.chartData?.chartJsx || "";
-
-      // Only update if title actually changed
-      if (title === state.title) return {};
-
-      return {
-        title,
-        hasUnsavedChanges:
-          title !== originalTitle || state.currJsx !== originalJsx,
-      };
-    }),
-
-  setHasUnsavedChanges: (hasChanges) => {
-    // Avoid re-render when setting to the same value
-    if (hasChanges === get().hasUnsavedChanges) return;
-    set({ hasUnsavedChanges: hasChanges });
-  },
-
-  setIsStreaming: (streaming) => {
+  setIsStreaming: (streaming: boolean) => {
     set((state) => {
       if (streaming) {
-        // When starting to stream, don't show diff view yet, just start streaming
+        // Starting stream: clear previous diff, keep current view
+        return { isStreaming: true, newJsx: null, showDiffView: false };
+      } else {
+        // Stopping stream: if newJsx exists, show diff view
         return {
-          isStreaming: streaming,
-          // Don't change showDiffView here - keep it as is
+          isStreaming: false,
+          showDiffView: state.newJsx !== null && state.newJsx !== state.currJsx,
         };
       }
-
-      // When streaming completes and we have newJsx, show diff view
-      if (!streaming && state.isStreaming && state.newJsx !== null) {
-        return {
-          isStreaming: streaming,
-          showDiffView: true, // Enable diff view when streaming completes
-        };
-      }
-
-      // When stopping streaming but no changes were made
-      if (!streaming && state.isStreaming && state.newJsx === null) {
-        return {
-          isStreaming: streaming,
-          showDiffView: false, // Hide diff view if no new content
-        };
-      }
-
-      return { isStreaming: streaming };
     });
   },
 
-  setShowDiffView: (show) => set({ showDiffView: show }),
+  setShowDiffView: (show: boolean) => set({ showDiffView: show }),
 
+  setError: (error: string | null) => set({ error }),
   clearError: () => set({ error: null }),
 
-  processIncomingMessage: (message) => {
+  processIncomingMessage: (message: string) => {
+    // Update newJsx as messages stream in
     set({ newJsx: message });
+  },
 
-    // Log to check values
-    console.log("Updated newJsx:", {
-      currJsx: get().currJsx,
-      newJsx: message,
+  setOriginalContent: (jsx: string, title: string) => {
+    set({
+      originalJsx: jsx,
+      originalTitle: title,
+      currJsx: jsx, // Initialize current state with fetched data
+      title: title,
+      hasUnsavedChanges: false, // Start with no unsaved changes
+      newJsx: null,
+      showDiffView: false,
+      isStreaming: false,
+      error: null,
     });
   },
 
   acceptChanges: () => {
-    const { newJsx } = get();
-    if (!newJsx) return;
-
-    // Accept changes: update currJsx with newJsx and exit diff view
-    set({
-      currJsx: newJsx,
-      newJsx: null,
-      showDiffView: false,
-      hasUnsavedChanges: true,
+    set((state) => {
+      if (!state.newJsx) return {}; // No changes to accept
+      const changesMade =
+        state.newJsx !== state.originalJsx ||
+        state.title !== state.originalTitle;
+      return {
+        currJsx: state.newJsx, // Apply the new JSX
+        newJsx: null, // Clear the pending change
+        showDiffView: false, // Hide diff view
+        hasUnsavedChanges: changesMade, // Mark unsaved if different from original
+      };
     });
   },
 
   rejectChanges: () => {
-    // Reject changes: discard newJsx and exit diff view
+    // Discard newJsx, hide diff view, keep currJsx as is
     set({
       newJsx: null,
       showDiffView: false,
-    });
-  },
-
-  // Complex operations with tryCatch
-  loadChartData: async (chartId) => {
-    set({ isLoading: true, error: null, chartId });
-    const supabase = createClient();
-
-    // Get current user
-    const userResult = await tryCatch(supabase.auth.getUser());
-
-    if (userResult.error || !userResult.data?.data?.user) {
-      set({
-        error: userResult.error?.message || "Not authenticated",
-        isLoading: false,
-      });
-      return;
-    }
-
-    // Load chart data
-    const userId = userResult.data.data.user.id;
-    const chartResult = await tryCatch(loadChart(chartId, userId));
-
-    if (chartResult.error || !chartResult.data) {
-      set({
-        error: chartResult.error?.message || "Chart not found",
-        isLoading: false,
-      });
-      return;
-    }
-
-    // Update state with loaded data
-    const chartDoc = chartResult.data;
-    set({
-      chartData: chartDoc.data,
-      currJsx: chartDoc.data.chartJsx,
-      title: chartDoc.title || "Untitled Chart",
-      isLoading: false,
-      hasUnsavedChanges: false,
-      newJsx: null,
-      showDiffView: false,
-    });
-  },
-
-  saveChanges: async () => {
-    const { chartId, chartData, currJsx, title } = get();
-
-    if (!chartId || !chartData) {
-      set({ error: "No chart data to save" });
-      return;
-    }
-
-    // Only set isSaving true to trigger minimum re-renders
-    set({ isSaving: true });
-    const supabase = createClient();
-
-    // Get current user
-    const userResult = await tryCatch(supabase.auth.getUser());
-
-    if (userResult.error || !userResult.data?.data?.user) {
-      set({
-        error: userResult.error?.message || "Not authenticated",
-        isSaving: false,
-      });
-      return;
-    }
-
-    // Save chart data
-    const userId = userResult.data.data.user.id;
-    const updatedChartData = { ...chartData, chartJsx: currJsx, title };
-
-    const saveResult = await tryCatch(
-      saveChart(updatedChartData, userId, title, chartId)
-    );
-
-    if (saveResult.error) {
-      set({
-        error: saveResult.error.message || "Failed to save changes",
-        isSaving: false,
-      });
-      return;
-    }
-
-    // When successful, update only the necessary state
-    set({
-      isSaving: false,
-      hasUnsavedChanges: false,
-      chartData: updatedChartData,
     });
   },
 
   resetEditor: () => {
-    // Reset only essential state for cleanup
-    set({
-      error: null,
-      isStreaming: false,
-      showDiffView: false,
-      newJsx: null,
-    });
+    // Reset UI state, keep chartId if needed for context
+    set((state) => ({
+      ...initialState,
+      chartId: state.chartId, // Preserve chartId if needed
+    }));
   },
 }));
 

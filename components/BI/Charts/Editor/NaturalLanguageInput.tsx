@@ -7,71 +7,85 @@ import { Button } from "@/components/ui/button";
 import { ArrowRightCircle, GripHorizontal, StopCircle } from "lucide-react";
 import { cn } from "@/lib/utils";
 import useChartEditorStore from "@/components/stores/chartEditor_store";
-import Draggable from "react-draggable";
+import { useChartData } from "@/lib/hooks/use-chart-data"; // Import useChartData
+import Draggable, { DraggableEventHandler } from "react-draggable"; // Import DraggableEventHandler
 
 export default function NaturalLanguageInput() {
   const textareaRef = useRef<HTMLTextAreaElement>(null);
   const nodeRef = useRef<HTMLDivElement>(null);
   const containerRef = useRef<HTMLDivElement>(null);
   const [isFocused, setIsFocused] = useState(false);
-  // Add a debounce ref to prevent excessive re-renders
   const processingTimeoutRef = useRef<NodeJS.Timeout | null>(null);
-  // Manage prompt locally instead of in the store
   const [naturalLanguagePrompt, setNaturalLanguagePrompt] = useState("");
-  // State for position and dragging
   const [isDragging, setIsDragging] = useState(false);
-  // State to track if the component has been dragged from its initial position
   const [hasBeenDragged, setHasBeenDragged] = useState(false);
 
+  // Get UI state and actions from Zustand store
   const {
-    currJsx,
-    chartData,
-    isStreaming,
+    currJsx, // Current JSX to send as context
+    isStreaming, // Read isStreaming state from store
     processIncomingMessage,
-    setIsStreaming,
+    setIsStreaming, // Action to set streaming state
     setNewJsx,
+    chartId, // Get chartId from store
   } = useChartEditorStore();
 
+  // Fetch chart data using React Query - enabled only if chartId is valid
+  const { data: chartQueryResult, isLoading: dataIsLoading } = useChartData(
+    chartId && chartId !== "new" ? chartId : null
+  );
+
+  // Extract data needed for the AI context
+  const chartContext = {
+    jsxCode: currJsx,
+    types: chartQueryResult?.chartData?.data?.types || [],
+    rowCount: chartQueryResult?.chartData?.data?.rowCount || 0,
+    query: chartQueryResult?.chartData?.query,
+  };
+
   // Setup chat with the chart editor API
-  const { messages, append, status, stop } = useChat({
-    initialMessages: [],
+  const {
+    messages,
+    append,
+    status, // Keep status for local logic if needed (e.g., disabling input)
+    stop,
+    error: chatError,
+  } = useChat({
     api: "/api/chartEditor",
-    body: {
-      jsxCode: currJsx,
-      types: chartData?.data?.types || [],
-      rowCount: chartData?.data?.rowCount || 0,
-      query: chartData?.query,
-    },
+    body: chartContext, // Pass the fetched context
     onFinish: (message) => {
+      // This runs AFTER the stream finishes
       if (message.content) {
+        // Update the store with the FINAL message content
         processIncomingMessage(message.content);
       }
+      // Set streaming to false AFTER processing the final message
+      // This ensures the store calculates showDiffView based on the final newJsx
       setIsStreaming(false);
     },
     onError: (error) => {
       console.error("Chat error:", error);
+      // Ensure streaming stops on error
       setIsStreaming(false);
+      // Optionally show a toast or message to the user
     },
+    // No initial messages needed usually
   });
 
-  // Process incoming assistant message during streaming
+  // Process incoming assistant message during streaming (debounced)
+  // This useEffect still updates newJsx during the stream for potential intermediate previews (though not currently used)
   useEffect(() => {
     if (status === "streaming" && messages.length > 0) {
-      // Clear any existing timeout
       if (processingTimeoutRef.current) {
         clearTimeout(processingTimeoutRef.current);
       }
-
-      // Set a new timeout to process the message (debounce)
       processingTimeoutRef.current = setTimeout(() => {
-        const assistantMessage = messages.find((m) => m.role === "assistant");
-        if (assistantMessage?.content) {
-          processIncomingMessage(assistantMessage.content);
+        const lastMessage = messages[messages.length - 1];
+        if (lastMessage?.role === "assistant" && lastMessage.content) {
+          processIncomingMessage(lastMessage.content);
         }
-      }, 100); // Short debounce for responsive updates
+      }, 100); // Debounce slightly
     }
-
-    // Cleanup timeout on unmount or when dependencies change
     return () => {
       if (processingTimeoutRef.current) {
         clearTimeout(processingTimeoutRef.current);
@@ -79,123 +93,109 @@ export default function NaturalLanguageInput() {
     };
   }, [messages, status, processIncomingMessage]);
 
-  // Sync isProcessing state with the store
-  useEffect(() => {
-    const isProcessing = status === "streaming" || status === "submitted";
-
-    if (isProcessing !== isStreaming) {
-      setIsStreaming(isProcessing);
-    }
-  }, [status, isStreaming, setIsStreaming]);
-
-  const isProcessing = status === "streaming" || status === "submitted";
-  const canSubmit = naturalLanguagePrompt.trim().length > 0 && !isProcessing;
-
-  // Auto-resize textarea based on content
+  // Auto-resize textarea
   useEffect(() => {
     const textarea = textareaRef.current;
     if (!textarea) return;
-
     textarea.style.height = "auto";
-    const newHeight = Math.min(Math.max(textarea.scrollHeight, 24), 100);
+    const newHeight = Math.min(Math.max(textarea.scrollHeight, 40), 100); // Min height 40px
     textarea.style.height = `${newHeight}px`;
   }, [naturalLanguagePrompt]);
+
+  // Submit handler
+  const handleSubmit = useCallback(async () => {
+    const prompt = naturalLanguagePrompt.trim();
+    // Read isStreaming directly from the store state for the check
+    if (!prompt || isStreaming || dataIsLoading) return;
+
+    // Set streaming mode and clear previous newJsx immediately
+    // This is the primary place to set isStreaming = true
+    setIsStreaming(true);
+    setNewJsx(null);
+
+    try {
+      await append({ role: "user", content: prompt });
+      setNaturalLanguagePrompt(""); // Clear input on successful append start
+    } catch (error) {
+      console.error("Failed to send prompt:", error);
+      // Ensure streaming stops if append fails immediately
+      setIsStreaming(false);
+    }
+  }, [
+    naturalLanguagePrompt,
+    isStreaming, // Read from store state
+    dataIsLoading,
+    append,
+    setIsStreaming,
+    setNewJsx,
+  ]);
 
   // Handle Enter key press
   const handleKeyDown = useCallback(
     (e: React.KeyboardEvent<HTMLTextAreaElement>) => {
-      if (
-        e.key === "Enter" &&
-        !e.shiftKey &&
-        naturalLanguagePrompt.trim() &&
-        !isProcessing
-      ) {
+      // Read isStreaming directly from the store state for the check
+      if (e.key === "Enter" && !e.shiftKey && !isStreaming && !dataIsLoading) {
         e.preventDefault();
         handleSubmit();
       }
     },
-    [naturalLanguagePrompt, isProcessing]
+    [handleSubmit, isStreaming, dataIsLoading] // Read from store state
   );
 
-  // Submit the prompt
-  const handleSubmit = async () => {
-    if (!naturalLanguagePrompt.trim() || isProcessing) return;
-
-    try {
-      // Set streaming mode and reset newJsx before starting the request
-      setIsStreaming(true);
-      setNewJsx(null); // Clear any existing newJsx before streaming starts
-
-      // Send the prompt
-      await append({
-        role: "user",
-        content: naturalLanguagePrompt,
-      });
-
-      setNaturalLanguagePrompt("");
-    } catch (error) {
-      console.error("Failed to send prompt:", error);
-      setIsStreaming(false);
-    }
-  };
-
   // Stop generation
-  const handleStop = () => {
+  const handleStop = useCallback(() => {
     stop();
+    // Manually set streaming to false on stop, as onFinish/onError might not fire
     setIsStreaming(false);
-  };
+  }, [stop, setIsStreaming]);
 
-  // Drag event handlers
-  const handleDragStart = () => {
+  // Drag handlers
+  const handleDragStart: DraggableEventHandler = () => {
     setIsDragging(true);
     setHasBeenDragged(true);
   };
-
-  const handleDragStop = () => {
+  // FIX: Ensure the function matches the expected signature (no return value needed from setTimeout)
+  const handleDragStop: DraggableEventHandler = () => {
     setTimeout(() => setIsDragging(false), 0);
   };
 
-  // Calculate default position
+  // Calculate default position (bottom-center)
   const getDefaultPosition = () => {
-    // If it's been dragged, don't reposition it
-    if (hasBeenDragged) {
-      return undefined;
+    if (hasBeenDragged || !containerRef.current || !nodeRef.current) {
+      return undefined; // Use default or last dragged position
     }
-
-    // Otherwise, return position with bottom-center coordinates
-    if (containerRef.current && nodeRef.current) {
-      const containerWidth = containerRef.current.clientWidth;
-      const nodeWidth = nodeRef.current.clientWidth;
-
-      // Calculate x position to center the component
-      // Since position is relative to the starting (top-left) point, we need to
-      // calculate the offset from left to achieve center positioning
-      return {
-        x: containerWidth / 2 - nodeWidth / 2,
-        y:
-          containerRef.current.clientHeight - nodeRef.current.clientHeight - 24, // 24px from bottom
-      };
-    }
-
-    return undefined;
+    const containerWidth = containerRef.current.clientWidth;
+    const nodeWidth = nodeRef.current.clientWidth || containerWidth * 0.5; // Estimate width if not rendered yet
+    const nodeHeight = nodeRef.current.clientHeight || 50; // Estimate height
+    return {
+      x: containerWidth / 2 - nodeWidth / 2,
+      y: containerRef.current.clientHeight - nodeHeight - 24, // 24px from bottom
+    };
   };
 
-  // Update node width after initial render
+  // Update position on resize if not dragged
   useEffect(() => {
-    const updateNodePosition = () => {
+    const updatePosition = () => {
       if (!hasBeenDragged) {
-        // Force a re-render to update position
+        // Force re-render to recalculate position
         setHasBeenDragged(false);
       }
     };
-
-    // Initial update
-    updateNodePosition();
-
-    // Update on window resize
-    window.addEventListener("resize", updateNodePosition);
-    return () => window.removeEventListener("resize", updateNodePosition);
+    window.addEventListener("resize", updatePosition);
+    // Initial position calculation after mount
+    const timer = setTimeout(updatePosition, 100);
+    return () => {
+      window.removeEventListener("resize", updatePosition);
+      clearTimeout(timer);
+    };
   }, [hasBeenDragged]);
+
+  // Use store's isStreaming state for disabling elements and button state
+  const isCurrentlyStreaming = isStreaming; // Use state from store
+  const canSubmit =
+    naturalLanguagePrompt.trim().length > 0 &&
+    !isCurrentlyStreaming &&
+    !dataIsLoading;
 
   return (
     <div ref={containerRef} className="absolute inset-0 pointer-events-none">
@@ -204,89 +204,88 @@ export default function NaturalLanguageInput() {
         handle=".drag-handle"
         bounds="parent"
         onStart={handleDragStart}
-        onStop={handleDragStop}
-        position={getDefaultPosition()}
+        onStop={handleDragStop} // Use corrected handler
+        position={getDefaultPosition()} // Use calculated position
+        // key forces re-render when position needs recalculation (e.g., on resize)
+        key={hasBeenDragged ? "dragged" : "initial"}
       >
         <div
           ref={nodeRef}
-          className="absolute z-50 w-1/2 max-w-md pointer-events-auto"
+          className={cn(
+            "absolute z-50 w-11/12 sm:w-3/4 md:w-1/2 max-w-xl pointer-events-auto", // Adjusted width
+            "transition-opacity duration-300 ease-in-out",
+            !isFocused && !isCurrentlyStreaming && !naturalLanguagePrompt // Use store state
+              ? "opacity-80 hover:opacity-100"
+              : "opacity-100"
+          )}
           style={{ cursor: isDragging ? "grabbing" : "default" }}
         >
           <div
             className={cn(
-              "relative rounded-full border border-zinc-200 dark:border-zinc-700 bg-white dark:bg-zinc-800/90 shadow-lg backdrop-blur-xs",
-              "transition-opacity duration-200",
-              !isFocused && !isProcessing && !naturalLanguagePrompt
-                ? "opacity-70"
-                : "opacity-100"
+              "relative rounded-full border border-input dark:border-zinc-700",
+              "bg-background/80 dark:bg-zinc-800/80 shadow-lg backdrop-blur-sm" // Use background color
             )}
           >
+            {/* Drag Handle */}
             <div
-              className="absolute left-4 top-1/2 transform -translate-y-1/2 text-muted-foreground drag-handle"
-              style={{ cursor: "grab", zIndex: 10 }}
+              className="absolute left-0 top-0 bottom-0 flex items-center pl-3 text-muted-foreground drag-handle cursor-grab"
+              title="Drag to move"
             >
               <GripHorizontal className="h-4 w-4" />
             </div>
 
+            {/* Textarea */}
             <Textarea
               ref={textareaRef}
-              placeholder="Describe chart changes ..."
+              placeholder="Describe chart changes (e.g., 'change to bar chart', 'color bars red')"
               value={naturalLanguagePrompt}
               onChange={(e) => setNaturalLanguagePrompt(e.target.value)}
               onKeyDown={handleKeyDown}
               onFocus={() => setIsFocused(true)}
               onBlur={() => setIsFocused(false)}
-              disabled={isProcessing}
-              className="pl-10 pr-12 rounded-full border-0 shadow-none bg-transparent resize-none min-h-[40px] max-h-[100px] py-3 overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0"
+              disabled={isCurrentlyStreaming || dataIsLoading} // Use store state
+              className="pl-10 pr-12 rounded-full border-0 shadow-none bg-transparent resize-none min-h-[40px] max-h-[100px] py-2.5 overflow-y-auto focus-visible:ring-0 focus-visible:ring-offset-0 text-sm" // Adjusted padding/height
               rows={1}
             />
 
-            <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2 transition-all duration-200">
-              {isProcessing ? (
+            {/* Action Button (Submit/Stop) */}
+            <div className="absolute right-2.5 top-1/2 transform -translate-y-1/2">
+              {isCurrentlyStreaming ? ( // Use store state
                 <Button
                   type="button"
-                  size="sm"
+                  size="icon" // Use icon size
                   onClick={handleStop}
                   variant="destructive"
-                  className={cn(
-                    "h-7 w-7 rounded-full p-0",
-                    "bg-linear-to-br from-rose-400 to-red-500",
-                    "hover:from-rose-500 hover:to-red-600",
-                    "text-white shadow-xs",
-                    "transition-all duration-200 ease-in-out",
-                    "dark:from-rose-500 dark:to-red-600",
-                    "dark:hover:from-rose-600 dark:hover:to-red-700"
-                  )}
+                  className="h-7 w-7 rounded-full" // Explicit size
+                  title="Stop generating"
                 >
                   <StopCircle className="h-4 w-4" />
-                  <span className="sr-only">Stop generating</span>
+                  <span className="sr-only">Stop</span>
                 </Button>
               ) : (
                 <Button
                   type="button"
-                  size="sm"
-                  disabled={!canSubmit}
-                  onClick={() => canSubmit && handleSubmit()}
+                  size="icon" // Use icon size
+                  disabled={!canSubmit} // Use derived state
+                  onClick={handleSubmit}
                   className={cn(
-                    "h-7 w-7 rounded-full p-0",
-                    "bg-linear-to-br from-blue-400 to-indigo-500",
-                    "hover:from-blue-500 hover:to-indigo-600",
-                    "text-white shadow-xs",
-                    "transition-all duration-200 ease-in-out",
-                    "dark:from-blue-500 dark:to-indigo-600",
-                    "dark:hover:from-blue-600 dark:hover:to-indigo-700",
-                    "disabled:from-gray-200 disabled:to-gray-300",
-                    "dark:disabled:from-gray-700 dark:disabled:to-gray-800",
-                    "disabled:text-gray-400 dark:disabled:text-gray-500",
-                    "disabled:cursor-not-allowed disabled:opacity-70"
+                    "h-7 w-7 rounded-full", // Explicit size
+                    "bg-primary text-primary-foreground hover:bg-primary/90", // Primary button style
+                    "disabled:bg-muted disabled:text-muted-foreground disabled:cursor-not-allowed disabled:opacity-70"
                   )}
+                  title="Send message"
                 >
                   <ArrowRightCircle className="h-4 w-4" />
-                  <span className="sr-only">Send message</span>
+                  <span className="sr-only">Send</span>
                 </Button>
               )}
             </div>
           </div>
+          {chatError && (
+            <p className="text-xs text-destructive mt-1 px-4">
+              Error: {chatError.message}
+            </p>
+          )}
         </div>
       </Draggable>
     </div>

@@ -5,9 +5,12 @@ import { listCharts, deleteChart } from "@/components/stores/chart_store";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
-import { createClient } from "@/utils/supabase/client";
+// Removed createClient import as it's handled by useIsAuthenticated
 import Routes from "@/components/routes";
 import { ChartDocument } from "@/lib/types/stores/chart";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Import React Query hooks
+import { useIsAuthenticated } from "@/lib/hooks/use-authenticated-query"; // Import only auth hook
+import { chartQueryKeys } from "@/lib/hooks/use-chart-data"; // Import query keys from use-chart-data
 
 import {
   Card,
@@ -29,128 +32,122 @@ import {
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
 import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
-import { BarChart3, Trash2, AlertCircle } from "lucide-react";
+import { BarChart3, Trash2, AlertCircle, Loader2 } from "lucide-react"; // Added Loader2
 
+// Simplified state for deletion dialog
 type AppState = {
-  user: any;
-  isLoading: boolean;
   isDeleting: boolean;
-  error: string | null;
   chartToDelete: string | null;
 };
 
 export default function ChartsPage() {
   const router = useRouter();
-  const supabase = createClient();
+  const queryClient = useQueryClient(); // Get query client instance
 
-  // State
-  const [charts, setCharts] = useState<
-    Pick<ChartDocument, "_id" | "title" | "updatedAt" | "data">[]
-  >([]);
+  // Use authentication hook
+  const {
+    isAuthenticated,
+    isLoading: authIsLoading,
+    userId,
+  } = useIsAuthenticated();
+
+  // State only for delete confirmation UI
   const [state, setState] = useState<AppState>({
-    user: null,
-    isLoading: true,
     isDeleting: false,
-    error: null,
     chartToDelete: null,
   });
 
-  // Authentication and load charts
+  // Redirect if not authenticated after loading
   useEffect(() => {
-    async function initializeApp() {
-      try {
-        const {
-          data: { user },
-        } = await supabase.auth.getUser();
-
-        if (!user) {
-          router.push(Routes.LoginPage);
-          return;
-        }
-
-        setState((prev) => ({ ...prev, user, isLoading: true }));
-        const chartsData = await listCharts(user.id);
-        setCharts(chartsData);
-        setState((prev) => ({ ...prev, isLoading: false, error: null }));
-      } catch (error) {
-        console.error("Error:", error);
-        setState((prev) => ({
-          ...prev,
-          isLoading: false,
-          error:
-            error instanceof Error
-              ? error.message
-              : "An unknown error occurred",
-        }));
-      }
+    if (!authIsLoading && !isAuthenticated) {
+      router.push(Routes.LoginPage);
     }
+  }, [authIsLoading, isAuthenticated, router]);
 
-    initializeApp();
-  }, [router, supabase.auth]);
+  // Fetch charts using React Query
+  const chartsQuery = useQuery({
+    queryKey: chartQueryKeys.list(userId), // Use query key factory
+    queryFn: async () => {
+      if (!userId) throw new Error("User not authenticated"); // Guard against missing userId
+      return listCharts(userId);
+    },
+    enabled: isAuthenticated === true && !!userId, // Enable only when authenticated and userId is available
+    staleTime: 5 * 60 * 1000, // 5 minutes stale time
+  });
 
-  // Delete chart handler
-  const handleDelete = async (id: string, e?: React.MouseEvent) => {
+  // Mutation for deleting a chart
+  const deleteMutation = useMutation({
+    mutationFn: async (chartId: string) => {
+      if (!userId) throw new Error("User not authenticated");
+      return deleteChart(chartId, userId);
+    },
+    onMutate: () => {
+      setState((prev) => ({ ...prev, isDeleting: true })); // Set deleting state for UI feedback
+    },
+    onSuccess: () => {
+      // Invalidate the charts list query to refetch
+      queryClient.invalidateQueries({ queryKey: chartQueryKeys.list(userId) });
+      setState({ isDeleting: false, chartToDelete: null }); // Reset delete state
+    },
+    onError: (error) => {
+      console.error("Failed to delete chart:", error);
+      // Optionally show a toast or keep the dialog open with an error message
+      setState((prev) => ({ ...prev, isDeleting: false })); // Reset deleting state on error
+      // Consider using a toast notification for the error instead of the Alert component
+      // toast({ title: "Error", description: "Failed to delete chart.", variant: "destructive" });
+    },
+  });
+
+  // Delete chart handler (initiates confirmation)
+  const handleDelete = (id: string, e?: React.MouseEvent) => {
     if (e) {
       e.preventDefault();
       e.stopPropagation();
     }
-
     setState((prev) => ({ ...prev, chartToDelete: id }));
   };
 
   // Delete confirmation handler
-  const confirmDelete = async () => {
-    const { chartToDelete, user } = state;
-    if (!chartToDelete || !user?.id) return;
-
-    try {
-      setState((prev) => ({ ...prev, isDeleting: true }));
-      await deleteChart(chartToDelete, user.id);
-
-      // Update the charts list
-      const updatedCharts = await listCharts(user.id);
-      setCharts(updatedCharts);
-
-      setState((prev) => ({
-        ...prev,
-        isDeleting: false,
-        chartToDelete: null,
-        error: null,
-      }));
-    } catch (error) {
-      setState((prev) => ({
-        ...prev,
-        isDeleting: false,
-        error: "Failed to delete chart",
-      }));
-    }
+  const confirmDelete = () => {
+    if (!state.chartToDelete) return;
+    deleteMutation.mutate(state.chartToDelete);
   };
 
   const cancelDelete = () =>
-    setState((prev) => ({ ...prev, chartToDelete: null }));
-  const clearError = () => setState((prev) => ({ ...prev, error: null }));
+    setState((prev) => ({ ...prev, chartToDelete: null, isDeleting: false })); // Also reset isDeleting
 
-  if (state.isLoading) {
+  // Combined loading state
+  const isLoading = authIsLoading || chartsQuery.isLoading;
+
+  if (isLoading) {
     return <LoadingSkeleton />;
   }
 
+  // Use charts data from the query result
+  const charts = chartsQuery.data ?? [];
+
   return (
     <div className="container px-4 py-8 mx-auto">
-      {/* Error message */}
-      {state.error && (
+      {/* Error message from query */}
+      {chartsQuery.error && (
         <Alert variant="destructive" className="mb-6">
           <AlertCircle className="h-4 w-4" />
-          <AlertTitle>Error</AlertTitle>
+          <AlertTitle>Error Loading Charts</AlertTitle>
           <AlertDescription className="flex items-center justify-between">
-            {state.error}
-            <Button variant="ghost" size="sm" onClick={clearError}>
-              Dismiss
+            {chartsQuery.error.message || "An unknown error occurred"}
+            <Button
+              variant="ghost"
+              size="sm"
+              onClick={() => chartsQuery.refetch()} // Add a refetch button
+            >
+              Retry
             </Button>
           </AlertDescription>
         </Alert>
       )}
-      {/*content*/}
-      {charts.length === 0 ? (
+
+      {/* Content */}
+      {!isLoading && charts.length === 0 && !chartsQuery.error ? (
         <EmptyState />
       ) : (
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -164,25 +161,31 @@ export default function ChartsPage() {
                 <CardHeader className="pb-3">
                   <div className="flex items-start justify-between">
                     <CardTitle className="text-lg font-medium line-clamp-2 group-hover:text-primary">
-                      {chart.title}
+                      {chart.title || "Untitled Chart"}{" "}
+                      {/* Handle potentially missing title */}
                     </CardTitle>
                     <Button
                       variant="ghost"
                       size="icon"
-                      className="h-8 w-8 opacity-70 hover:opacity-100 text-destructive"
+                      className="h-8 w-8 opacity-70 hover:opacity-100 text-destructive flex-shrink-0" // Added flex-shrink-0
                       onClick={(e) => handleDelete(chart._id, e)}
+                      disabled={state.isDeleting} // Disable while deleting
                     >
                       <Trash2 className="h-4 w-4" />
                       <span className="sr-only">Delete</span>
                     </Button>
                   </div>
                 </CardHeader>
+                {/* Removed CardContent as it wasn't used */}
                 <CardFooter className="pt-1">
                   <p className="text-xs text-muted-foreground">
                     Updated{" "}
-                    {formatDistanceToNow(new Date(chart.updatedAt), {
-                      addSuffix: true,
-                    })}
+                    {chart.updatedAt
+                      ? formatDistanceToNow(new Date(chart.updatedAt), {
+                          addSuffix: true,
+                        })
+                      : "never"}{" "}
+                    {/* Handle potentially missing updatedAt */}
                   </p>
                 </CardFooter>
               </Card>
@@ -213,7 +216,13 @@ export default function ChartsPage() {
               disabled={state.isDeleting}
               className="bg-destructive hover:bg-destructive/90"
             >
-              {state.isDeleting ? "Deleting..." : "Delete"}
+              {state.isDeleting ? (
+                <>
+                  <Loader2 className="mr-2 h-4 w-4 animate-spin" /> Deleting...
+                </>
+              ) : (
+                "Delete"
+              )}
             </AlertDialogAction>
           </AlertDialogFooter>
         </AlertDialogContent>
