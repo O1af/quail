@@ -32,8 +32,9 @@ export const useEditorStore = create<EditorStore>()(
       setValue: (value) => set({ value }),
       setEditorRef: (editor) => set({ editorRef: editor }),
       executeQuery: async () => {
-        const { value } = get();
+        const { value, executedQuery } = get();
 
+        // Only execute if this is triggered by user action
         set({ isExecuting: true, error: null });
         try {
           // Execute the query and get the results
@@ -62,9 +63,9 @@ export const useEditorStore = create<EditorStore>()(
     }),
     {
       name: "editor-storage",
+      // Persist only the editor input; do not persist executedQuery to avoid auto-running on page load
       partialize: (state) => ({
         value: state.value,
-        executedQuery: state.executedQuery,
       }),
     }
   )
