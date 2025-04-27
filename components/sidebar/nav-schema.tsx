@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect } from "react";
+import { useEffect, useState } from "react";
 import {
   ChevronRight,
   Database,
@@ -9,6 +9,7 @@ import {
   RefreshCw,
 } from "lucide-react";
 import { useToast } from "@/lib/hooks/use-toast";
+import { useQueryClient } from "@tanstack/react-query";
 
 import {
   Collapsible,
@@ -32,37 +33,50 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 
-import { useDatabaseStructure } from "@/components/stores/table_store";
-import { queryMetadata } from "@/components/stores/utils/query";
-import { useState } from "react";
+import {
+  useDatabaseStructure,
+  tableQueryKeys,
+} from "@/lib/hooks/use-table-data";
 import { useDatabase } from "@/lib/hooks/use-database";
 import { useEditorStore } from "@/components/stores/editor_store";
 
 export function NavSchema() {
   const { toast } = useToast();
+  const queryClient = useQueryClient();
   const [refreshing, setRefreshing] = useState(false);
-  const { getCurrentDatabase, isLoading } = useDatabase();
-  const databaseStructure = useDatabaseStructure();
+  const { getCurrentDatabase, isLoading: dbLoading } = useDatabase();
+  const {
+    data: databaseStructure = { schemas: [] },
+    refetch,
+    isLoading: structureLoading,
+    isFetching,
+  } = useDatabaseStructure();
   const executeQuery = useEditorStore((state) => state.executeQuery);
   const setValue = useEditorStore((state) => state.setValue);
 
+  const isLoading = dbLoading || structureLoading || isFetching || refreshing;
+
   useEffect(() => {
-    // Only run refresh when loading is complete and we have a database
-    if (!isLoading) {
+    if (!dbLoading) {
       const currentDb = getCurrentDatabase();
-      if (currentDb) {
-        handleRefresh();
+      if (currentDb && !databaseStructure.schemas.length) {
       }
     }
-  }, [isLoading, getCurrentDatabase]); // Re-run when loading state changes
+  }, [dbLoading, getCurrentDatabase, databaseStructure.schemas.length]);
 
   const handleRefresh = async () => {
     const currentDb = getCurrentDatabase();
-    if (refreshing || !currentDb) return;
+    if (isLoading || !currentDb) return;
 
     setRefreshing(true);
     try {
-      await queryMetadata(currentDb.connectionString, currentDb.type);
+      await queryClient.invalidateQueries({
+        queryKey: tableQueryKeys.databaseStructure(),
+      });
+      toast({
+        title: "Schema refreshed",
+        description: "Database schema has been updated.",
+      });
     } catch (err) {
       toast({
         variant: "destructive",
@@ -86,7 +100,12 @@ export function NavSchema() {
     } else if (currentDb.type === "mysql") {
       query = `SELECT * FROM ${schemaName}.${tableName} LIMIT 100;`;
     } else {
-      throw new Error(`Unsupported database type: ${currentDb.type}`);
+      toast({
+        variant: "destructive",
+        title: "Unsupported Database",
+        description: `Database type '${currentDb.type}' is not supported for table preview.`,
+      });
+      return;
     }
     try {
       setValue(query);
@@ -115,12 +134,10 @@ export function NavSchema() {
                 <button
                   onClick={handleRefresh}
                   className="p-1 hover:bg-accent hover:text-accent-foreground rounded-md transition-colors"
-                  disabled={refreshing || isLoading}
+                  disabled={isLoading}
                 >
                   <RefreshCw
-                    className={`h-3.5 w-3.5 ${
-                      refreshing || isLoading ? "animate-spin" : ""
-                    }`}
+                    className={`h-3.5 w-3.5 ${isLoading ? "animate-spin" : ""}`}
                   />
                 </button>
               </TooltipTrigger>
@@ -132,6 +149,23 @@ export function NavSchema() {
         )}
       </SidebarGroupLabel>
       <SidebarMenu className="grow overflow-y-auto pr-1">
+        {isLoading && databaseStructure.schemas.length === 0 && (
+          <div className="p-4 text-center text-muted-foreground">
+            Loading schema...
+          </div>
+        )}
+        {!isLoading &&
+          databaseStructure.schemas.length === 0 &&
+          getCurrentDatabase() && (
+            <div className="p-4 text-center text-muted-foreground">
+              No schemas found or empty database. Try refreshing.
+            </div>
+          )}
+        {!isLoading && !getCurrentDatabase() && (
+          <div className="p-4 text-center text-muted-foreground">
+            Select a database connection first.
+          </div>
+        )}
         {databaseStructure.schemas.map((schema) => (
           <Collapsible
             key={schema.name}
@@ -158,7 +192,7 @@ export function NavSchema() {
                       className="cursor-pointer"
                     >
                       <SidebarMenuSubButton className="rounded-md hover:bg-muted hover:text-foreground transition-colors duration-150 pl-6 py-1">
-                        {table.type === "VIEW" ? (
+                        {table.type.toLowerCase().includes("view") ? (
                           <BoxSelect className="h-3.5 w-3.5 mr-1.5 text-indigo-500" />
                         ) : (
                           <Table2 className="h-3.5 w-3.5 mr-1.5 text-blue-500" />
@@ -167,6 +201,13 @@ export function NavSchema() {
                       </SidebarMenuSubButton>
                     </SidebarMenuSubItem>
                   ))}
+                  {schema.tables.length === 0 && (
+                    <SidebarMenuSubItem className="pl-6 py-1">
+                      <span className="text-xs text-muted-foreground italic">
+                        No tables found
+                      </span>
+                    </SidebarMenuSubItem>
+                  )}
                 </SidebarMenuSub>
               </CollapsibleContent>
             </SidebarMenuItem>

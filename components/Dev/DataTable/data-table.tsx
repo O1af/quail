@@ -4,18 +4,24 @@ import * as React from "react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import { useTableStore } from "../../stores/table_store";
+import { useTableData } from "@/lib/hooks/use-table-data";
+import { useEditorStore } from "@/components/stores/editor_store";
 import {
   ArrowUpDown,
   ArrowUp,
   ArrowDown,
   Loader2,
   ExternalLink,
+  AlertTriangle,
 } from "lucide-react";
 import {
   flexRender,
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
+  ColumnSort,
+  OnChangeFn,
+  SortingState,
 } from "@tanstack/react-table";
 import {
   Table,
@@ -40,52 +46,69 @@ function handleHeaderClick(column: any) {
 }
 
 export function DataTable() {
+  // --- ALL HOOKS AT THE TOP ---
   const pathname = usePathname();
+  const { sorting, columnVisibility, rowSelection, setSorting } =
+    useTableStore();
+  // Use executedQuery instead of current value
+  const executedQuery = useEditorStore((state) => state.executedQuery);
   const {
-    data,
-    columns,
-    sorting,
-    columnVisibility,
-    rowSelection,
-    setSorting,
+    data: tableQueryResult,
     isLoading,
-  } = useTableStore();
+    isError,
+    error,
+    isFetching,
+  } = useTableData(executedQuery || null);
 
-  // Initialize sorting only once when component mounts
+  // Track if we've seen data before
+  const [hasData, setHasData] = React.useState(false);
+
+  React.useEffect(() => {
+    // Check if data exists and has length before accessing length property
+    if (tableQueryResult?.data && tableQueryResult.data.length > 0) {
+      setHasData(true);
+    }
+  }, [tableQueryResult?.data]);
+
   React.useEffect(() => {
     setSorting([]);
-  }, []); // Empty dependency array
+  }, [setSorting]);
 
-  const handleSortingChange = React.useCallback(
-    (updater: any) => {
-      setSorting(typeof updater === "function" ? updater(sorting) : updater);
+  const handleSortingChange: OnChangeFn<SortingState> = React.useCallback(
+    (updater) => {
+      const newState =
+        typeof updater === "function" ? updater(sorting) : updater;
+      setSorting(newState);
     },
-    [setSorting, sorting] // Remove columns from dependencies
+    [setSorting, sorting]
   );
 
+  // Memoize data/columns with defaults
+  const data = React.useMemo(
+    () => tableQueryResult?.data || [],
+    [tableQueryResult?.data]
+  );
+  const columns = React.useMemo(
+    () => tableQueryResult?.columns || [],
+    [tableQueryResult?.columns]
+  );
+
+  // The actual loading state combines both isLoading and isFetching
+  const showLoading = isLoading || (isFetching && !hasData);
+
+  // Always call useReactTable
   const table = useReactTable({
-    data: data || [],
-    columns: columns || [],
+    data: data,
+    columns: columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     onSortingChange: handleSortingChange,
     enableSorting: true,
-    state: {
-      sorting,
-      columnVisibility,
-      rowSelection,
-    },
+    state: { sorting, columnVisibility, rowSelection },
   });
+  // --- END OF HOOKS ---
 
-  // Early return after hooks
-  if (!data || !columns || columns.length === 0) {
-    return (
-      <div className="flex h-[200px] w-full items-center justify-center rounded-md border">
-        <p className="text-sm text-muted-foreground">No data available</p>
-      </div>
-    );
-  }
-
+  // --- RENDER LOGIC ---
   return (
     <div className="flex flex-col h-full">
       <div className="relative flex-1 overflow-hidden rounded-md border">
@@ -93,56 +116,102 @@ export function DataTable() {
           <div className="min-w-full inline-block">
             <Table>
               <TableHeader className="sticky top-0 z-10 bg-background">
-                {table.getHeaderGroups().map((headerGroup) => (
-                  <TableRow
-                    key={headerGroup.id}
-                    className="hover:bg-transparent border-b"
-                  >
-                    {headerGroup.headers.map((header, index) => (
-                      <TableHead
-                        key={header.id}
-                        className={`whitespace-nowrap bg-muted/50 py-2 px-4 text-sm min-w-[150px] ${
-                          index === headerGroup.headers.length - 1
-                            ? ""
-                            : "border-r"
-                        }`}
+                {/* Render header only if not loading/error and columns exist */}
+                {!showLoading && !isError && columns.length > 0
+                  ? table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow
+                        key={headerGroup.id}
+                        className="hover:bg-transparent border-b"
                       >
-                        {!header.isPlaceholder && (
-                          <div
-                            className={`flex items-center gap-1 ${
-                              header.column.getCanSort()
-                                ? "cursor-pointer select-none hover:text-primary"
-                                : ""
+                        {headerGroup.headers.map((header, index) => (
+                          <TableHead
+                            key={header.id}
+                            className={`whitespace-nowrap bg-muted/50 py-2 px-4 text-sm min-w-[150px] ${
+                              index === headerGroup.headers.length - 1
+                                ? ""
+                                : "border-r"
                             }`}
-                            onClick={() => handleHeaderClick(header.column)}
                           >
-                            {flexRender(
-                              header.column.columnDef.header,
-                              header.getContext()
+                            {!header.isPlaceholder && (
+                              <div
+                                className={`flex items-center gap-1 ${
+                                  header.column.getCanSort()
+                                    ? "cursor-pointer select-none hover:text-primary"
+                                    : ""
+                                }`}
+                                onClick={() => handleHeaderClick(header.column)}
+                              >
+                                {flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                                {header.column.getCanSort() && (
+                                  <SortIcon
+                                    sortDirection={header.column.getIsSorted()}
+                                  />
+                                )}
+                              </div>
                             )}
-                            {header.column.getCanSort() && (
-                              <SortIcon
-                                sortDirection={header.column.getIsSorted()}
-                              />
-                            )}
-                          </div>
-                        )}
-                      </TableHead>
-                    ))}
+                          </TableHead>
+                        ))}
+                      </TableRow>
+                    ))
+                  : null}
+                {/* Optional: Render a placeholder row during loading/error if needed */}
+                {(showLoading || isError || columns.length === 0) && (
+                  <TableRow className="hover:bg-transparent border-b">
+                    <TableHead
+                      colSpan={columns.length || 1}
+                      className="h-[49px]"
+                    >
+                      {/* Optionally add a subtle loading/error indicator here if desired */}
+                    </TableHead>
                   </TableRow>
-                ))}
+                )}
               </TableHeader>
               <TableBody>
-                {isLoading ? (
+                {/* Conditional rendering inside the body */}
+                {showLoading ? (
                   <TableRow>
                     <TableCell
-                      colSpan={columns.length}
+                      colSpan={columns.length || 1}
                       className="h-16 text-center"
                     >
-                      <Loader2 className="h-4 w-4 animate-spin mx-auto" />
+                      <Loader2 className="h-6 w-6 animate-spin text-muted-foreground mx-auto" />
                     </TableCell>
                   </TableRow>
-                ) : table.getRowModel().rows?.length ? (
+                ) : isError ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length || 1}
+                      className="h-16 text-center text-destructive"
+                    >
+                      <div className="flex flex-col items-center justify-center">
+                        <AlertTriangle className="h-6 w-6 mb-1" />
+                        <p className="text-sm font-medium">
+                          Error Loading Data
+                        </p>
+                        <p className="text-xs text-muted-foreground mt-1">
+                          {error instanceof Error
+                            ? error.message
+                            : "An unknown error occurred"}
+                        </p>
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ) : data.length === 0 || columns.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length || 1}
+                      className="h-16 text-center"
+                    >
+                      <p className="text-sm text-muted-foreground">
+                        No data available for this query.
+                      </p>
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  // Render actual data rows
                   table.getRowModel().rows.map((row, index) => (
                     <TableRow
                       key={row.id}
@@ -168,28 +237,23 @@ export function DataTable() {
                       ))}
                     </TableRow>
                   ))
-                ) : (
-                  <TableRow>
-                    <TableCell
-                      colSpan={columns.length}
-                      className="h-16 text-center"
-                    >
-                      <p className="text-sm text-muted-foreground">
-                        No results.
-                      </p>
-                    </TableCell>
-                  </TableRow>
                 )}
               </TableBody>
             </Table>
           </div>
         </div>
       </div>
+      {/* Footer remains the same */}
       <div className="px-2 py-1 text-xs text-muted-foreground border-t bg-muted/10 flex justify-between items-center">
         <div>
-          {table.getRowModel().rows?.length ?? 0} rows
-          {table.getSelectedRowModel?.()?.rows?.length > 0 &&
-            ` (${table.getSelectedRowModel().rows.length} selected)`}
+          {/* Show row count only if not loading/error and data exists */}
+          {!showLoading && !isError && data.length > 0 && (
+            <>
+              {table.getRowModel().rows.length} rows
+              {table.getSelectedRowModel?.()?.rows?.length > 0 &&
+                ` (${table.getSelectedRowModel().rows.length} selected)`}
+            </>
+          )}
         </div>
         <Link
           href={pathname.replace(/\/*$/, "") + "/data"}

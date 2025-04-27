@@ -25,7 +25,7 @@ import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState, useEffect, useCallback, memo } from "react";
 import { DatabaseConfig } from "@/lib/hooks/use-database";
-import { testConnection } from "../../stores/utils/query";
+import { testConnection } from "@/lib/hooks/query-helpers";
 import { getAzureIP } from "@/utils/actions/getIP";
 import { SiPostgresql, SiMysql } from "react-icons/si";
 

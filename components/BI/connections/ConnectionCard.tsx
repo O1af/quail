@@ -1,28 +1,23 @@
-import { useState, memo } from "react";
-import { queryMetadata } from "@/components/stores/utils/query";
-import { useTableStore } from "@/components/stores/table_store";
-import { useToast } from "@/lib/hooks/use-toast";
-import { DatabaseConfig, useDatabase } from "@/lib/hooks/use-database";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { Button } from "@/components/ui/button";
+import { memo, useState } from "react";
 import {
-  MoreHorizontal,
-  Edit,
+  Server,
   Trash2,
+  Loader2,
   CheckCircle,
   ArrowRightCircle,
-  Loader2,
+  MoreHorizontal,
+  Edit,
   ServerOff,
-  Server,
   TableProperties,
 } from "lucide-react";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuSeparator,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
+import { SiPostgresql, SiMysql, SiSupabase, SiAmazon } from "react-icons/si";
+import { useToast } from "@/lib/hooks/use-toast";
+import { Button } from "@/components/ui/button";
+import { DatabaseConfig } from "@/lib/types/stores/dbConnections"; // Corrected path for DatabaseConfig
+import { useDatabase } from "@/lib/hooks/use-database";
+import { fetchDatabaseStructure } from "@/lib/hooks/query-helpers";
+import { useQueryClient } from "@tanstack/react-query";
+import { tableQueryKeys } from "@/lib/hooks/use-table-data";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -32,14 +27,21 @@ import {
   AlertDialogFooter,
   AlertDialogHeader,
   AlertDialogTitle,
+  AlertDialogTrigger,
 } from "@/components/ui/alert-dialog";
-import { SiPostgresql, SiMysql, SiSupabase } from "react-icons/si";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
-} from "@/components/ui/tooltip";
+} from "@/components/ui/tooltip"; // Added Tooltip imports
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from "@/components/ui/dropdown-menu"; // Added Dropdown imports
+import { Card, CardContent, CardFooter } from "@/components/ui/card";
 import Image from "next/image";
 import Link from "next/link";
 
@@ -106,18 +108,28 @@ export const ConnectionCard = memo(function ConnectionCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { setCurrentDatabase } = useDatabase();
-  const clearTableData = useTableStore((state) => state.clearTableData);
+  const queryClient = useQueryClient();
 
   const handleSetActive = async () => {
     if (isActive) return;
     setActivating(true);
 
     try {
-      await queryMetadata(connection.connectionString, connection.type);
-      clearTableData();
+      // Fetch structure first to test connection and prime cache
+      await fetchDatabaseStructure(
+        connection.connectionString,
+        connection.type
+      );
+      // Invalidate queries instead of clearing table data
+      await queryClient.invalidateQueries({
+        queryKey: tableQueryKeys.databaseStructure(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: tableQueryKeys.tableData(), // Invalidate table data as well
+      });
       await setCurrentDatabase(connection.id);
       toast({
-        title: "Connection activated",
+        title: "Database activated",
         description: `Now using ${connection.name} as the active database.`,
       });
     } catch (err) {
@@ -225,7 +237,6 @@ export const ConnectionCard = memo(function ConnectionCard({
                     <Edit className="mr-2 h-3.5 w-3.5" />
                     Edit
                   </DropdownMenuItem>
-                  <DropdownMenuSeparator />
                   <DropdownMenuItem
                     className="text-destructive cursor-pointer"
                     onClick={() => setIsDeleting(true)}

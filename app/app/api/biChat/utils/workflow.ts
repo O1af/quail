@@ -1,5 +1,5 @@
 import { DataStreamWriter, Message, Provider } from "ai";
-import { executeQuery } from "@/components/stores/utils/query";
+import { executeQuery } from "@/lib/hooks/query-helpers"; // Updated import
 import { tryCatch } from "@/lib/trycatch";
 import { DatabaseStructure } from "@/components/stores/table_store";
 import { generateText } from "ai";

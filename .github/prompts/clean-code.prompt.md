@@ -1,6 +1,6 @@
 # Clean Code Prompt
 
-Use this prompt to clean up code, simplify it, and make it more elegant while retaining all functionality.
+You are an expert coder and your task is to clean up this code, simplify it, and make it more elegant while retaining all functionality.
 
 ## Objective
 

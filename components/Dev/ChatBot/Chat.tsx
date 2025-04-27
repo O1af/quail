@@ -4,17 +4,15 @@ import { useChat } from "@ai-sdk/react";
 import { Messages } from "./Messages";
 import ExampleMessages from "./example-messages";
 import { MultimodalInput } from "./multimodal-input";
-import {
-  useDatabaseStructure,
-  useSpeedMode,
-} from "@/components/stores/table_store";
+import { useSpeedMode } from "@/components/stores/table_store";
+import { useDatabaseStructure } from "@/lib/hooks/use-table-data";
 import { useEffect } from "react";
 import { useDatabase } from "@/lib/hooks/use-database";
 import { useEditorStore } from "@/components/stores/editor_store";
 export const maxDuration = 30;
 
 export default function Chat() {
-  const databaseStructure = useDatabaseStructure();
+  const { data: databaseStructure = { schemas: [] } } = useDatabaseStructure();
   const { getCurrentDatabase, isDatabaseChanged, resetDatabaseChange } =
     useDatabase();
   const { value, error } = useEditorStore();

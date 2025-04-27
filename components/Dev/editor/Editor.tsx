@@ -5,14 +5,16 @@ import { useTheme } from "next-themes";
 import React, { useEffect, useCallback } from "react";
 import { setupSQLAutocomplete } from "./utils/autocomplete";
 import { useEditorStore } from "@/components/stores/editor_store";
-import { useTableStore } from "@/components/stores/table_store";
+import { useDatabaseStructure } from "@/lib/hooks/use-table-data";
 
 export default React.memo(function SQLEditor() {
   const { resolvedTheme } = useTheme();
   const value = useEditorStore((state) => state.value);
   const setValue = useEditorStore((state) => state.setValue);
   const setEditorRef = useEditorStore((state) => state.setEditorRef);
-  const databaseStructure = useTableStore((state) => state.databaseStructure);
+
+  // Use React Query hook to fetch database structure
+  const { data: databaseStructure = { schemas: [] } } = useDatabaseStructure();
 
   const handleEditorDidMount = useCallback<OnMount>(
     (editor, monaco) => {

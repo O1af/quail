@@ -1,7 +1,7 @@
 "use client";
 
 import { useState, useMemo, useCallback, useEffect } from "react";
-import { useDatabaseStructure } from "@/components/stores/table_store";
+import { useDatabaseStructure } from "@/lib/hooks/use-table-data";
 import {
   ChevronRight,
   ChevronDown,
@@ -9,7 +9,7 @@ import {
   Table as TableIcon,
   LayoutList,
 } from "lucide-react";
-import { Table } from "@/components/stores/table_store";
+import type { Table } from "@/components/stores/table_store"; // Use 'import type'
 import { cn } from "@/lib/utils";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { memo } from "react";
@@ -61,7 +61,7 @@ const SchemaItem = memo(
     selectedTable,
     onSelectTable,
   }: {
-    schema: { name: string; tables: Table[] };
+    schema: { name: string; tables: Table[] }; // Use Table type
     isExpanded: boolean;
     onToggle: () => void;
     selectedTable: Table | null;
@@ -105,7 +105,8 @@ export function SchemaTree({
   selectedTable,
   onSelectTable,
 }: SchemaTreeProps) {
-  const { schemas } = useDatabaseStructure();
+  const { data: databaseStructure = { schemas: [] } } = useDatabaseStructure();
+  const { schemas } = databaseStructure;
   const [expandedSchemas, setExpandedSchemas] = useState<
     Record<string, boolean>
   >({});

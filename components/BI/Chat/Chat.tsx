@@ -11,10 +11,8 @@ import { Welcome } from "./Welcome";
 import { useInitializeChat } from "@/lib/hooks/useInitializeChat";
 import { loadChat } from "@/components/stores/chat_store";
 import { useDatabase } from "@/lib/hooks/use-database";
-import {
-  useDatabaseStructure,
-  useSpeedMode,
-} from "@/components/stores/table_store";
+import { useSpeedMode } from "@/components/stores/table_store";
+import { useDatabaseStructure } from "@/lib/hooks/use-table-data";
 import { AlertCircle } from "lucide-react";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 
@@ -38,7 +36,7 @@ export default function Chat({ className, chat_id }: ChatProps) {
   // Get current database info
   const { getCurrentDatabase } = useDatabase();
   const currentDB = getCurrentDatabase();
-  const databaseStructure = useDatabaseStructure();
+  const { data: databaseStructure = { schemas: [] } } = useDatabaseStructure();
   const speedMode = useSpeedMode();
 
   // Check if database is selected

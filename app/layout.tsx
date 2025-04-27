@@ -4,7 +4,7 @@ import { RootProvider } from "fumadocs-ui/provider";
 import type { ReactNode } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/lib/context/AuthContext";
+import { AuthProvider } from "@/lib/providers/AuthContext";
 import { ReactQueryProvider } from "@/lib/providers/react-query-provider";
 import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";

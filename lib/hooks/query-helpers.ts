@@ -1,13 +1,16 @@
-import { useEditorStore } from "../editor_store";
-import { useTableStore } from "../table_store";
+// This is a modified version of query.ts that doesn't rely on the Zustand store
+// It will be imported by the React Query hooks
+
 import { runPostgres, runMySQL } from "@/utils/actions/runSQL";
-import { ColumnDef } from "@tanstack/react-table";
-import { SQLData } from "../table_store";
-import { useQueryClient } from "@tanstack/react-query";
-import { dbQueryKeys } from "@/lib/hooks/use-database";
-import { DbState } from "@/lib/types/stores/dbConnections";
-import { DatabaseStructure, Schema, Column, Index } from "../table_store";
-import { mysqlMeta, pgMeta } from "./metadataQueries";
+import type { ColumnDef } from "@tanstack/react-table";
+import type {
+  SQLData,
+  DatabaseStructure,
+  Schema,
+  Column,
+  Index,
+} from "@/components/stores/table_store"; // Use 'import type'
+import { mysqlMeta, pgMeta } from "@/components/stores/utils/metadataQueries";
 
 import { getCurrentDatabaseConnection } from "@/lib/actions/database-connection";
 
@@ -51,36 +54,6 @@ export async function testConnection(connectionString: string, type: string) {
   const testQuery = type === "mysql" ? "SELECT 1" : "SELECT 1;";
   await executeQuery(testQuery, connectionString, type);
   return true;
-}
-
-export async function handleQuery(queryString?: string): Promise<void> {
-  const query = queryString ?? useEditorStore.getState().value;
-  const { setData, setColumns } = useTableStore.getState();
-
-  try {
-    const result = await executeQuery(query);
-
-    if (result.rows.length > 0) {
-      const columns: ColumnDef<SQLData, any>[] = Object.keys(
-        result.rows[0]
-      ).map((key) => ({
-        accessorKey: key,
-        header: key,
-        enableSorting: true,
-        sortingFn: "basic",
-      }));
-
-      setColumns(columns);
-      setData(result.rows);
-    } else {
-      setColumns([]);
-      setData([]);
-    }
-  } catch (error) {
-    setColumns([]);
-    setData([]);
-    throw error; // Re-throw for the UI to handle
-  }
 }
 
 interface RawMetadataRow {
@@ -232,13 +205,11 @@ function processMetadataRow(
   }
 }
 
-export async function queryMetadata(
+export async function fetchDatabaseStructure(
   connectionString?: string,
   dbType?: string
-) {
+): Promise<DatabaseStructure> {
   const metadataQuery = dbType === "mysql" ? mysqlMeta : pgMeta;
-
-  const { setDatabaseStructure } = useTableStore.getState();
 
   try {
     const result = await executeQuery(metadataQuery, connectionString, dbType);
@@ -252,16 +223,46 @@ export async function queryMetadata(
       }
 
       // Convert the map to the final structure
-      const structure: DatabaseStructure = {
+      return {
         schemas: Array.from(schemaMap.values()),
       };
-
-      setDatabaseStructure(structure);
     } else {
-      setDatabaseStructure({ schemas: [] });
+      return { schemas: [] };
     }
   } catch (error) {
-    setDatabaseStructure({ schemas: [] });
-    throw error; // Re-throw for the UI to handle
+    console.error("Error fetching database structure:", error);
+    return { schemas: [] };
+  }
+}
+
+/**
+ * Execute a query and transform the result into appropriate table data
+ * This doesn't update any store - it just returns the data
+ */
+export async function executeQueryAndTransform(query: string) {
+  try {
+    const result = await executeQuery(query);
+
+    if (result.rows.length > 0) {
+      // Explicitly type the columns array
+      const columns: ColumnDef<SQLData, any>[] = Object.keys(
+        result.rows[0]
+      ).map((key) => ({
+        accessorKey: key,
+        header: key,
+        enableSorting: true,
+        sortingFn: "basic", // This string literal is valid for SortingFnOption
+      }));
+
+      return {
+        data: result.rows,
+        columns,
+      };
+    } else {
+      return { data: [], columns: [] };
+    }
+  } catch (error) {
+    console.error("Error executing query:", error);
+    throw error;
   }
 }

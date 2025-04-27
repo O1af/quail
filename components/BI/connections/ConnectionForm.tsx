@@ -1,11 +1,11 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
-import { useForm } from "react-hook-form";
-import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { useForm } from "react-hook-form";
+import { testConnection } from "@/lib/hooks/query-helpers";
 import { getAzureIP } from "@/utils/actions/getIP";
-import { testConnection } from "@/components/stores/utils/query";
 import { DatabaseConfig } from "@/lib/types/stores/dbConnections";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -148,7 +148,9 @@ export function ConnectionForm({
     const subscription = form.watch(() => {
       if (connectionError) setConnectionError(null);
     });
-    return () => subscription.unsubscribe();
+    // react-hook-form v7 watch doesn't return a subscription with unsubscribe
+    // The effect cleanup is handled by React automatically
+    // return () => subscription.unsubscribe(); // Removed unsubscribe call
   }, [form, connectionError]);
 
   // Check for SSL in connection string
@@ -165,9 +167,9 @@ export function ConnectionForm({
     } catch {
       setHasSSLInString(false);
     }
-  }, [form.watch("connectionString")]);
+  }, [form]); // Depend only on form instance, form.watch is implicitly covered
 
-  const dbType = form.watch("type");
+  const dbType = form.watch("type") as keyof typeof DB_TYPES; // Explicitly type dbType
   const dbTypeInfo = DB_TYPES[dbType];
 
   const handleSubmit = useCallback(
@@ -295,11 +297,15 @@ export function ConnectionForm({
                     <SelectValue />
                   </SelectTrigger>
                   <SelectContent>
-                    {dbTypeInfo.sslModes.map((mode) => (
-                      <SelectItem key={mode} value={mode}>
-                        {mode}
-                      </SelectItem>
-                    ))}
+                    {dbTypeInfo.sslModes.map(
+                      (
+                        mode: string // Explicitly type mode
+                      ) => (
+                        <SelectItem key={mode} value={mode}>
+                          {mode}
+                        </SelectItem>
+                      )
+                    )}
                   </SelectContent>
                 </Select>
                 <p className="text-xs text-muted-foreground">

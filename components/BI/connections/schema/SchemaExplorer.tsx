@@ -1,12 +1,12 @@
 "use client";
 
 import { useState, useEffect, useCallback, memo } from "react";
-import { useDatabaseStructure } from "@/components/stores/table_store";
+import { useDatabaseStructure } from "@/lib/hooks/use-table-data";
 import { SchemaTree } from "./SchemaTree";
 import { TableDetails } from "./TableDetails";
 import { RelationshipPanel } from "./RelationshipPanel";
 import { ResizablePanelGroup, ResizablePanel } from "@/components/ui/resizable";
-import { Table } from "@/components/stores/table_store";
+import type { Table } from "@/components/stores/table_store"; // Use 'import type'
 
 interface SchemaExplorerProps {
   searchTerm: string;
@@ -17,17 +17,10 @@ const MemoizedTableDetails = memo(TableDetails);
 const MemoizedRelationshipPanel = memo(RelationshipPanel);
 
 export function SchemaExplorer({ searchTerm }: SchemaExplorerProps) {
-  const databaseStructure = useDatabaseStructure();
+  // Use the React Query hook for database structure
+  const { data: databaseStructure = { schemas: [] } } = useDatabaseStructure();
   const [selectedTable, setSelectedTable] = useState<Table | null>(null);
   const [showRelationships, setShowRelationships] = useState(false);
-
-  // Fetch database structure on component mount if not already loaded
-  useEffect(() => {
-    if (databaseStructure.schemas.length === 0) {
-      // In a real implementation, you would fetch the database structure here
-      // fetchDatabaseStructure();
-    }
-  }, [databaseStructure]);
 
   // Use useCallback to memoize functions passed as props
   const handleSelectTable = useCallback((table: Table) => {

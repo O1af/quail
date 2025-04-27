@@ -1,19 +1,11 @@
-import { DatabaseConfig, useDatabase } from "@/lib/hooks/use-database";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardFooter } from "@/components/ui/card";
-import { useState, memo } from "react";
+import { memo, useState } from "react";
+import { SiPostgresql, SiMysql } from "react-icons/si";
 import { useToast } from "@/lib/hooks/use-toast";
-import { queryMetadata } from "../../stores/utils/query";
-import { useTableStore } from "../../stores/table_store";
-import {
-  CheckCircle,
-  ArrowRightCircle,
-  Loader2,
-  ServerOff,
-  Edit,
-  Trash2,
-  Server,
-} from "lucide-react";
+import { useDatabase } from "@/lib/hooks/use-database";
+import { fetchDatabaseStructure } from "@/lib/hooks/query-helpers"; // Updated import
+import { useQueryClient } from "@tanstack/react-query"; // Added import
+import { tableQueryKeys } from "@/lib/hooks/use-table-data"; // Added import
+import { DatabaseConfig } from "@/lib/types/stores/dbConnections";
 import {
   AlertDialog,
   AlertDialogAction,
@@ -24,13 +16,23 @@ import {
   AlertDialogHeader,
   AlertDialogTitle,
 } from "@/components/ui/alert-dialog";
-import { SiPostgresql, SiMysql } from "react-icons/si";
+import { CardFooter, Card, CardContent } from "@/components/ui/card";
+import { Button } from "@/components/ui/button";
 import {
   Tooltip,
   TooltipContent,
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
+import {
+  Loader2,
+  CheckCircle,
+  ArrowRightCircle,
+  ServerOff,
+  Edit,
+  Trash2,
+  Server,
+} from "lucide-react";
 import { DatabaseDialog } from "./DatabaseDialog";
 
 interface DatabaseCardProps {
@@ -48,7 +50,7 @@ export const DatabaseCard = memo(function DatabaseCard({
   const [isDeleting, setIsDeleting] = useState(false);
   const { toast } = useToast();
   const { currentDatabaseId, setCurrentDatabase } = useDatabase();
-  const clearTableData = useTableStore((state) => state.clearTableData);
+  const queryClient = useQueryClient(); // Added queryClient
   const isActive = db.id === currentDatabaseId;
 
   const handleSetActive = async () => {
@@ -56,8 +58,15 @@ export const DatabaseCard = memo(function DatabaseCard({
     setActivating(true);
 
     try {
-      await queryMetadata(db.connectionString, db.type);
-      clearTableData();
+      // Fetch structure first to test connection and prime cache
+      await fetchDatabaseStructure(db.connectionString, db.type);
+      // Invalidate queries instead of clearing table data
+      await queryClient.invalidateQueries({
+        queryKey: tableQueryKeys.databaseStructure(),
+      });
+      await queryClient.invalidateQueries({
+        queryKey: tableQueryKeys.tableData(), // Invalidate table data as well
+      });
       setCurrentDatabase(db.id);
       toast({
         title: "Database activated",
