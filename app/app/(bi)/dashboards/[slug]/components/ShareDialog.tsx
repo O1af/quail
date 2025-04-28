@@ -64,14 +64,36 @@ export function ShareDialog({
     setEmailError(null);
   }, [dashboard, open]);
 
-  const handleTogglePublic = () => {
-    setPermissions((prev) => ({
-      ...prev,
-      publicView: !prev.publicView,
-    }));
+  // Function to save permissions
+  const savePermissions = async (
+    updatedPermissions: Dashboard["permissions"]
+  ) => {
+    setIsSubmitting(true);
+    try {
+      await onUpdatePermissions(updatedPermissions);
+    } catch (error) {
+      console.error("Failed to update permissions:", error);
+      // On error, revert to dashboard permissions
+      setPermissions({
+        publicView: dashboard.permissions.publicView || false,
+        viewers: [...(dashboard.permissions.viewers || [])],
+        editors: [...(dashboard.permissions.editors || [])],
+      });
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
-  const handleAddEmail = () => {
+  const handleTogglePublic = () => {
+    const updatedPermissions = {
+      ...permissions,
+      publicView: !permissions.publicView,
+    };
+    setPermissions(updatedPermissions);
+    savePermissions(updatedPermissions);
+  };
+
+  const handleAddEmail = async () => {
     // Clear previous errors
     setEmailError(null);
 
@@ -102,63 +124,74 @@ export function ShareDialog({
       return;
     }
 
-    // Add to the appropriate list if not a duplicate
-    setPermissions((prev) => {
-      if (emailType === "viewer") {
-        return { ...prev, viewers: [...prev.viewers, newEmail] };
-      } else {
-        return { ...prev, editors: [...prev.editors, newEmail] };
-      }
-    });
+    // Create updated permissions
+    const updatedPermissions = { ...permissions };
+
+    if (emailType === "viewer") {
+      updatedPermissions.viewers = [...updatedPermissions.viewers, newEmail];
+    } else {
+      updatedPermissions.editors = [...updatedPermissions.editors, newEmail];
+    }
+
+    // Update local state
+    setPermissions(updatedPermissions);
 
     // Clear input on successful add
     setNewEmail("");
+
+    // Save to server
+    await savePermissions(updatedPermissions);
   };
 
-  const handleRemoveEmail = (email: string, type: "viewer" | "editor") => {
-    setPermissions((prev) => {
-      if (type === "viewer") {
-        return { ...prev, viewers: prev.viewers.filter((e) => e !== email) };
-      } else {
-        return { ...prev, editors: prev.editors.filter((e) => e !== email) };
-      }
-    });
+  const handleRemoveEmail = async (
+    email: string,
+    type: "viewer" | "editor"
+  ) => {
+    const updatedPermissions = { ...permissions };
+
+    if (type === "viewer") {
+      updatedPermissions.viewers = updatedPermissions.viewers.filter(
+        (e) => e !== email
+      );
+    } else {
+      updatedPermissions.editors = updatedPermissions.editors.filter(
+        (e) => e !== email
+      );
+    }
+
+    // Update local state
+    setPermissions(updatedPermissions);
+
+    // Save to server
+    await savePermissions(updatedPermissions);
   };
 
-  const handleChangePermissionLevel = (
+  const handleChangePermissionLevel = async (
     email: string,
     newType: "viewer" | "editor"
   ) => {
-    setPermissions((prev) => {
-      // Create new arrays excluding the email
-      const newViewers = prev.viewers.filter((e) => e !== email);
-      const newEditors = prev.editors.filter((e) => e !== email);
+    const updatedPermissions = { ...permissions };
 
-      // Add email to the appropriate array based on new type
-      if (newType === "viewer") {
-        newViewers.push(email);
-      } else {
-        newEditors.push(email);
-      }
+    // Create new arrays excluding the email
+    updatedPermissions.viewers = updatedPermissions.viewers.filter(
+      (e) => e !== email
+    );
+    updatedPermissions.editors = updatedPermissions.editors.filter(
+      (e) => e !== email
+    );
 
-      return {
-        ...prev,
-        viewers: newViewers,
-        editors: newEditors,
-      };
-    });
-  };
-
-  const handleSave = async () => {
-    setIsSubmitting(true);
-    try {
-      await onUpdatePermissions(permissions);
-      onOpenChange(false);
-    } catch (error) {
-      console.error("Failed to update permissions:", error);
-    } finally {
-      setIsSubmitting(false);
+    // Add email to the appropriate array based on new type
+    if (newType === "viewer") {
+      updatedPermissions.viewers.push(email);
+    } else {
+      updatedPermissions.editors.push(email);
     }
+
+    // Update local state
+    setPermissions(updatedPermissions);
+
+    // Save to server
+    await savePermissions(updatedPermissions);
   };
 
   // Combine all users for display
@@ -208,6 +241,7 @@ export function ShareDialog({
             <Switch
               checked={permissions.publicView}
               onCheckedChange={handleTogglePublic}
+              disabled={isSubmitting}
             />
           </div>
 
@@ -226,6 +260,7 @@ export function ShareDialog({
                       if (emailError) setEmailError(null);
                     }}
                     className={emailError ? "border-destructive" : ""}
+                    disabled={isSubmitting}
                   />
                 </div>
                 {emailError && (
@@ -238,12 +273,21 @@ export function ShareDialog({
                   setEmailType(e.target.value as "viewer" | "editor")
                 }
                 className="bg-background border border-input rounded-md px-3 py-2 text-sm"
+                disabled={isSubmitting}
               >
                 <option value="viewer">Can view</option>
                 <option value="editor">Can edit</option>
               </select>
-              <Button variant="secondary" onClick={handleAddEmail}>
-                <Plus className="h-4 w-4" />
+              <Button
+                variant="secondary"
+                onClick={handleAddEmail}
+                disabled={isSubmitting}
+              >
+                {isSubmitting ? (
+                  <div className="h-4 w-4 animate-spin rounded-full border-2 border-primary border-t-transparent" />
+                ) : (
+                  <Plus className="h-4 w-4" />
+                )}
               </Button>
             </div>
           </div>
@@ -282,7 +326,12 @@ export function ShareDialog({
                     </div>
                     <DropdownMenu>
                       <DropdownMenuTrigger asChild>
-                        <Button variant="ghost" size="sm" className="h-8">
+                        <Button
+                          variant="ghost"
+                          size="sm"
+                          className="h-8"
+                          disabled={isSubmitting}
+                        >
                           {role === "editor" ? "Editor" : "Viewer"}{" "}
                           <span className="ml-1">▼</span>
                         </Button>
@@ -293,6 +342,7 @@ export function ShareDialog({
                           onClick={() =>
                             handleChangePermissionLevel(email, "editor")
                           }
+                          disabled={isSubmitting}
                         >
                           <Edit className="mr-2 h-4 w-4" />
                           <span>Editor</span>
@@ -302,6 +352,7 @@ export function ShareDialog({
                           onClick={() =>
                             handleChangePermissionLevel(email, "viewer")
                           }
+                          disabled={isSubmitting}
                         >
                           <Eye className="mr-2 h-4 w-4" />
                           <span>Viewer</span>
@@ -309,6 +360,7 @@ export function ShareDialog({
                         <DropdownMenuItem
                           onClick={() => handleRemoveEmail(email, role)}
                           className="text-destructive focus:text-destructive border-t"
+                          disabled={isSubmitting}
                         >
                           <X className="mr-2 h-4 w-4" />
                           <span>Remove access</span>
@@ -333,12 +385,18 @@ export function ShareDialog({
         </div>
 
         <DialogFooter className="justify-between sm:justify-between">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancel
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={isSubmitting}
+          >
+            Close
           </Button>
-          <Button onClick={handleSave} disabled={isSubmitting}>
-            {isSubmitting ? "Saving..." : "Save"}
-          </Button>
+          {isSubmitting && (
+            <div className="text-sm text-muted-foreground">
+              Saving changes...
+            </div>
+          )}
         </DialogFooter>
       </DialogContent>
     </Dialog>

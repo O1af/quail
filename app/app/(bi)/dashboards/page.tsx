@@ -65,6 +65,7 @@ export default function DashboardsPage() {
     queryKey: ["sharedDashboards", user?.email],
     queryFn: () => {
       if (!user?.email) throw new Error("User email not available");
+      console.log(loadSharedDashboards(user.email));
       return loadSharedDashboards(user.email);
     },
     enabled: !!user?.email, // Only run when user email is available
