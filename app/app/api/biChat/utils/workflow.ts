@@ -75,10 +75,10 @@ export async function executeQueryWithErrorHandling({
 
       // Still on step 1 for query retries
 
-      // Always use o3-mini for query validation regardless of user tier
+      // Always use o4-mini for query validation regardless of user tier
       const { data: improvedQueryData, error: reformError } = await tryCatch(
         generateText({
-          model: provider("o3-mini"),
+          model: provider("o4-mini"),
           prompt: createQueryValidationPrompt({
             originalQuery: currentQuery,
             errorMessage,

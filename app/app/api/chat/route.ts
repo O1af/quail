@@ -13,9 +13,9 @@ import { type SpeedMode } from "@/components/stores/table_store";
 
 function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
   if (speedMode === "slow") {
-    return azure("o3-mini");
+    return azure("o4-mini");
   } else {
-    return azure("gpt-4o-mini");
+    return azure("gpt-4.1-mini");
   }
 }
 

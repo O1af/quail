@@ -4,7 +4,6 @@ import { useTheme } from "next-themes";
 import { useEffect, useState } from "react";
 import { useQuery } from "@tanstack/react-query";
 import { Label } from "@/components/ui/label";
-import { Switch } from "@/components/ui/switch";
 import {
   Select,
   SelectContent,
@@ -84,36 +83,6 @@ export function GeneralForm() {
               <SelectItem value="system">System</SelectItem>
             </SelectContent>
           </Select>
-        </div>
-      </div>
-
-      <div className="space-y-4">
-        <h3 className="text-lg font-medium mb-2">Preferences</h3>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor="show-code" className="font-medium">
-              Always show code when using data analyst
-            </Label>
-          </div>
-          <Switch
-            id="show-code"
-            checked={showCode}
-            onCheckedChange={setShowCode}
-          />
-        </div>
-
-        <div className="flex items-center justify-between">
-          <div>
-            <Label htmlFor="show-suggestions" className="font-medium">
-              Show follow up suggestions in chats
-            </Label>
-          </div>
-          <Switch
-            id="show-suggestions"
-            checked={showSuggestions}
-            onCheckedChange={setShowSuggestions}
-          />
         </div>
       </div>
 

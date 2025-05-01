@@ -33,14 +33,14 @@ const azure = createAzure({
 
 /**
  * Select the appropriate model based on speed mode
- * - slow: o3-mini (more accurate but slower)
- * - fast/medium: gpt-4o-mini (faster but may be less accurate)
+ * - slow: o4-mini (more accurate but slower)
+ * - fast/medium: gpt-4.1-mini (faster but may be less accurate)
  */
 function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
   if (speedMode === "slow") {
-    return azure("o3-mini");
+    return azure("o4-mini");
   } else {
-    return azure("gpt-4o-mini");
+    return azure("gpt-4.1-mini");
   }
 }
 

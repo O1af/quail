@@ -47,7 +47,7 @@ export async function POST(req: Request) {
 
     // Stream the modified JSX
     const result = streamText({
-      model: azure("gpt-4o-mini"),
+      model: azure("gpt-4.1-mini"),
       prompt: createChartEditPrompt({
         prompt: userMessage.content,
         currentJsx: jsxCode,

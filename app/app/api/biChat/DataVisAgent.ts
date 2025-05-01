@@ -82,7 +82,7 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
 
       const { data: chartJsxData, error: vizError } = await tryCatch(
         generateText({
-          model: provider("o3-mini"),
+          model: provider("o4-mini"),
           prompt: chartPrompt,
           system:
             "You are a data visualization expert. Generate Chart.js JSX code based on data analysis requirements.",
@@ -99,7 +99,7 @@ export const DataVisAgentTool = (params: DataVisAgentParams) =>
       //generate a unique title for the chart
       const { data: chartTitle, error: titleError } = await tryCatch(
         generateText({
-          model: provider("gpt-4o-mini"),
+          model: provider("gpt-4.1-mini"),
           prompt: `Generate a unique title for this chart
         based on this code: ${chartJsxData.text}`,
           system: `You are a data visualization expert. 
