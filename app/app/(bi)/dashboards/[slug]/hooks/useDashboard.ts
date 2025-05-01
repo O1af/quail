@@ -4,75 +4,111 @@ import {
   loadDashboard,
   Dashboard,
   updateDashboard,
-  LayoutItem, // Import LayoutItem type
+  LayoutItem,
 } from "@/components/stores/dashboard_store";
 import { loadChart } from "@/components/stores/chart_store";
 import { ChartDocument } from "@/lib/types/stores/chart";
 import { useToast } from "@/lib/hooks/use-toast";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
-import { User } from "@supabase/supabase-js";
-import { useIsAuthenticated } from "@/lib/hooks/use-authenticated-query"; // Import useIsAuthenticated
+import { User } from "@supabase/supabase-js"; // Re-add User import
+import { useIsAuthenticated } from "@/lib/hooks/use-authenticated-query";
 
 type Permission = "owner" | "editor" | "viewer" | "public" | "anonymous" | null;
 
-// Define the structure returned by the queryFn
+// Define the structure returned by the queryFn, including permission and user
 interface DashboardQueryResult {
   dashboard: Dashboard;
   charts: Map<string, ChartDocument | null>;
+  calculatedPermission: Permission;
+  user: User | null; // Add user to the query result
 }
 
 interface UseDashboardReturn {
-  user: User | null; // Keep user state for now, though useIsAuthenticated provides ID
-  dashboard: Dashboard | undefined; // Data from query
-  isLoading: boolean; // Combined loading state
-  isAuthLoading: boolean; // From useIsAuthenticated
-  isSaving: boolean; // Keep for mutation pending state
-  error: Error | null; // Use Error type from React Query
-  chartData: Map<string, ChartDocument | null>; // Local state, synced with query
+  user: User | null; // Add user back to the return type
+  dashboard: Dashboard | undefined;
+  isLoading: boolean;
+  isAuthLoading: boolean;
+  isSaving: boolean;
+  error: Error | null;
+  chartData: Map<string, ChartDocument | null>;
   userPermission: Permission;
   tempTitle: string;
   tempDescription: string;
   isEditing: boolean;
   hasUnsavedChanges: boolean;
   chartUpdateCounter: number;
-  tempLayoutsRef: React.MutableRefObject<LayoutItem[]>; // Use LayoutItem[]
+  tempLayoutsRef: React.MutableRefObject<LayoutItem[]>;
   tempChartsRef: React.MutableRefObject<string[]>;
   handleTitleChange: (e: React.ChangeEvent<HTMLInputElement>) => void;
   handleDescriptionChange: (e: React.ChangeEvent<HTMLTextAreaElement>) => void;
   handleEdit: () => void;
   handleSave: () => Promise<void>;
   handleCancel: () => void;
-  handleLayoutChange: (layout: LayoutItem[]) => void; // Use LayoutItem[]
+  handleLayoutChange: (layout: LayoutItem[]) => void;
   handleChartsChange: (newCharts: string[], apply: boolean) => void;
   handleUpdatePermissions: (
     newPermissions: Dashboard["permissions"]
   ) => Promise<void>;
 }
 
-// Helper function to check permissions (can be moved outside if preferred)
+// Helper function to get user email
+const getUserEmail = async (
+  supabaseClient: any
+): Promise<string | undefined> => {
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabaseClient.auth.getUser();
+    if (error) throw error;
+    return user?.email;
+  } catch (err) {
+    console.error("Error fetching user email:", err);
+    return undefined;
+  }
+};
+
+// Helper function to get the full user object
+const getFullUser = async (supabaseClient: any): Promise<User | null> => {
+  try {
+    const {
+      data: { user },
+      error,
+    } = await supabaseClient.auth.getUser();
+    if (error) throw error;
+    return user;
+  } catch (err) {
+    console.error("Error fetching full user object:", err);
+    return null;
+  }
+};
+
+// checkUserPermissions remains the same
 const checkUserPermissions = (
   dashboard: Dashboard,
   userEmail?: string,
   userId?: string
 ): Permission => {
-  if (!userId) return null;
+  if (!userId) {
+    // If user is not logged in, check if dashboard is public
+    return dashboard.permissions?.publicView ? "public" : null;
+  }
   if (dashboard.userId === userId) return "owner";
   if (userEmail && dashboard.permissions?.editors?.includes(userEmail))
     return "editor";
   if (userEmail && dashboard.permissions?.viewers?.includes(userEmail))
     return "viewer";
+  // If logged in but no specific permission, check if public
   if (dashboard.permissions?.publicView) return "public";
-  return null;
+  return null; // No permission found
 };
 
 export function useDashboard(slug: string): UseDashboardReturn {
-  // Still keep user state if needed for email/metadata, though ID comes from useIsAuthenticated
-  const [user, setUser] = useState<User | null>(null);
   const {
     isAuthenticated,
     isLoading: isAuthLoading,
     userId,
-  } = useIsAuthenticated(); // Use the hook
+  } = useIsAuthenticated();
 
   const [userPermission, setUserPermission] = useState<Permission>(null);
   const [isEditing, setIsEditing] = useState(false);
@@ -84,36 +120,15 @@ export function useDashboard(slug: string): UseDashboardReturn {
     new Map()
   );
 
-  const tempLayoutsRef = useRef<LayoutItem[]>([]); // Use LayoutItem[]
+  const tempLayoutsRef = useRef<LayoutItem[]>([]);
   const tempChartsRef = useRef<string[]>([]);
 
   const { toast } = useToast();
-  const supabase = createClient(); // Keep for fetching full user object if needed
+  const supabase = createClient();
   const queryClient = useQueryClient();
 
-  // --- User Authentication ---
-  // Fetch full user object once authenticated (optional, if needed beyond ID/email)
-  useEffect(() => {
-    const fetchFullUser = async () => {
-      if (isAuthenticated) {
-        try {
-          const {
-            data: { user: fetchedUser },
-          } = await supabase.auth.getUser();
-          setUser(fetchedUser); // Store the full user object
-        } catch (err) {
-          console.error("Error fetching full user object:", err);
-          setUser(null);
-        }
-      } else {
-        setUser(null); // Clear user if not authenticated
-      }
-    };
-    fetchFullUser();
-  }, [isAuthenticated, supabase]);
-
   // --- Data Fetching with React Query ---
-  const dashboardQueryKey = ["dashboard", slug];
+  const dashboardQueryKey = ["dashboard", slug, userId];
 
   const {
     data: queryResult,
@@ -123,28 +138,26 @@ export function useDashboard(slug: string): UseDashboardReturn {
   } = useQuery<DashboardQueryResult, Error>({
     queryKey: dashboardQueryKey,
     queryFn: async (): Promise<DashboardQueryResult> => {
-      // userId is guaranteed by the 'enabled' flag
-      if (!userId) throw new Error("User not authenticated");
+      // Fetch dashboard data, user email, AND full user object concurrently
+      const [dashboardData, userEmail, fetchedUser] = await Promise.all([
+        loadDashboard(slug),
+        isAuthenticated ? getUserEmail(supabase) : Promise.resolve(undefined),
+        isAuthenticated ? getFullUser(supabase) : Promise.resolve(null), // Fetch user object if authenticated
+      ]);
 
-      const dashboardData = await loadDashboard(slug);
       if (!dashboardData) {
         throw new Error("Dashboard not found");
       }
 
-      // Fetch user email if needed for permissions check (can be optimized)
-      const userEmail = user?.email; // Get email from the fetched user state
-
       const permissionLevel = checkUserPermissions(
         dashboardData,
-        userEmail, // Pass email
-        userId // Pass ID from useIsAuthenticated
+        userEmail,
+        userId ?? undefined
       );
 
       if (permissionLevel === null) {
         throw new Error("You don't have permission to view this dashboard");
       }
-
-      setUserPermission(permissionLevel);
 
       // Load chart data associated with the dashboard
       const chartDataMap = new Map<string, ChartDocument | null>();
@@ -163,39 +176,69 @@ export function useDashboard(slug: string): UseDashboardReturn {
           chartDataMap.set(chartId, chart);
         });
       }
-      // Return both dashboard and chart data
-      return { dashboard: dashboardData, charts: chartDataMap };
+
+      // Return dashboard, charts, permission, and the fetched user object
+      return {
+        dashboard: dashboardData,
+        charts: chartDataMap,
+        calculatedPermission: permissionLevel,
+        user: fetchedUser, // Include the user object
+      };
     },
-    // Enable only when authentication check is complete and successful
-    enabled: isAuthenticated === true,
+    enabled: !isAuthLoading,
     staleTime: 5 * 60 * 1000,
     refetchOnWindowFocus: true,
-    retry: 1,
+    retry: (failureCount, error) => {
+      // Don't retry on permission errors
+      if (error.message.includes("permission")) {
+        return false;
+      }
+      // Default retry behavior for other errors (e.g., network)
+      return failureCount < 2;
+    },
   });
 
-  // Extract dashboard data from the query result
-  const dashboard = queryResult?.dashboard;
+  // Effect to update the local userPermission state when the query successfully completes
+  useEffect(() => {
+    if (isDashboardSuccess && queryResult) {
+      setUserPermission(queryResult.calculatedPermission);
+    }
+    // Reset permission if query is loading, errored, or auth state changes significantly
+    else if (isDashboardLoading || dashboardError || isAuthLoading) {
+      setUserPermission(null);
+    }
+  }, [
+    isDashboardSuccess,
+    queryResult,
+    isDashboardLoading,
+    dashboardError,
+    isAuthLoading,
+  ]);
 
-  // Effect to sync local chartData state with fetched data from React Query
+  // Extract dashboard and user data from the query result
+  const dashboard = queryResult?.dashboard;
+  const user = queryResult?.user; // Extract user from query result
+
+  // Effect to sync local chartData state with fetched data
   useEffect(() => {
     if (isDashboardSuccess && queryResult?.charts) {
-      // Only update local state if not currently editing to avoid overwriting temp changes
       if (!isEditing) {
-        setChartData(new Map(queryResult.charts)); // Create a new map instance
+        setChartData(new Map(queryResult.charts));
       }
     }
-  }, [queryResult, isDashboardSuccess, isEditing]); // Add isEditing dependency
+  }, [queryResult, isDashboardSuccess, isEditing]);
 
   // --- Mutations with React Query ---
   const updateDashboardMutation = useMutation({
     mutationFn: (updatedData: Partial<Dashboard>) => {
-      const currentDashboard = queryResult?.dashboard;
+      // ... existing mutationFn logic ...
       // Use userId from useIsAuthenticated
-      if (!currentDashboard || !userId)
+      if (!queryResult?.dashboard || !userId)
         throw new Error("Dashboard or user ID not available for saving");
       return updateDashboard(slug, userId, updatedData); // Use userId
     },
     onSuccess: (updatedData, variables) => {
+      // Invalidate the query to refetch data including permissions
       queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
       toast({
         title: "Dashboard saved",
@@ -204,9 +247,9 @@ export function useDashboard(slug: string): UseDashboardReturn {
       });
       setIsEditing(false);
       setHasUnsavedChanges(false);
-      // No need to manually update chartData state here, invalidation handles it.
     },
     onError: (error) => {
+      // ... existing onError logic ...
       console.error("Failed to save dashboard changes:", error);
       toast({
         title: "Save failed",
@@ -215,22 +258,21 @@ export function useDashboard(slug: string): UseDashboardReturn {
         variant: "destructive",
         duration: 5000,
       });
-      // Optionally: Rollback optimistic update if implemented
-      // queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
     },
   });
 
   const updatePermissionsMutation = useMutation({
     mutationFn: (newPermissions: Dashboard["permissions"]) => {
-      const currentDashboard = queryResult?.dashboard;
+      // ... existing mutationFn logic ...
       // Use userId from useIsAuthenticated
-      if (!currentDashboard || !userId)
+      if (!queryResult?.dashboard || !userId)
         throw new Error(
           "Dashboard or user ID not available for permission update"
         );
       return updateDashboard(slug, userId, { permissions: newPermissions }); // Use userId
     },
     onSuccess: (updatedData, variables) => {
+      // Invalidate the query to refetch data including permissions
       queryClient.invalidateQueries({ queryKey: dashboardQueryKey });
       toast({
         title: "Permissions updated",
@@ -238,6 +280,7 @@ export function useDashboard(slug: string): UseDashboardReturn {
       });
     },
     onError: (error) => {
+      // ... existing onError logic ...
       console.error("Failed to update dashboard permissions:", error);
       toast({
         title: "Permission update failed",
@@ -253,7 +296,7 @@ export function useDashboard(slug: string): UseDashboardReturn {
   const handleTitleChange = useCallback(
     (e: React.ChangeEvent<HTMLInputElement>) => {
       setTempTitle(e.target.value);
-      setHasUnsavedChanges(true); // Mark changes when title is edited
+      setHasUnsavedChanges(true);
     },
     []
   );
@@ -261,44 +304,45 @@ export function useDashboard(slug: string): UseDashboardReturn {
   const handleDescriptionChange = useCallback(
     (e: React.ChangeEvent<HTMLTextAreaElement>) => {
       setTempDescription(e.target.value);
-      setHasUnsavedChanges(true); // Mark changes when description is edited
+      setHasUnsavedChanges(true);
     },
     []
   );
 
   const handleEdit = useCallback(() => {
-    // Use dashboard from the query result for initialization
     const currentDashboard = queryResult?.dashboard;
-    if (currentDashboard) {
+    const currentCharts = queryResult?.charts; // Get charts from query result
+    if (currentDashboard && currentCharts) {
+      // Ensure charts are also available
       tempLayoutsRef.current = [...(currentDashboard.layout || [])];
       tempChartsRef.current = [...(currentDashboard.charts || [])];
       setTempTitle(currentDashboard.title || "Dashboard");
       setTempDescription(currentDashboard.description || "");
       // Ensure local chartData reflects the current state when starting edit
-      setChartData(new Map(queryResult?.charts || []));
+      setChartData(new Map(currentCharts)); // Use charts from query result
       setIsEditing(true);
       setHasUnsavedChanges(false);
     }
   }, [queryResult]); // Depend on queryResult
 
   const handleSave = useCallback(async () => {
+    // ... existing save logic ...
+    // Ensure it uses queryResult?.dashboard for comparisons
     const currentDashboard = queryResult?.dashboard;
-    // Use userId from useIsAuthenticated
-    if (!currentDashboard || !userId) return;
+    if (!currentDashboard || !userId) return; // Use userId from hook scope
 
     const trimmedTitle = tempTitle.trim() || "Dashboard";
     const trimmedDescription = tempDescription.trim();
 
-    // Compare against the dashboard data from the query result
     const didTitleChange = trimmedTitle !== currentDashboard.title;
     const didDescriptionChange =
       trimmedDescription !== currentDashboard.description;
     const didLayoutChange =
       JSON.stringify(tempLayoutsRef.current) !==
-      JSON.stringify(currentDashboard.layout);
+      JSON.stringify(currentDashboard.layout || []); // Ensure comparison with default empty array
     const didChartsChange =
       JSON.stringify(tempChartsRef.current) !==
-      JSON.stringify(currentDashboard.charts);
+      JSON.stringify(currentDashboard.charts || []); // Ensure comparison with default empty array
 
     if (
       didTitleChange ||
@@ -323,7 +367,7 @@ export function useDashboard(slug: string): UseDashboardReturn {
     }
   }, [
     queryResult,
-    userId, // Use userId
+    userId, // Use userId from hook scope
     tempTitle,
     tempDescription,
     updateDashboardMutation,
@@ -337,11 +381,14 @@ export function useDashboard(slug: string): UseDashboardReturn {
     if (queryResult?.charts) {
       setChartData(new Map(queryResult.charts));
     }
-    // Optionally reset temp refs if needed before next edit
+    // Reset temp refs based on the fetched dashboard data
     const currentDashboard = queryResult?.dashboard;
     if (currentDashboard) {
       tempLayoutsRef.current = currentDashboard.layout || [];
       tempChartsRef.current = currentDashboard.charts || [];
+      // Also reset temp title/description if needed
+      setTempTitle(currentDashboard.title || "Dashboard");
+      setTempDescription(currentDashboard.description || "");
     }
 
     toast({
@@ -353,9 +400,7 @@ export function useDashboard(slug: string): UseDashboardReturn {
 
   const handleLayoutChange = useCallback(
     (layout: LayoutItem[]) => {
-      // Use LayoutItem[]
       if (isEditing) {
-        // Check if layout actually changed compared to the ref
         if (JSON.stringify(layout) !== JSON.stringify(tempLayoutsRef.current)) {
           tempLayoutsRef.current = layout;
           setHasUnsavedChanges(true);
@@ -365,8 +410,10 @@ export function useDashboard(slug: string): UseDashboardReturn {
     [isEditing]
   );
 
-  // handleChartsChange remains largely the same, operating on the local chartData state
   const handleChartsChange = useCallback(
+    // ... existing handleChartsChange logic ...
+    // Ensure it uses tempLayoutsRef.current and tempChartsRef.current correctly
+    // and updates local chartData state as before.
     (newCharts: string[], apply: boolean) => {
       if (apply && isEditing) {
         const currentChartsSet = new Set(tempChartsRef.current);
@@ -401,10 +448,10 @@ export function useDashboard(slug: string): UseDashboardReturn {
 
           const newLayoutItems = addedCharts.map((chartId, index) => ({
             i: chartId,
-            x: (index * 6) % 12, // Basic positioning
+            x: (index * 6) % 12,
             y: maxY + Math.floor((index * 6) / 12) * 9,
-            w: 6, // Default width
-            h: 9, // Default height
+            w: 6,
+            h: 9,
             minW: 3,
             minH: 3,
           }));
@@ -414,13 +461,10 @@ export function useDashboard(slug: string): UseDashboardReturn {
             ...newLayoutItems,
           ];
 
-          // Load data for new charts immediately into local state
           const loadNewChartData = async () => {
-            // Use the current local chartData state
             const newChartDataMap = new Map(chartData);
             for (const chartId of addedCharts) {
               if (!newChartDataMap.has(chartId)) {
-                // Avoid reloading if already present
                 try {
                   const chart = await loadChart(chartId);
                   newChartDataMap.set(chartId, chart);
@@ -430,11 +474,9 @@ export function useDashboard(slug: string): UseDashboardReturn {
                 }
               }
             }
-            setChartData(newChartDataMap); // Update local state
+            setChartData(newChartDataMap);
           };
-          if (addedCharts.length > 0) {
-            loadNewChartData();
-          }
+          loadNewChartData(); // No need to check addedCharts.length > 0 here
         }
 
         // Remove chart data for removed charts from local state
@@ -446,10 +488,9 @@ export function useDashboard(slug: string): UseDashboardReturn {
           });
         }
 
-        setChartUpdateCounter((prev) => prev + 1); // Trigger grid re-render if needed
-        setHasUnsavedChanges(true); // Mark changes
+        setChartUpdateCounter((prev) => prev + 1);
+        setHasUnsavedChanges(true);
 
-        // Notify user
         let message = "";
         if (addedCharts.length > 0)
           message += `Added ${addedCharts.length} chart${
@@ -466,26 +507,28 @@ export function useDashboard(slug: string): UseDashboardReturn {
         });
       }
     },
-    [isEditing, chartData, toast] // Keep chartData dependency for local updates
+    [isEditing, chartData, toast] // Keep chartData dependency
   );
 
   const handleUpdatePermissions = useCallback(
     async (newPermissions: Dashboard["permissions"]) => {
+      // ... existing update permissions logic ...
+      // Ensure it uses queryResult?.dashboard
       const currentDashboard = queryResult?.dashboard;
-      // Use userId from useIsAuthenticated
-      if (!currentDashboard || !userId) return;
+      if (!currentDashboard || !userId) return; // Use userId from hook scope
       await updatePermissionsMutation.mutateAsync(newPermissions);
     },
-    [queryResult, userId, updatePermissionsMutation] // Use userId
+    [queryResult, userId, updatePermissionsMutation] // Use userId from hook scope
   );
 
   // --- Return Values ---
   return {
-    user, // Return the full user object if needed
+    user: user ?? null, // Return the user object, defaulting undefined to null
     dashboard,
-    isLoading: isAuthLoading || isDashboardLoading, // Combined loading
-    isAuthLoading, // Expose auth loading state
-    isSaving: updateDashboardMutation.isPending,
+    isLoading: isAuthLoading || isDashboardLoading,
+    isAuthLoading,
+    isSaving:
+      updateDashboardMutation.isPending || updatePermissionsMutation.isPending,
     error: dashboardError,
     chartData,
     userPermission,

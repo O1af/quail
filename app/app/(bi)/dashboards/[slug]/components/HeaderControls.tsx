@@ -18,7 +18,6 @@ import {
 import { TitleEditor } from "./TitleEditor";
 import { useHeader } from "@/components/header/header-context";
 import { Dashboard } from "@/components/stores/dashboard_store";
-import { PermissionBadge } from "./PermissionBadge";
 
 interface HeaderControlsProps {
   dashboard: Dashboard | null;
@@ -172,6 +171,8 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
     );
 
     return () => {
+      // Log when the cleanup function runs
+      console.log("HeaderControls useEffect cleanup.");
       setHeaderContent(null);
       setHeaderButtons(null);
     };
@@ -194,6 +195,9 @@ export const HeaderControls: React.FC<HeaderControlsProps> = ({
     setIsShareModalOpen,
     setIsManageChartsOpen,
   ]);
+
+  // Log before returning null (component doesn't render UI itself)
+  console.log("HeaderControls returning null (UI rendered via context).");
 
   return null;
 };
