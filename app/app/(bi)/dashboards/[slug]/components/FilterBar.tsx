@@ -45,7 +45,7 @@ interface FilterBarProps {
 
 interface DateRange {
   from: Date | undefined;
-  to: Date | undefined;
+  to?: Date | undefined;
 }
 
 interface DateRangeFilterProps {
@@ -182,7 +182,7 @@ export const DateRangeFilter: React.FC<DateRangeFilterProps> = ({
   ];
 
   return (
-    <div className="p-2 bg-white rounded-lg shadow-xs">
+    <div className="p-2 bg-card rounded-lg shadow-xs">
       <div className="flex items-center flex-wrap gap-2">
         <Popover open={isOpen} onOpenChange={setIsOpen}>
           <PopoverTrigger asChild>
@@ -310,7 +310,7 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[700px] md:max-w-[800px] w-[90vw] max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[700px] md:max-w-[800px] w-[40vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader className="border-b pb-4">
           <DialogTitle className="flex items-center">
             <Filter className="h-5 w-5 mr-2" />
@@ -323,13 +323,13 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
 
         <div className="space-y-6 py-6">
           {/* Date Range Filter Section */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="text-sm font-medium mb-4 flex items-center text-gray-700">
-              <CalendarIcon className="h-4 w-4 mr-2 text-gray-500" />
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <h4 className="text-sm font-medium mb-4 flex items-center">
+              <CalendarIcon className="h-4 w-4 mr-2 text-muted-foreground" />
               Date Range
             </h4>
             <div className="grid gap-4">
-              <div className="flex flex-wrap gap-2 pb-2 bg-white p-2 rounded-md">
+              <div className="flex flex-wrap gap-2 pb-2 bg-card p-2 rounded-md">
                 {/* Predefined date ranges */}
                 <Button
                   variant="outline"
@@ -392,14 +392,16 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
               </div>
 
               {/* Calendar - Make responsive */}
-              <div className="w-full overflow-x-auto pb-2 bg-white p-2 rounded-md">
+              <div className="w-full overflow-x-auto pb-2 bg-card p-2 rounded-md">
                 <div className="min-w-[600px] md:min-w-0">
                   <Calendar
                     mode="range"
                     selected={localDateRange}
                     onSelect={(range) =>
                       setLocalDateRange(
-                        range || { from: undefined, to: undefined }
+                        range
+                          ? { from: range.from, to: range.to }
+                          : { from: undefined, to: undefined }
                       )
                     }
                     numberOfMonths={2}
@@ -410,15 +412,15 @@ export const FilterDialog: React.FC<FilterDialogProps> = ({
             </div>
           </div>
 
-          <Separator className="bg-gray-200" />
+          <Separator className="bg-border" />
 
           {/* Keyword Filter Section */}
-          <div className="bg-gray-50 p-4 rounded-lg">
-            <h4 className="text-sm font-medium mb-4 flex items-center text-gray-700">
-              <Search className="h-4 w-4 mr-2 text-gray-500" />
+          <div className="bg-muted/50 p-4 rounded-lg">
+            <h4 className="text-sm font-medium mb-4 flex items-center">
+              <Search className="h-4 w-4 mr-2 text-muted-foreground" />
               Keyword Search
             </h4>
-            <div className="grid gap-2 bg-white p-2 rounded-md">
+            <div className="grid gap-2 bg-card p-2 rounded-md">
               <div className="relative">
                 <Search className="absolute left-2 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
@@ -559,11 +561,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   }
 
   return (
-    <div className="p-2 bg-white rounded-lg shadow-xs">
+    <div className="p-2 bg-background border border-border rounded-lg shadow-sm">
       <div className="flex items-center flex-wrap gap-2">
         {Object.entries(filterGroups).map(([groupName, groupFilters]) => (
           <div key={groupName} className="flex flex-col gap-1">
-            <div className="text-sm font-medium text-gray-700 flex items-center">
+            <div className="text-sm font-medium flex items-center">
               {getFilterIcon(groupName)}
               {groupName}
             </div>
@@ -598,7 +600,9 @@ export const FilterBar: React.FC<FilterBarProps> = ({
 
       {activeFilters.length > 0 && (
         <div className="mt-2 flex flex-wrap gap-1">
-          <span className="text-xs text-gray-500 mr-1">Active filters:</span>
+          <span className="text-xs text-muted-foreground mr-1">
+            Active filters:
+          </span>
           {activeFilters.map((filter) => (
             <Badge
               key={`active-${filter.id}-${filter.value}`}

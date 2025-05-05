@@ -391,7 +391,7 @@ export const DashboardGrid = memo(
     return (
       <div className="flex flex-col h-full">
         {/* Compact filter bar with button directly inline with badges */}
-        <div className="bg-gray-50 border-b mb-3 rounded-md py-2 px-3">
+        <div className="bg-background border-border mb-3 rounded-md py-2 px-3 border">
           <div className="flex items-center justify-between">
             {/* Left side with active filters */}
             <div className="flex items-center gap-2 flex-wrap flex-1">
@@ -399,8 +399,8 @@ export const DashboardGrid = memo(
                 <div className="flex items-center gap-2 flex-wrap">
                   {dateRange.from && (
                     <Badge
-                      variant="outline"
-                      className="flex items-center gap-1 text-xs bg-white"
+                      variant="secondary"
+                      className="flex items-center gap-1 text-xs"
                     >
                       <span className="truncate max-w-[150px]">
                         {dateRange.from.toLocaleDateString()}
@@ -419,8 +419,8 @@ export const DashboardGrid = memo(
 
                   {keyword && (
                     <Badge
-                      variant="outline"
-                      className="flex items-center gap-1 text-xs bg-white"
+                      variant="secondary"
+                      className="flex items-center gap-1 text-xs"
                     >
                       <span className="truncate max-w-[150px]">{keyword}</span>
                       <X
@@ -440,7 +440,7 @@ export const DashboardGrid = memo(
                   </Button>
                 </div>
               ) : (
-                <span className="text-xs text-gray-500">
+                <span className="text-xs text-muted-foreground">
                   No filters applied
                 </span>
               )}
@@ -475,7 +475,7 @@ export const DashboardGrid = memo(
         />
 
         {/* Dashboard content area with adjusted height */}
-        <div className="flex flex-row flex-1">
+        <div className="flex flex-row justify-end flex-1">
           {/* Main dashboard area with transition */}
           <div
             ref={containerRef}

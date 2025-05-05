@@ -2,6 +2,7 @@
 
 import { useState, useEffect, useMemo } from "react"; // Added useMemo
 import Fuse from "fuse.js";
+import { useSearchParams } from "next/navigation"; // Added for query params
 // Removed createClient import as it's not directly used here
 import {
   loadUserDashboards,
@@ -42,9 +43,18 @@ export default function DashboardsPage() {
   const { setHeaderContent, setHeaderButtons } = useHeader();
   const [activeTab, setActiveTab] = useState("my-dashboards");
   const [isDialogOpen, setIsDialogOpen] = useState(false);
+  const searchParams = useSearchParams(); // For reading URL query parameters
 
   // React Query Client
   const queryClient = useQueryClient();
+
+  // Check for "new=true" query parameter and open dialog
+  useEffect(() => {
+    const newParam = searchParams.get("new");
+    if (newParam === "true") {
+      setIsDialogOpen(true);
+    }
+  }, [searchParams]);
 
   // --- React Query Data Fetching ---
 
