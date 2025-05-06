@@ -1,8 +1,8 @@
 "use client";
 
 import * as React from "react";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+// import Link from "next/link"; // No longer needed for Advanced View
+// import { usePathname } from "next/navigation"; // No longer needed for Advanced View path
 import { useTableStore } from "../../stores/table_store";
 import { useTableData } from "@/lib/hooks/use-table-data";
 import { useEditorStore } from "@/components/stores/editor_store";
@@ -19,7 +19,6 @@ import {
   getCoreRowModel,
   getSortedRowModel,
   useReactTable,
-  ColumnSort,
   OnChangeFn,
   SortingState,
 } from "@tanstack/react-table";
@@ -31,6 +30,22 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import { Button } from "@/components/ui/button";
+import { BetterDataTable } from "./better-data-table";
+import DataHeader from "./header";
+// Assuming DataDownloadButton is imported correctly.
+// You might need to create/update this component.
+import { DataDownloadButton } from "@/components/header/buttons/data-download-button";
+import { ColumnDef } from "@tanstack/react-table"; // For type safety
+import { SQLData } from "../../stores/table_store"; // For type safety
 
 // Reusable SortIcon component
 const SortIcon = ({ sortDirection }: { sortDirection: string | false }) => {
@@ -47,7 +62,7 @@ function handleHeaderClick(column: any) {
 
 export function DataTable() {
   // --- ALL HOOKS AT THE TOP ---
-  const pathname = usePathname();
+  // const pathname = usePathname(); // No longer needed
   const { sorting, columnVisibility, rowSelection, setSorting } =
     useTableStore();
   // Use executedQuery instead of current value
@@ -88,7 +103,7 @@ export function DataTable() {
     () => tableQueryResult?.data || [],
     [tableQueryResult?.data]
   );
-  const columns = React.useMemo(
+  const columns: ColumnDef<SQLData, any>[] = React.useMemo(
     () => tableQueryResult?.columns || [],
     [tableQueryResult?.columns]
   );
@@ -255,15 +270,43 @@ export function DataTable() {
             </>
           )}
         </div>
-        <Link
-          href={pathname.replace(/\/*$/, "") + "/data"}
-          className="text-primary hover:underline inline-flex items-center gap-1"
-          target="_blank"
-          rel="noopener noreferrer"
-        >
-          Advanced View
-          <ExternalLink className="h-3 w-3" />
-        </Link>
+        <Dialog>
+          <DialogTrigger asChild>
+            <Button
+              variant="link"
+              className="text-primary hover:underline inline-flex items-center gap-1 h-auto p-0 text-xs"
+              disabled={showLoading || isError || data.length === 0} // Disable if no data or error
+            >
+              Advanced View
+              <ExternalLink className="h-3 w-3" />
+            </Button>
+          </DialogTrigger>
+          <DialogContent className="w-[95vw] h-[90vh] flex flex-col p-0 border rounded-lg overflow-hidden">
+            <div className="bg-muted/30 p-3 border-b">
+              <DialogHeader className="gap-1">
+                <DialogTitle className="text-xl">
+                  Advanced Data View
+                </DialogTitle>
+                <DialogDescription className="text-sm">
+                  View, sort, filter, and download your query results.
+                </DialogDescription>
+              </DialogHeader>
+              {/* Pass data and columns to DataHeader */}
+              <div className="mt-3">
+                <DataHeader data={data} columns={columns} />
+              </div>
+            </div>
+            <div className="flex-grow overflow-hidden p-2">
+              {/* Pass data, columns, and loading state to BetterDataTable */}
+              <BetterDataTable
+                data={data}
+                columns={columns}
+                isLoading={showLoading}
+              />
+            </div>
+            {/* Footer removed since the download button is now in the header */}
+          </DialogContent>
+        </Dialog>
       </div>
     </div>
   );

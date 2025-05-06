@@ -17,26 +17,39 @@ import { downloadSelectedCSV } from "../../stores/utils/downloads/downloadCSV";
 import { downloadSelectedExcel } from "../../stores/utils/downloads/downloadExcel";
 import { downloadSelectedPDF } from "../../stores/utils/downloads/downloadPDF";
 import React from "react";
+import { SQLData } from "@/components/stores/table_store";
+import { ColumnDef } from "@tanstack/react-table";
 
-export const DataDownloadButton = React.memo(function DownloadButton() {
+interface DataDownloadButtonProps {
+  data: SQLData[];
+  columns: ColumnDef<SQLData, any>[];
+}
+
+export const DataDownloadButton = React.memo(function DownloadButton({
+  data,
+  columns,
+}: DataDownloadButtonProps) {
   const [isDownloading, setIsDownloading] = useState(false);
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleDownload = useCallback(async (format: string) => {
-    setIsDownloading(true);
-    setIsOpen(false);
-    try {
-      if (format === "CSV") {
-        await downloadSelectedCSV();
-      } else if (format === "Excel") {
-        await downloadSelectedExcel();
-      } else if (format === "PDF") {
-        await downloadSelectedPDF();
+  const handleDownload = useCallback(
+    async (format: string) => {
+      setIsDownloading(true);
+      setIsOpen(false);
+      try {
+        if (format === "CSV") {
+          await downloadSelectedCSV(data, columns);
+        } else if (format === "Excel") {
+          await downloadSelectedExcel(data, columns);
+        } else if (format === "PDF") {
+          await downloadSelectedPDF(data, columns);
+        }
+      } finally {
+        setIsDownloading(false);
       }
-    } finally {
-      setIsDownloading(false);
-    }
-  }, []);
+    },
+    [data, columns]
+  );
 
   const handleOpenChange = useCallback((open: boolean) => {
     setIsOpen(open);

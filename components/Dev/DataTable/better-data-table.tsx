@@ -51,16 +51,26 @@ const selectionColumn: ColumnDef<SQLData, any> = {
   size: 40,
 };
 
-export function BetterDataTable() {
+interface BetterDataTableProps {
+  data: SQLData[];
+  columns: ColumnDef<SQLData, any>[];
+  isLoading?: boolean;
+}
+
+export function BetterDataTable({
+  data: propData = [],
+  columns: propColumns = [],
+  isLoading: propIsLoading,
+}: BetterDataTableProps) {
   const {
-    data = [],
-    columns: baseColumns = [],
+    // data = [], // Use propData
+    // columns: baseColumns = [], // Use propColumns
     sorting,
     columnVisibility,
     rowSelection,
     setSorting,
     setRowSelection,
-    isLoading,
+    // isLoading, // Use propIsLoading
     pagination,
     setPagination,
     globalFilter,
@@ -70,13 +80,13 @@ export function BetterDataTable() {
 
   // Memoize columns with selection column, but only add if it doesn't exist
   const columns = React.useMemo(() => {
-    const hasSelectionColumn = baseColumns.some((col) => col.id === "select");
-    return hasSelectionColumn ? baseColumns : [selectionColumn, ...baseColumns];
-  }, [baseColumns]);
+    const hasSelectionColumn = propColumns.some((col) => col.id === "select");
+    return hasSelectionColumn ? propColumns : [selectionColumn, ...propColumns];
+  }, [propColumns]);
 
   const table = useReactTable({
-    data,
-    columns, // Use the memoized columns instead
+    data: propData, // Use propData
+    columns, // Use the memoized columns (derived from propColumns)
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
     getPaginationRowModel: getPaginationRowModel(),
@@ -108,9 +118,9 @@ export function BetterDataTable() {
     },
   });
 
-  if (!data.length || !columns.length) {
+  if (!propIsLoading && (!propData.length || !columns.length)) {
     return (
-      <div className="flex h-full w-full items-center justify-center rounded-md border">
+      <div className="flex h-full w-full items-center justify-center rounded-md border bg-background/50">
         <p className="text-sm text-muted-foreground">No data available</p>
       </div>
     );
@@ -118,16 +128,19 @@ export function BetterDataTable() {
 
   return (
     <div className="flex flex-col h-full">
-      <div className="flex-1 relative border rounded-md">
+      <div className="flex-1 relative border rounded-md shadow-sm bg-background">
         <div className="absolute inset-0 overflow-auto">
           <Table className="w-full">
             <TableHeader className="sticky top-0 z-10 bg-background">
               {table.getHeaderGroups().map((headerGroup) => (
-                <TableRow key={headerGroup.id} className="hover:bg-transparent">
+                <TableRow
+                  key={headerGroup.id}
+                  className="hover:bg-transparent border-b"
+                >
                   {headerGroup.headers.map((header) => (
                     <TableHead
                       key={header.id}
-                      className="whitespace-nowrap bg-muted/50 py-1.5 px-3"
+                      className="whitespace-nowrap bg-muted/50 py-2 px-3 font-medium text-muted-foreground"
                       style={{
                         width: header.getSize(),
                         maxWidth: header.getSize(),
@@ -137,7 +150,7 @@ export function BetterDataTable() {
                         <div
                           className={`flex items-center gap-1 ${
                             header.column.getCanSort()
-                              ? "cursor-pointer select-none"
+                              ? "cursor-pointer select-none hover:text-foreground"
                               : ""
                           }`}
                           onClick={header.column.getToggleSortingHandler()}
@@ -165,7 +178,7 @@ export function BetterDataTable() {
               ))}
             </TableHeader>
             <TableBody>
-              {isLoading ? (
+              {propIsLoading ? (
                 <TableRow>
                   <TableCell
                     colSpan={columns.length}
@@ -179,10 +192,10 @@ export function BetterDataTable() {
                   <TableRow
                     key={row.id}
                     data-state={row.getIsSelected() && "selected"}
-                    className="hover:bg-muted/50"
+                    className="hover:bg-muted/30"
                   >
                     {row.getVisibleCells().map((cell) => (
-                      <TableCell key={cell.id} className="px-3 py-1.5">
+                      <TableCell key={cell.id} className="px-3 py-2">
                         {flexRender(
                           cell.column.columnDef.cell,
                           cell.getContext()

@@ -4,9 +4,12 @@ import { ColumnDef } from "@tanstack/react-table";
 import jsPDF from "jspdf";
 import autoTable from "jspdf-autotable";
 
-export const downloadPDF = (customFilename?: string) => {
+export const downloadPDF = (
+  data: SQLData[],
+  columns: ColumnDef<SQLData, any>[],
+  customFilename?: string
+) => {
   const store = useTableStore.getState();
-  const { data, columns } = store;
   const columnVisibility = store.columnVisibility;
 
   if (!data.length) return;
@@ -51,9 +54,12 @@ export const downloadPDF = (customFilename?: string) => {
   doc.save(customFilename ? `${customFilename}.pdf` : "query_results.pdf");
 };
 
-export const downloadSelectedPDF = (customFilename?: string) => {
+export const downloadSelectedPDF = (
+  data: SQLData[],
+  columns: ColumnDef<SQLData, any>[],
+  customFilename?: string
+) => {
   const store = useTableStore.getState();
-  const { data, columns } = store;
   const selectedRows = store.rowSelection;
   const columnVisibility = store.columnVisibility;
 

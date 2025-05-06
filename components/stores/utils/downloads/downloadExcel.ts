@@ -3,9 +3,13 @@ import { SQLData } from "../../table_store";
 import { ColumnDef } from "@tanstack/react-table";
 import * as XLSX from "xlsx";
 
-export const downloadExcel = (customFilename?: string) => {
+export const downloadExcel = (
+  data: SQLData[],
+  columns: ColumnDef<SQLData, any>[],
+  customFilename?: string
+) => {
   const store = useTableStore.getState();
-  const { data, columns } = store;
+  // const { data, columns } = store; // data and columns are now parameters
   const columnVisibility = store.columnVisibility;
 
   if (!data.length) return;
@@ -50,9 +54,13 @@ export const downloadExcel = (customFilename?: string) => {
   );
 };
 
-export const downloadSelectedExcel = (customFilename?: string) => {
+export const downloadSelectedExcel = (
+  data: SQLData[],
+  columns: ColumnDef<SQLData, any>[],
+  customFilename?: string
+) => {
   const store = useTableStore.getState();
-  const { data, columns } = store;
+  // const { data, columns } = store; // data and columns are now parameters
   const selectedRows = store.rowSelection;
   const columnVisibility = store.columnVisibility;
 
