@@ -53,28 +53,32 @@ export async function saveChat(
     await connectToMongo();
     const collection = getCollection();
 
-    const updateData: Partial<ChatDocument> = {
+    // Base fields for $set
+    const setData: Partial<ChatDocument> = {
       messages,
       updatedAt: new Date(),
     };
 
-    // Only include title in the $set operation if it's provided
-    // This prevents overwriting an existing title with "New Chat" unintentionally
+    // Base fields for $setOnInsert
+    const setOnInsertData: Partial<ChatDocument> = {
+      createdAt: new Date(),
+      userId,
+    };
+
     if (title) {
-      updateData.title = title;
+      // If a title is provided, it should be set for both updates and inserts.
+      setData.title = title;
+    } else {
+      // If no title is provided, set "New Chat" only on insert.
+      // Existing documents will keep their current title during an update.
+      setOnInsertData.title = "New Chat";
     }
 
     const result = await collection.updateOne(
       { _id: id, userId },
       {
-        $set: updateData,
-        $setOnInsert: {
-          // Set title on insert only if it wasn't provided in $set
-          // If a title *was* provided, $set takes precedence
-          title: title ?? "New Chat",
-          createdAt: new Date(),
-          userId,
-        },
+        $set: setData,
+        $setOnInsert: setOnInsertData,
       },
       { upsert: true }
     );

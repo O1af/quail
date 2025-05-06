@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react"; // Added useMemo
+import { useState, useEffect, useMemo, useCallback } from "react"; // Added useMemo and useCallback
 import Fuse from "fuse.js";
 import { useSearchParams } from "next/navigation"; // Added for query params
 // Removed createClient import as it's not directly used here
@@ -86,24 +86,27 @@ export default function DashboardsPage() {
   // --- Derived Data & Filtering ---
 
   // Memoize Fuse instances and filtered results
-  const fuseOptions = {
-    keys: ["title", "description"],
-    threshold: 0.5,
-  };
+  const fuseOptions = useMemo(
+    () => ({
+      keys: ["title", "description"],
+      threshold: 0.5,
+    }),
+    []
+  );
 
   const filteredDashboards = useMemo(() => {
     const dashboards = userDashboardsQuery.data ?? [];
     if (searchQuery.trim() === "") return dashboards;
     const fuse = new Fuse(dashboards, fuseOptions);
     return fuse.search(searchQuery).map((res) => res.item);
-  }, [userDashboardsQuery.data, searchQuery]);
+  }, [userDashboardsQuery.data, searchQuery, fuseOptions]);
 
   const filteredSharedDashboards = useMemo(() => {
     const dashboards = sharedDashboardsQuery.data ?? [];
     if (searchQuery.trim() === "") return dashboards;
     const fuse = new Fuse(dashboards, fuseOptions);
     return fuse.search(searchQuery).map((res) => res.item);
-  }, [sharedDashboardsQuery.data, searchQuery]);
+  }, [sharedDashboardsQuery.data, searchQuery, fuseOptions]);
 
   // --- Event Handlers & Effects ---
 
@@ -166,15 +169,15 @@ export default function DashboardsPage() {
   // --- Invalidate Queries ---
 
   // Invalidate queries function (used for refreshing)
-  const invalidateUserDashboards = () => {
+  const invalidateUserDashboards = useCallback(() => {
     queryClient.invalidateQueries({ queryKey: ["userDashboards", user?.id] });
-  };
+  }, [queryClient, user?.id]);
 
-  const invalidateSharedDashboards = () => {
+  const invalidateSharedDashboards = useCallback(() => {
     queryClient.invalidateQueries({
       queryKey: ["sharedDashboards", user?.email],
     });
-  };
+  }, [queryClient, user?.email]);
 
   // Handle dashboard duplication event using query invalidation
   useEffect(() => {
@@ -197,7 +200,12 @@ export default function DashboardsPage() {
         );
       };
     }
-  }, [user?.id, user?.email]); // Add dependencies
+  }, [
+    user?.id,
+    user?.email,
+    invalidateUserDashboards,
+    invalidateSharedDashboards,
+  ]); // Add dependencies
 
   // --- Rendering Logic ---
 

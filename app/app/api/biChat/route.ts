@@ -46,9 +46,6 @@ function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
 
 // API route to generate a new chat ID
 export async function GET(req: Request) {
-  const { searchParams } = new URL(req.url);
-  // Check for a specific action, like requesting an ID
-  // Corrected endpoint to match useInitializeChat fetch call
   if (req.url.endsWith("/api/biChat/id")) {
     try {
       const newId = await generateId();
@@ -187,11 +184,6 @@ export async function POST(req: Request) {
           )
         : { data: undefined, error: null };
 
-      if (titleError) {
-        console.warn("Failed to generate title:", titleError);
-        // Proceed without title generation error stopping the chat
-      }
-
       // Select model based on speed mode
       const modelToUse = getModelBySpeedMode(speedMode);
 
@@ -202,16 +194,19 @@ export async function POST(req: Request) {
           dbType,
           databaseStructure,
         }),
+        providerOptions: {
+          openai: {
+            reasoningEffort: "low",
+          },
+        },
         system: createSystemPrompt(dbType),
         experimental_transform: smoothStream({ chunking: "word" }),
         onError(error) {
           console.log("Error in request:", error);
           dataStream.writeData({
             status: "Error during AI processing",
-            // Type check error before accessing message
             error: error instanceof Error ? error.message : String(error),
           });
-          // Removed: dataStream.close(); // Stream closes automatically on error/completion
         },
         tools: {
           DataVisAgent: DataVisAgentTool({
@@ -261,7 +256,6 @@ export async function POST(req: Request) {
               id, // Use the ID passed from the client
               finalMessages,
               user.user.id,
-              // Ensure title is string | undefined, converting null if necessary
               title ?? undefined
             )
           );
@@ -275,8 +269,6 @@ export async function POST(req: Request) {
             // Optionally send final status
             dataStream.writeData({ status: "Chat saved successfully" });
           }
-
-          // Removed: dataStream.close(); // Stream closes automatically on error/completion
         },
       });
 
