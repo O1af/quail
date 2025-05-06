@@ -24,6 +24,7 @@ import {
   updateUsage,
   getCurrentUsageColumn,
 } from "@/utils/metrics/AI";
+import { get } from "http";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -41,6 +42,18 @@ function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
     return azure("o4-mini");
   } else {
     return azure("gpt-4.1-mini");
+  }
+}
+
+function getOptionsBySpeedMode(speedMode: SpeedMode = "medium") {
+  if (speedMode === "slow") {
+    return {
+      openai: {
+        reasoningEffort: "low",
+      },
+    };
+  } else {
+    return undefined;
   }
 }
 
@@ -194,11 +207,7 @@ export async function POST(req: Request) {
           dbType,
           databaseStructure,
         }),
-        providerOptions: {
-          openai: {
-            reasoningEffort: "low",
-          },
-        },
+        providerOptions: getOptionsBySpeedMode(speedMode),
         system: createSystemPrompt(dbType),
         experimental_transform: smoothStream({ chunking: "word" }),
         onError(error) {

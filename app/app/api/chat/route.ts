@@ -19,6 +19,18 @@ function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
   }
 }
 
+function getOptionsBySpeedMode(speedMode: SpeedMode = "medium") {
+  if (speedMode === "slow") {
+    return {
+      openai: {
+        reasoningEffort: "low",
+      },
+    };
+  } else {
+    return undefined;
+  }
+}
+
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
   apiKey: process.env.NEXT_PUBLIC_AZURE_API_KEY, // Azure API key
@@ -109,6 +121,7 @@ export async function POST(req: Request) {
     model: getModelBySpeedMode(speedMode),
     messages: [systemPrompt, ...messages],
     maxTokens: 1000,
+    providerOptions: getOptionsBySpeedMode(speedMode),
     async onFinish({ usage }) {
       console.log("Response usage:", usage.totalTokens);
 
