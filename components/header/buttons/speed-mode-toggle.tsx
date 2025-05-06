@@ -23,6 +23,7 @@ const speedModeInfo = {
     icon: Zap,
     color: "text-amber-500",
     bgColor: "bg-amber-500",
+    model: "GPT-4o mini",
   },
   medium: {
     label: "Balanced", // Changed label for clarity
@@ -30,13 +31,15 @@ const speedModeInfo = {
     icon: Gauge,
     color: "text-blue-500",
     bgColor: "bg-blue-500",
+    model: "Multiple models",
   },
   slow: {
-    label: "Accurate", // Changed label for clarity
+    label: "Thinking", // Changed label for clarity
     description: "Precise analysis", // Updated description
     icon: Clock,
     color: "text-green-500",
     bgColor: "bg-green-500",
+    model: "o4-mini",
   },
 };
 
@@ -93,6 +96,9 @@ export function SpeedModeToggle() {
                         <div className="font-medium text-sm">{info.label}</div>
                         <div className="text-xs text-muted-foreground">
                           {info.description}
+                        </div>
+                        <div className="text-xs text-muted-foreground/80 italic">
+                          {info.model}
                         </div>
                       </div>
                     </div>
