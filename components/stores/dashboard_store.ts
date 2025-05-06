@@ -73,13 +73,13 @@ export async function loadUserDashboards(
     const limit = options.limit || 0; // 0 means no limit
 
     // Query dashboards for the user
-    const dashboards = await collection
-      .find({ userId })
-      .sort(sort)
-      .skip(skip)
-      .toArray();
+    let query = collection.find({ userId }).sort(sort).skip(skip);
 
-    console.log(dashboards);
+    if (limit > 0) {
+      query = query.limit(limit);
+    }
+
+    const dashboards = await query.toArray();
     // Convert MongoDB documents to plain objects with string IDs and dates to ISO strings
     return dashboards.map((dashboard) => ({
       ...dashboard,

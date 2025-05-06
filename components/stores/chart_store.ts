@@ -61,17 +61,25 @@ export async function saveChart(
 }
 
 export async function listCharts(
-  userId: string
-): Promise<Array<Pick<ChartDocument, "_id" | "title" | "updatedAt" | "data">>> {
+  userId: string,
+  limit?: number // Add optional limit parameter
+): Promise<Array<Pick<ChartDocument, "_id" | "title" | "updatedAt">>> {
+  // Remove 'data' from Pick
   try {
     await connectToMongo();
-    return await getCollection()
+    const query = getCollection()
       .find(
         { userId },
-        { projection: { title: 1, updatedAt: 1, _id: 1, data: 1 } }
+        // Remove 'data' from projection as it's not needed for lists and can be large
+        { projection: { title: 1, updatedAt: 1, _id: 1 } }
       )
-      .sort({ updatedAt: -1 })
-      .toArray();
+      .sort({ updatedAt: -1 });
+
+    if (limit) {
+      query.limit(limit);
+    }
+
+    return await query.toArray();
   } catch (error) {
     console.error("Failed to list charts:", error);
     throw new Error("Failed to list charts");

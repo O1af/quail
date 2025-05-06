@@ -96,13 +96,21 @@ export async function saveChat(
   }
 }
 
-export async function listChats(userId: string): Promise<ChatListResponse[]> {
+export async function listChats(
+  userId: string,
+  limit?: number // Add optional limit parameter
+): Promise<ChatListResponse[]> {
   try {
     await connectToMongo();
-    return await getCollection()
+    const query = getCollection()
       .find({ userId }, { projection: { title: 1, updatedAt: 1, _id: 1 } })
-      .sort({ updatedAt: -1 })
-      .toArray();
+      .sort({ updatedAt: -1 });
+
+    if (limit) {
+      query.limit(limit);
+    }
+
+    return await query.toArray();
   } catch (error) {
     console.error("Failed to list chats:", error);
     throw new Error("Failed to list chats");

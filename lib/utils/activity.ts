@@ -37,9 +37,9 @@ export async function fetchRecentActivities(
 
     // Fetch all user data from stores
     const [dashboards, charts, chats] = await Promise.all([
-      loadUserDashboards(userId),
-      listCharts(userId),
-      listChats(userId),
+      loadUserDashboards(userId, { limit: limit }), // Pass limit to loadUserDashboards
+      listCharts(userId, limit), // Pass limit to listCharts
+      listChats(userId, limit), // Pass limit to listChats
     ]);
 
     // Create activities from dashboards

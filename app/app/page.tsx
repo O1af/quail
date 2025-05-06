@@ -1,5 +1,9 @@
 "use client";
-import { useEffect, useState } from "react";
+import {
+  useQuery,
+  QueryClient,
+  QueryClientProvider,
+} from "@tanstack/react-query";
 import { UnifiedSidebar } from "@/components/sidebar/unified-sidebar";
 import {
   SidebarInset,
@@ -9,14 +13,7 @@ import {
 import { ModeToggle } from "@/components/header/buttons/mode-toggle";
 import { HeaderProvider } from "@/components/header/header-context";
 import { Button } from "@/components/ui/button";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import Link from "next/link";
 import { createClient } from "@/utils/supabase/client";
 import {
@@ -27,96 +24,107 @@ import {
 import { listCharts } from "@/components/stores/chart_store";
 import { ActivityList } from "@/components/Overview/ActivityList";
 import { ActivityItem, fetchRecentActivities } from "@/lib/utils/activity";
-import { formatDistanceToNow } from "date-fns";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
   BarChart3,
   Database,
   Code,
-  CirclePlus,
   MessageSquare,
 } from "lucide-react";
 import { listChats as listChatHistory } from "@/components/stores/chat_store";
+
+interface DashboardPageData {
+  stats: DashboardStats;
+  recentDashboards: Dashboard[];
+}
 
 interface DashboardStats {
   totalDashboards: number;
   totalCharts: number;
   totalChats: number;
+  recentChatCount: number;
 }
 
-export default function Page() {
+// Create a client
+const queryClient = new QueryClient();
+
+function PageContent() {
   const router = useRouter();
-  const [user, setUser] = useState<any>(null);
-  const [stats, setStats] = useState<DashboardStats>({
-    totalDashboards: 0,
-    totalCharts: 0,
-    totalChats: 0,
-  });
-  const [recentDashboards, setRecentDashboards] = useState<Dashboard[]>([]);
-  const [activities, setActivities] = useState<ActivityItem[]>([]);
-  const [isLoading, setIsLoading] = useState(true);
-  const [recentChatCount, setRecentChatCount] = useState(0);
 
-  // Fetch user and data
-  useEffect(() => {
-    const fetchUserAndData = async () => {
-      setIsLoading(true);
-      try {
-        const supabase = createClient();
-        const { data } = await supabase.auth.getUser();
-
-        if (data.user) {
-          setUser(data.user);
-
-          // Get dashboard counts
-          const userDashboards = await loadUserDashboards(data.user.id);
-          const sharedDashboards = await loadSharedDashboards(
-            data.user.email || ""
-          );
-
-          // Get chart count
-          const userCharts = await listCharts(data.user.id);
-
-          // Get chat count and determine recent activity
-          const userChats = await listChatHistory(data.user.id);
-
-          // Calculate chats created in the last month
-          const oneMonthAgo = new Date();
-          oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-
-          const recentChats = userChats.filter(
-            (chat) => new Date(chat.updatedAt) > oneMonthAgo
-          );
-
-          // Get recent activities
-          const recentActivities = await fetchRecentActivities(data.user.id);
-
-          // Set state with all fetched data
-          setStats({
-            totalDashboards: userDashboards.length + sharedDashboards.length,
-            totalCharts: userCharts.length,
-            totalChats: userChats.length,
-          });
-
-          // Set recent dashboards (up to 3)
-          setRecentDashboards(userDashboards.slice(0, 3));
-
-          // Set activities
-          setActivities(recentActivities);
-
-          // Store the recent chats count for display
-          setRecentChatCount(recentChats.length);
-        }
-      } catch (error) {
-        console.error("Error fetching data:", error);
-      } finally {
-        setIsLoading(false);
+  // Fetch user
+  const { data: user, isLoading: isLoadingUser } = useQuery({
+    queryKey: ["user"],
+    queryFn: async () => {
+      const supabase = createClient();
+      const { data } = await supabase.auth.getUser();
+      if (data.user) {
+        return data.user;
       }
-    };
+      throw new Error("User not found");
+    },
+    staleTime: Infinity, // User data is unlikely to change frequently within a session
+  });
 
-    fetchUserAndData();
-  }, []);
+  // Fetch combined data for stats and recent dashboards
+  const { data: pageData, isLoading: isLoadingPageData } = useQuery<
+    DashboardPageData,
+    Error
+  >({
+    queryKey: ["dashboardPageData", user?.id, user?.email],
+    queryFn: async () => {
+      if (!user || !user.id || !user.email) {
+        throw new Error("User ID or email not available for page data");
+      }
+      const [
+        userDashboards, // Fetched without limit, sorted by updatedAt
+        sharedDashboards,
+        userCharts, // Fetched without limit, sorted by updatedAt
+        userChatsData, // Fetched without limit, sorted by updatedAt
+      ] = await Promise.all([
+        loadUserDashboards(user.id, { sort: { updatedAt: -1 } }), // Ensure sorted for recent
+        loadSharedDashboards(user.email),
+        listCharts(user.id), // Ensure sorted
+        listChatHistory(user.id), // Ensure sorted
+      ]);
+
+      const oneMonthAgo = new Date();
+      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
+      const recentChats = userChatsData.filter(
+        (chat) => new Date(chat.updatedAt) > oneMonthAgo
+      );
+
+      return {
+        stats: {
+          totalDashboards: userDashboards.length + sharedDashboards.length,
+          totalCharts: userCharts.length,
+          totalChats: userChatsData.length,
+          recentChatCount: recentChats.length,
+        },
+        recentDashboards: userDashboards.slice(0, 3),
+      };
+    },
+    enabled: !!user, // Only run query if user is loaded
+  });
+
+  // Fetch recent activities (remains separate as its needs are specific and limited)
+  const { data: activities, isLoading: isLoadingActivities } = useQuery<
+    ActivityItem[],
+    Error
+  >({
+    queryKey: ["recentActivities", user?.id],
+    queryFn: async () => {
+      if (!user || !user.id) {
+        throw new Error("User ID not available for activities");
+      }
+      return await fetchRecentActivities(user.id, 10); // Fetch 10 recent activities
+    },
+    enabled: !!user,
+  });
+
+  const isLoading = isLoadingUser || isLoadingPageData || isLoadingActivities;
+  const stats = pageData?.stats;
+  const recentDashboards = pageData?.recentDashboards ?? [];
 
   // Handle quick action clicks
   const handleCreateDashboard = () => {
@@ -183,16 +191,16 @@ export default function Page() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {isLoading ? (
+                        {isLoadingUser || isLoadingPageData ? (
                           <span className="animate-pulse">...</span>
                         ) : (
-                          stats.totalDashboards
+                          stats?.totalDashboards ?? 0
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {stats.totalDashboards > 1
+                        {(stats?.totalDashboards ?? 0) > 1
                           ? `${Math.floor(
-                              stats.totalDashboards * 0.25
+                              (stats?.totalDashboards ?? 0) * 0.25
                             )} new this month`
                           : "Create your first dashboard"}
                       </p>
@@ -207,16 +215,16 @@ export default function Page() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {isLoading ? (
+                        {isLoadingUser || isLoadingPageData ? (
                           <span className="animate-pulse">...</span>
                         ) : (
-                          stats.totalCharts
+                          stats?.totalCharts ?? 0
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {stats.totalCharts > 1
+                        {(stats?.totalCharts ?? 0) > 1
                           ? `${Math.floor(
-                              stats.totalCharts * 0.3
+                              (stats?.totalCharts ?? 0) * 0.3
                             )} from last month`
                           : "Create your first chart"}
                       </p>
@@ -231,15 +239,15 @@ export default function Page() {
                     </CardHeader>
                     <CardContent>
                       <div className="text-2xl font-bold">
-                        {isLoading ? (
+                        {isLoadingUser || isLoadingPageData ? (
                           <span className="animate-pulse">...</span>
                         ) : (
-                          stats.totalChats
+                          stats?.totalChats ?? 0
                         )}
                       </div>
                       <p className="text-xs text-muted-foreground mt-1">
-                        {stats.totalChats > 0
-                          ? `${recentChatCount} new this month`
+                        {(stats?.totalChats ?? 0) > 0
+                          ? `${stats?.recentChatCount ?? 0} new this month`
                           : "0 new this month"}
                       </p>
                     </CardContent>
@@ -255,7 +263,7 @@ export default function Page() {
                     <CardTitle>Recent Activity</CardTitle>
                   </CardHeader>
                   <CardContent className="pl-2 pt-0">
-                    {isLoading ? (
+                    {isLoadingUser || isLoadingActivities ? (
                       <div className="space-y-8">
                         {[...Array(4)].map((_, i) => (
                           <div
@@ -271,7 +279,7 @@ export default function Page() {
                         ))}
                       </div>
                     ) : (
-                      <ActivityList activities={activities} />
+                      <ActivityList activities={activities ?? []} />
                     )}
                   </CardContent>
                 </Card>
@@ -333,17 +341,17 @@ export default function Page() {
                 <p className="text-muted-foreground mb-2">
                   Need help?{" "}
                   <Link
-                    href="/docs"
+                    href={`${process.env.NEXT_PUBLIC_BASE_URL}/docs`}
                     className="font-medium text-primary hover:underline"
                   >
                     Docs
                   </Link>{" "}
                   <span className="mx-2">|</span>{" "}
                   <Link
-                    href="/support"
+                    href={`${process.env.NEXT_PUBLIC_BASE_URL}/contact`}
                     className="font-medium text-primary hover:underline"
                   >
-                    Support
+                    Contact Us
                   </Link>
                 </p>
               </div>
@@ -352,5 +360,13 @@ export default function Page() {
         </SidebarInset>
       </SidebarProvider>
     </HeaderProvider>
+  );
+}
+
+export default function Page() {
+  return (
+    <QueryClientProvider client={queryClient}>
+      <PageContent />
+    </QueryClientProvider>
   );
 }
