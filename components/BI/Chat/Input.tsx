@@ -1,7 +1,7 @@
 "use client";
 
 import type { ChatRequestOptions, CreateMessage, Message } from "ai";
-import cx from "classnames";
+import { cn } from "@/lib/utils";
 import type React from "react";
 import {
   useRef,
@@ -185,7 +185,7 @@ const PureInput: React.FunctionComponent<InputProps> = ({
           placeholder="Send a message..."
           value={input}
           onChange={handleInput}
-          className={cx(
+          className={cn(
             "max-h-[100px] min-h-[80px] overflow-y-auto resize-none rounded-2xl text-base! bg-muted pr-12 dark:border-zinc-700",
             className
           )}

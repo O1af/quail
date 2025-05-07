@@ -1,7 +1,6 @@
 "use client";
 
 import type { ChatRequestOptions, Message } from "ai";
-import cx from "classnames";
 import { AnimatePresence, motion } from "framer-motion";
 import { AvatarImage, Avatar } from "@/components/ui/avatar";
 import { memo, useState } from "react";

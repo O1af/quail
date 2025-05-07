@@ -56,8 +56,9 @@ const CustomJsxParser: React.FC<CustomJsxParserProps> = ({
       }
 
       try {
-        // Import Babel only when needed
-        const { default: Babel } = await import("@babel/standalone");
+        // Fix Babel import to handle both export formats
+        const babelModule = await import("@babel/standalone");
+        const Babel = babelModule.default ?? babelModule;
 
         // Transpile JSX to JavaScript
         const { code } = Babel.transform(jsx, { presets: ["react"] }) || {};

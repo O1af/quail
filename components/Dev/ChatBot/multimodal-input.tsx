@@ -1,7 +1,6 @@
 "use client";
 
 import type { ChatRequestOptions, CreateMessage, Message } from "ai";
-import cx from "classnames";
 import type React from "react";
 import {
   useRef,
@@ -16,7 +15,7 @@ import { useToast } from "@/lib/hooks/use-toast";
 import { useLocalStorage, useWindowSize } from "usehooks-ts";
 
 import { sanitizeUIMessages } from "@/lib/utils";
-
+import { cn } from "@/lib/utils";
 import { ArrowUpIcon, StopIcon } from "./icons";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -120,7 +119,7 @@ function PureMultimodalInput({
           placeholder="Ask Quail a question..."
           value={input}
           onChange={handleInput}
-          className={cx(
+          className={cn(
             "max-h-[calc(7.5vh)] overflow-hidden resize-none rounded-2xl text-base! bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pb-10 pr-16",
             className
           )}
