@@ -222,7 +222,6 @@ export function useDatabase() {
     setCurrentDatabase: (id: number | null) =>
       setCurrentDatabaseMutation.mutate(id),
     getCurrentDatabase,
-    setDatabaseChange: () => setIsDatabaseChanged(true),
     resetDatabaseChange: () => setIsDatabaseChanged(false),
   };
 }

@@ -16,11 +16,12 @@ import {
 const sqlRegex =
   /^(SELECT|INSERT|UPDATE|DELETE|MERGE|REPLACE|CREATE|DROP|ALTER|TRUNCATE|GRANT|REVOKE|COMMIT|ROLLBACK|SAVEPOINT|SET|SHOW|DESCRIBE|EXPLAIN|USE|LOCK|UNLOCK|TRUNCATE|BEGIN|END|CALL|EXCEPT|INTERSECT|FETCH)\s+/i;
 
-interface CodeBlockProps {
-  node: any;
-  inline: boolean;
-  className: string;
-  children: any;
+export interface CodeBlockProps {
+  node?: any;
+  inline?: boolean;
+  className?: string;
+  children?: any;
+  [key: string]: any;
 }
 
 export function CodeBlock({
@@ -138,44 +139,49 @@ export function CodeBlock({
     return (
       <>
         {tab === "code" && isSQL ? (
-          <div className="not-prose flex flex-col relative">
-            <div className="absolute top-0 left-0 right-0 flex justify-end bg-zinc-100 dark:bg-zinc-800 rounded-t-xl border-b border-zinc-200 dark:border-zinc-700">
-              <TooltipProvider>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-md hover:bg-zinc-700 focus:outline-hidden"
-                      onClick={() => insertCode(children)}
-                    >
-                      <Repeat className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Insert code into editor</p>
-                  </TooltipContent>
-                </Tooltip>
-                <Tooltip>
-                  <TooltipTrigger asChild>
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      className="rounded-md hover:bg-zinc-700 focus:outline-hidden"
-                      onClick={handleCopy}
-                    >
-                      <Copy className="h-4 w-4 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
-                    </Button>
-                  </TooltipTrigger>
-                  <TooltipContent>
-                    <p>Copy</p>
-                  </TooltipContent>
-                </Tooltip>
-              </TooltipProvider>
+          <div className="not-prose flex flex-col relative my-3">
+            <div className="absolute top-0 left-0 right-0 flex justify-between items-center px-3 py-1.5 bg-zinc-100 dark:bg-zinc-800/80 backdrop-blur-sm rounded-t-xl border-b border-zinc-200 dark:border-zinc-700">
+              <div className="text-xs text-zinc-500 dark:text-zinc-400 font-mono">
+                SQL
+              </div>
+              <div className="flex items-center gap-1">
+                <TooltipProvider>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-md size-7 hover:bg-zinc-200 dark:hover:bg-zinc-700 focus:outline-hidden"
+                        onClick={() => insertCode(children)}
+                      >
+                        <Repeat className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>Insert code into editor</p>
+                    </TooltipContent>
+                  </Tooltip>
+                  <Tooltip>
+                    <TooltipTrigger asChild>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        className="rounded-md size-7 hover:bg-zinc-200 dark:hover:bg-zinc-700 focus:outline-hidden"
+                        onClick={handleCopy}
+                      >
+                        <Copy className="h-3.5 w-3.5 text-zinc-600 dark:text-zinc-400 hover:text-zinc-800 dark:hover:text-zinc-100" />
+                      </Button>
+                    </TooltipTrigger>
+                    <TooltipContent side="left">
+                      <p>Copy</p>
+                    </TooltipContent>
+                  </Tooltip>
+                </TooltipProvider>
+              </div>
             </div>
             <pre
               {...props}
-              className={`text-sm w-full overflow-x-auto dark:bg-zinc-900 p-4 pt-12 border border-zinc-200 dark:border-zinc-700 rounded-xl dark:text-zinc-50 text-zinc-900`}
+              className={`text-sm w-full overflow-x-auto dark:bg-zinc-900/80 bg-zinc-50 p-4 pt-12 border border-zinc-200 dark:border-zinc-700/80 rounded-xl dark:text-zinc-50 text-zinc-900 shadow-sm`}
             >
               <code
                 className="whitespace-pre-wrap break-words"
@@ -184,18 +190,18 @@ export function CodeBlock({
             </pre>
           </div>
         ) : (
-          <>
+          <div className="my-2">
             <code className="contents not-prose whitespace-pre-wrap break-words">
               {children}
             </code>
-          </>
+          </div>
         )}
       </>
     );
   } else {
     return (
       <code
-        className={`${className} text-sm bg-zinc-100 dark:bg-zinc-800 py-0.5 px-1 rounded-md`}
+        className={`${className} text-sm bg-zinc-100 dark:bg-zinc-800 py-0.5 px-1.5 rounded-md`}
         {...props}
       >
         {children}

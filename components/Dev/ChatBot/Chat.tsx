@@ -54,6 +54,19 @@ export default function Chat() {
     }
   }, [isDatabaseChanged, setMessages, resetDatabaseChange]);
 
+  // Add a new effect to listen for the clear-chat event
+  useEffect(() => {
+    const handleClearChat = () => {
+      setMessages([]);
+    };
+
+    window.addEventListener("clear-chat", handleClearChat);
+
+    return () => {
+      window.removeEventListener("clear-chat", handleClearChat);
+    };
+  }, [setMessages]);
+
   useEffect(() => {
     if (chatError && messages.length > 0) {
       setMessages([

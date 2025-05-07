@@ -1,6 +1,5 @@
 "use client";
 import React from "react";
-import { useDatabase } from "@/lib/hooks/use-database";
 import { Button } from "@/components/ui/button";
 import {
   Tooltip,
@@ -11,14 +10,18 @@ import {
 import { MessageCircleOff } from "lucide-react";
 
 export function ClearChat() {
-  const { setDatabaseChange } = useDatabase();
+  const handleClearChat = () => {
+    // Dispatch a custom event that can be caught by the Chat component
+    const clearEvent = new CustomEvent("clear-chat");
+    window.dispatchEvent(clearEvent);
+  };
 
   return (
     <TooltipProvider>
       <Tooltip>
         <TooltipTrigger asChild>
           <Button
-            onClick={() => setDatabaseChange()}
+            onClick={handleClearChat}
             variant="ghost"
             size="icon"
             className="h-8 w-8 p-0"

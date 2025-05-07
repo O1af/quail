@@ -14,6 +14,7 @@ import { cn } from "@/lib/utils";
 const PurePreviewMessage = ({
   message,
   isLoading,
+  reload,
 }: {
   message: Message;
   isLoading: boolean;
@@ -28,8 +29,8 @@ const PurePreviewMessage = ({
     <AnimatePresence>
       <motion.div
         className="w-full mx-auto max-w-3xl px-4 group/message"
-        initial={{ y: 5, opacity: 0 }}
-        animate={{ y: 0, opacity: 1 }}
+        initial={{ y: 10, opacity: 0 }}
+        animate={{ y: 0, opacity: 1, transition: { duration: 0.3 } }}
         data-role={message.role}
       >
         <div
@@ -42,7 +43,7 @@ const PurePreviewMessage = ({
           )}
         >
           {message.role === "assistant" && (
-            <div className="size-12 flex items-center rounded-full justify-center shrink-0 bg-background">
+            <div className="size-12 flex items-center rounded-full justify-center shrink-0 bg-background shadow-sm">
               <div className="translate-y-px">
                 <Avatar className="w-12 h-12">
                   <AvatarImage
@@ -57,28 +58,32 @@ const PurePreviewMessage = ({
             </div>
           )}
 
-          <div className="flex flex-col gap-2 w-full">
+          <div className="flex flex-col gap-2 w-full min-w-0">
+            {" "}
+            {/* Added min-w-0 */}
             {message.content && mode === "view" && (
               <div className="flex flex-row gap-2 items-start">
                 <div
-                  className={cn("flex flex-col gap-4", {
-                    "text-sm bg-primary text-primary-foreground p-2 rounded-xl":
-                      message.role === "user",
-                    "text-sm": message.role === "assistant",
-                  })}
+                  className={cn(
+                    "flex flex-col gap-4 rounded-2xl", // Removed break-words from here
+                    {
+                      "text-sm bg-primary text-primary-foreground p-3 shadow-sm":
+                        message.role === "user",
+                      "text-sm": message.role === "assistant",
+                    }
+                  )}
                 >
                   <Markdown>{message.content as string}</Markdown>
                 </div>
               </div>
             )}
-
-            {
+            {message.role === "assistant" && (
               <MessageActions
                 key={`action-${message.id}`}
                 message={message}
                 isLoading={isLoading}
               />
-            }
+            )}
           </div>
         </div>
       </motion.div>
@@ -100,20 +105,17 @@ export const ThinkingMessage = () => {
 
   return (
     <motion.div
-      className="w-full mx-auto max-w-3xl px-4 group/message "
-      initial={{ y: 5, opacity: 0 }}
-      animate={{ y: 0, opacity: 1, transition: { delay: 1 } }}
+      className="w-full mx-auto max-w-3xl px-4 group/message"
+      initial={{ y: 10, opacity: 0 }}
+      animate={{
+        y: 0,
+        opacity: 1,
+        transition: { delay: 0.5, duration: 0.3 },
+      }}
       data-role={role}
     >
-      <div
-        className={cx(
-          "flex gap-4 group-data-[role=user]/message:px-3 w-full group-data-[role=user]/message:w-fit group-data-[role=user]/message:ml-auto group-data-[role=user]/message:max-w-2xl group-data-[role=user]/message:py-2 rounded-xl",
-          {
-            "group-data-[role=user]/message:bg-muted": true,
-          }
-        )}
-      >
-        <div className="size-12 flex items-center rounded-full justify-center shrink-0">
+      <div className="flex gap-4 w-full">
+        <div className="size-12 flex items-center rounded-full justify-center shrink-0 bg-background shadow-sm">
           <Avatar className="w-12 h-12">
             <AvatarImage
               src="/quail_logo.svg"
@@ -123,9 +125,44 @@ export const ThinkingMessage = () => {
           </Avatar>
         </div>
 
-        <div className="flex flex-col gap-2 w-full">
-          <div className="flex flex-col gap-4 text-muted-foreground">
-            Thinking...
+        <div className="flex items-center">
+          <div className="flex items-center text-muted-foreground gap-1">
+            <span>Thinking</span>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{
+                opacity: [0, 1, 0],
+                transition: { repeat: Infinity, duration: 1.5 },
+              }}
+            >
+              .
+            </motion.span>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{
+                opacity: [0, 1, 0],
+                transition: {
+                  repeat: Infinity,
+                  duration: 1.5,
+                  delay: 0.5,
+                },
+              }}
+            >
+              .
+            </motion.span>
+            <motion.span
+              initial={{ opacity: 0 }}
+              animate={{
+                opacity: [0, 1, 0],
+                transition: {
+                  repeat: Infinity,
+                  duration: 1.5,
+                  delay: 1,
+                },
+              }}
+            >
+              .
+            </motion.span>
           </div>
         </div>
       </div>

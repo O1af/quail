@@ -114,44 +114,46 @@ function PureMultimodalInput({
         tabIndex={-1}
       />
 
-      <Textarea
-        ref={textareaRef}
-        placeholder="Send a message..."
-        value={input}
-        onChange={handleInput}
-        className={cx(
-          "max-h-[calc(7.5vh)] overflow-hidden resize-none rounded-2xl text-base! bg-muted pb-10 dark:border-zinc-700",
-          className
-        )}
-        rows={2}
-        autoFocus
-        onKeyDown={(event) => {
-          if (event.key === "Enter" && !event.shiftKey) {
-            event.preventDefault();
+      <div className="relative bg-muted dark:bg-zinc-800/40 rounded-2xl backdrop-blur-sm border border-zinc-200 dark:border-zinc-700/80 shadow-sm">
+        <Textarea
+          ref={textareaRef}
+          placeholder="Ask Quail a question..."
+          value={input}
+          onChange={handleInput}
+          className={cx(
+            "max-h-[calc(7.5vh)] overflow-hidden resize-none rounded-2xl text-base! bg-transparent border-0 focus-visible:ring-0 focus-visible:ring-offset-0 pb-10 pr-16",
+            className
+          )}
+          rows={2}
+          autoFocus
+          onKeyDown={(event) => {
+            if (event.key === "Enter" && !event.shiftKey) {
+              event.preventDefault();
 
-            if (isLoading) {
-              toast({
-                title: "Please wait for the model to finish its response!",
-                duration: 1500,
-                variant: "destructive",
-              });
-            } else {
-              submitForm();
+              if (isLoading) {
+                toast({
+                  title: "Please wait for the model to finish its response!",
+                  duration: 1500,
+                  variant: "destructive",
+                });
+              } else {
+                submitForm();
+              }
             }
-          }
-        }}
-      />
+          }}
+        />
 
-      <div className="absolute bottom-0 right-0 p-2 space-x-1 w-fit flex flex-row justify-end">
-        {isLoading ? (
-          <StopButton stop={stop} setMessages={setMessages} />
-        ) : (
-          <SendButton
-            input={input}
-            submitForm={submitForm}
-            uploadQueue={uploadQueue}
-          />
-        )}
+        <div className="absolute bottom-2 right-2 p-1">
+          {isLoading ? (
+            <StopButton stop={stop} setMessages={setMessages} />
+          ) : (
+            <SendButton
+              input={input}
+              submitForm={submitForm}
+              uploadQueue={uploadQueue}
+            />
+          )}
+        </div>
       </div>
     </div>
   );
@@ -176,7 +178,8 @@ function PureStopButton({
 }) {
   return (
     <Button
-      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      className="rounded-full size-9 flex items-center justify-center border dark:border-zinc-600 shadow-sm"
+      variant="secondary"
       onClick={(event) => {
         event.preventDefault();
         stop();
@@ -201,7 +204,7 @@ function PureSendButton({
 }) {
   return (
     <Button
-      className="rounded-full p-1.5 h-fit border dark:border-zinc-600"
+      className="rounded-full size-9 flex items-center justify-center border dark:border-zinc-600 shadow-sm"
       onClick={(event) => {
         event.preventDefault();
         submitForm();
