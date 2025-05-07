@@ -1,9 +1,5 @@
 "use client";
-import {
-  useQuery,
-  QueryClient,
-  QueryClientProvider,
-} from "@tanstack/react-query";
+import { useQuery } from "@tanstack/react-query";
 import { UnifiedSidebar } from "@/components/sidebar/unified-sidebar";
 import {
   SidebarInset,
@@ -23,7 +19,6 @@ import {
 } from "@/components/stores/dashboard_store";
 import { listCharts } from "@/components/stores/chart_store";
 import { ActivityList } from "@/components/Overview/ActivityList";
-import { ActivityItem, fetchRecentActivities } from "@/lib/utils/activity";
 import { useRouter } from "next/navigation";
 import {
   LayoutDashboard,
@@ -32,11 +27,28 @@ import {
   Code,
   MessageSquare,
 } from "lucide-react";
-import { listChats as listChatHistory } from "@/components/stores/chat_store";
+import { listChats } from "@/components/stores/chat_store";
+import { formatDistanceToNow } from "date-fns";
 
-interface DashboardPageData {
+// Add the ChatListResponse interface for proper typing
+import { ChatListResponse } from "@/lib/types/stores/chat";
+export interface ActivityItem {
+  id: string;
+  type:
+    | "dashboard_created"
+    | "chart_updated"
+    | "dashboard_updated"
+    | "chat_created";
+  title: string;
+  timestamp: Date;
+  relativeTime?: string;
+  entityId?: string;
+  entityType?: string;
+}
+interface PageData {
   stats: DashboardStats;
   recentDashboards: Dashboard[];
+  activities: ActivityItem[];
 }
 
 interface DashboardStats {
@@ -46,10 +58,7 @@ interface DashboardStats {
   recentChatCount: number;
 }
 
-// Create a client
-const queryClient = new QueryClient();
-
-function PageContent() {
+export default function PageContent() {
   const router = useRouter();
 
   // Fetch user
@@ -66,65 +75,146 @@ function PageContent() {
     staleTime: Infinity, // User data is unlikely to change frequently within a session
   });
 
-  // Fetch combined data for stats and recent dashboards
+  // Consolidated data fetching in a single query
   const { data: pageData, isLoading: isLoadingPageData } = useQuery<
-    DashboardPageData,
+    PageData,
     Error
   >({
-    queryKey: ["dashboardPageData", user?.id, user?.email],
+    queryKey: ["overviewPageData", user?.id, user?.email],
     queryFn: async () => {
       if (!user || !user.id || !user.email) {
         throw new Error("User ID or email not available for page data");
       }
-      const [
-        userDashboards, // Fetched without limit, sorted by updatedAt
-        sharedDashboards,
-        userCharts, // Fetched without limit, sorted by updatedAt
-        userChatsData, // Fetched without limit, sorted by updatedAt
-      ] = await Promise.all([
-        loadUserDashboards(user.id, { sort: { updatedAt: -1 } }), // Ensure sorted for recent
-        loadSharedDashboards(user.email),
-        listCharts(user.id), // Ensure sorted
-        listChatHistory(user.id), // Ensure sorted
-      ]);
 
-      const oneMonthAgo = new Date();
-      oneMonthAgo.setMonth(oneMonthAgo.getMonth() - 1);
-      const recentChats = userChatsData.filter(
+      // Define reasonable limits for each data type
+      const DASHBOARD_LIMIT = 20;
+      const CHART_LIMIT = 20;
+      const CHAT_LIMIT = 20;
+      const ACTIVITY_LIMIT = 10;
+
+      const [userDashboards, sharedDashboards, charts, chats] =
+        await Promise.all([
+          loadUserDashboards(user.id, {
+            sort: { updatedAt: -1 },
+            limit: DASHBOARD_LIMIT,
+          }),
+          loadSharedDashboards(user.email),
+          listCharts(user.id, CHART_LIMIT),
+          listChats(user.id, CHAT_LIMIT),
+        ]);
+
+      // Filter chats from the last month
+      const oneMonthAgo = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000);
+      const recentChats = chats.filter(
         (chat) => new Date(chat.updatedAt) > oneMonthAgo
       );
 
       return {
         stats: {
           totalDashboards: userDashboards.length + sharedDashboards.length,
-          totalCharts: userCharts.length,
-          totalChats: userChatsData.length,
+          totalCharts: charts.length,
+          totalChats: chats.length,
           recentChatCount: recentChats.length,
         },
         recentDashboards: userDashboards.slice(0, 3),
+        activities: generateActivitiesFromData(
+          userDashboards,
+          charts,
+          chats,
+          ACTIVITY_LIMIT
+        ),
       };
     },
-    enabled: !!user, // Only run query if user is loaded
-  });
-
-  // Fetch recent activities (remains separate as its needs are specific and limited)
-  const { data: activities, isLoading: isLoadingActivities } = useQuery<
-    ActivityItem[],
-    Error
-  >({
-    queryKey: ["recentActivities", user?.id],
-    queryFn: async () => {
-      if (!user || !user.id) {
-        throw new Error("User ID not available for activities");
-      }
-      return await fetchRecentActivities(user.id, 10); // Fetch 10 recent activities
-    },
     enabled: !!user,
+    staleTime: 1000 * 60 * 5, // Cache for 5 minutes
   });
 
-  const isLoading = isLoadingUser || isLoadingPageData || isLoadingActivities;
+  const isLoading = isLoadingUser || isLoadingPageData;
   const stats = pageData?.stats;
   const recentDashboards = pageData?.recentDashboards ?? [];
+  const activities = pageData?.activities ?? [];
+
+  // Helper function to generate activities from already fetched data
+  function generateActivitiesFromData(
+    dashboards: Dashboard[],
+    charts: any[], // We should define a proper Chart type, but keeping as-is for now
+    chats: ChatListResponse[], // Fixed: added proper type
+    limit: number
+  ): ActivityItem[] {
+    // Create activities from dashboards
+    const dashboardActivities: ActivityItem[] = dashboards.map((dashboard) => ({
+      id: `dash-${dashboard._id}`,
+      type: "dashboard_updated",
+      title: `Dashboard "${dashboard.title}" updated`,
+      timestamp: new Date(dashboard.updatedAt),
+      entityId: dashboard._id,
+      entityType: "dashboard",
+      relativeTime: formatDistanceToNow(new Date(dashboard.updatedAt), {
+        addSuffix: true,
+      }),
+    }));
+
+    // Add dashboard creation events (if creation time differs significantly from update time)
+    const dashboardCreationActivities: ActivityItem[] = dashboards
+      .filter((dashboard) => {
+        // Only include if creation is at least 5 minutes before last update
+        const createdAt = new Date(dashboard.createdAt).getTime();
+        const updatedAt = new Date(dashboard.updatedAt).getTime();
+        return updatedAt - createdAt > 5 * 60 * 1000; // 5 minutes in milliseconds
+      })
+      .map((dashboard) => ({
+        id: `dash-create-${dashboard._id}`,
+        type: "dashboard_created",
+        title: `Dashboard "${dashboard.title}" created`,
+        timestamp: new Date(dashboard.createdAt),
+        entityId: dashboard._id,
+        entityType: "dashboard",
+        relativeTime: formatDistanceToNow(new Date(dashboard.createdAt), {
+          addSuffix: true,
+        }),
+      }));
+
+    // Create activities from charts
+    const chartActivities: ActivityItem[] = charts.map((chart) => ({
+      id: `chart-${chart._id}`,
+      type: "chart_updated",
+      title: `Chart "${chart.title}" updated`,
+      timestamp: new Date(chart.updatedAt),
+      entityId: chart._id,
+      entityType: "chart",
+      relativeTime: formatDistanceToNow(new Date(chart.updatedAt), {
+        addSuffix: true,
+      }),
+    }));
+
+    // Create activities from chats
+    const chatActivities: ActivityItem[] = chats.map(
+      (chat: ChatListResponse) => ({
+        id: `chat-${chat._id}`,
+        type: "chat_created",
+        title: `Chat "${chat.title}" updated`,
+        timestamp: new Date(chat.updatedAt),
+        entityId: chat._id,
+        entityType: "chat",
+        relativeTime: formatDistanceToNow(new Date(chat.updatedAt), {
+          addSuffix: true,
+        }),
+      })
+    );
+
+    // Combine all activities
+    const allActivities: ActivityItem[] = [
+      ...dashboardActivities,
+      ...dashboardCreationActivities,
+      ...chartActivities,
+      ...chatActivities,
+    ];
+
+    // Sort by timestamp (newest first) and limit
+    return allActivities
+      .sort((a, b) => b.timestamp.getTime() - a.timestamp.getTime())
+      .slice(0, limit);
+  }
 
   // Handle quick action clicks
   const handleCreateDashboard = () => {
@@ -263,7 +353,7 @@ function PageContent() {
                     <CardTitle>Recent Activity</CardTitle>
                   </CardHeader>
                   <CardContent className="pl-2 pt-0">
-                    {isLoadingUser || isLoadingActivities ? (
+                    {isLoading ? (
                       <div className="space-y-8">
                         {[...Array(4)].map((_, i) => (
                           <div
@@ -279,7 +369,7 @@ function PageContent() {
                         ))}
                       </div>
                     ) : (
-                      <ActivityList activities={activities ?? []} />
+                      <ActivityList activities={activities} />
                     )}
                   </CardContent>
                 </Card>
@@ -360,13 +450,5 @@ function PageContent() {
         </SidebarInset>
       </SidebarProvider>
     </HeaderProvider>
-  );
-}
-
-export default function Page() {
-  return (
-    <QueryClientProvider client={queryClient}>
-      <PageContent />
-    </QueryClientProvider>
   );
 }
