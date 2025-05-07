@@ -1,0 +1,468 @@
+---
+title: "Charts"
+description: "How to create, customize, and interpret charts in Quail"
+---
+
+import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { TypeTable } from "fumadocs-ui/components/type-table";
+
+## Creating Charts
+
+You can create charts in Quail through multiple methods:
+
+<Tabs items={["Charts Page", "Chat Interface", "SQL Editor"]}>
+  <Tab value="Charts Page">
+    <Steps>
+      <Step>Navigate to the **Charts** section in the main menu</Step>
+      <Step>Click **Create New Chart**</Step>
+      <Step>Select your data source (connection and table/query)</Step>
+      <Step>Choose a chart type</Step>
+      <Step>Configure your chart settings</Step>
+      <Step>Save your chart</Step>
+    </Steps>
+  </Tab>
+  <Tab value="Chat Interface">
+    <Steps>
+      <Step>
+        In the Chat interface, ask a question that would benefit from
+        visualization - Example: "Show me monthly sales for the last year" -
+        Example: "What's the distribution of customer ages?"
+      </Step>
+      <Step>
+        When Quail generates a chart in response, click **Save Chart**
+      </Step>
+      <Step>Enter a name and description for your chart</Step>
+      <Step>Select where to save the chart (standalone or to a dashboard)</Step>
+    </Steps>
+  </Tab>
+  <Tab value="SQL Editor">
+    <Steps>
+      <Step>Write a SQL query in the SQL Editor</Step>
+      <Step>Run the query to see the results</Step>
+      <Step>Click the **Visualize** button</Step>
+      <Step>Choose a chart type that fits your data</Step>
+      <Step>Configure visualization settings</Step>
+      <Step>Click **Save Chart**</Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Chart Types and When to Use Them
+
+<Accordions>
+  <Accordion title="Bar Charts" id="bar-charts">
+    <TypeTable
+      type={{
+        bestFor: {
+          description: "Comparing values across categories",
+          type: "Use Case",
+        },
+        verticalBars: {
+          description: "Use when you have fewer categories (less than 10)",
+          type: "Variation",
+        },
+        horizontalBars: {
+          description: "Use when you have many categories or long category names",
+          type: "Variation",
+        },
+        dataRequirements: {
+          description: "At least one dimension and one measure",
+          type: "Data",
+        },
+        example: {
+          description: "Sales by region, Product comparison, Survey results",
+          type: "Examples",
+        },
+      }}
+    />
+  </Accordion>
+
+{" "}
+
+<Accordion title="Line Charts" id="line-charts">
+  <TypeTable
+    type={{
+      bestFor: {
+        description: "Showing trends over time or continuous data",
+        type: "Use Case",
+      },
+      timeSeries: {
+        description: "Use when tracking metrics over time periods",
+        type: "Variation",
+      },
+      multiLine: {
+        description:
+          "Use when comparing multiple metrics or categories over time",
+        type: "Variation",
+      },
+      dataRequirements: {
+        description: "Time-based dimension and at least one measure",
+        type: "Data",
+      },
+      example: {
+        description: "Stock prices, Temperature trends, Monthly revenue",
+        type: "Examples",
+      },
+    }}
+  />
+</Accordion>
+
+{" "}
+
+<Accordion title="Pie/Donut Charts" id="pie-charts">
+  <TypeTable
+    type={{
+      bestFor: {
+        description: "Showing part-to-whole relationships",
+        type: "Use Case",
+      },
+      bestPractice: {
+        description: "Limit to 5-7 slices for readability",
+        type: "Usage Tip",
+      },
+      whenToUse: {
+        description: "Use when percentages add up to 100%",
+        type: "Best Practice",
+      },
+      dataRequirements: {
+        description:
+          "One dimension and one measure that sums to a meaningful total",
+        type: "Data",
+      },
+      example: {
+        description:
+          "Market share, Budget allocation, Survey response distribution",
+        type: "Examples",
+      },
+    }}
+  />
+</Accordion>
+
+{" "}
+
+<Accordion title="Scatter Plots" id="scatter-plots">
+  <TypeTable
+    type={{
+      bestFor: {
+        description: "Showing relationships between two variables",
+        type: "Use Case",
+      },
+      correlations: {
+        description: "Use to identify correlations between metrics",
+        type: "Variation",
+      },
+      trendLines: {
+        description: "Add trend lines to highlight patterns",
+        type: "Enhancement",
+      },
+      dataRequirements: {
+        description: "Two measures (numeric values) for X and Y axes",
+        type: "Data",
+      },
+      example: {
+        description:
+          "Height vs. weight, Price vs. rating, Marketing spend vs. revenue",
+        type: "Examples",
+      },
+    }}
+  />
+</Accordion>
+
+{" "}
+
+<Accordion title="Tables" id="tables">
+  <TypeTable
+    type={{
+      bestFor: {
+        description: "Precise values and multiple dimensions",
+        type: "Use Case",
+      },
+      exactNumbers: {
+        description: "Use when exact numbers are important",
+        type: "Variation",
+      },
+      conditionalFormatting: {
+        description: "Add conditional formatting to highlight important values",
+        type: "Enhancement",
+      },
+      dataRequirements: {
+        description: "Any combination of dimensions and measures",
+        type: "Data",
+      },
+      example: {
+        description:
+          "Financial statements, Detailed sales reports, Customer lists",
+        type: "Examples",
+      },
+    }}
+  />
+</Accordion>
+
+{" "}
+
+<Accordion title="Area Charts" id="area-charts">
+  <TypeTable
+    type={{
+      bestFor: {
+        description: "Showing cumulative totals over time",
+        type: "Use Case",
+      },
+      stackedArea: {
+        description: "Use stacked area charts to show composition changes",
+        type: "Variation",
+      },
+      partToWhole: {
+        description: "Good for part-to-whole relationships over time",
+        type: "Best Practice",
+      },
+      dataRequirements: {
+        description: "Time-based dimension and one or more measures",
+        type: "Data",
+      },
+      example: {
+        description:
+          "Market share over time, Website traffic by source, Resource usage",
+        type: "Examples",
+      },
+    }}
+  />
+</Accordion>
+
+{" "}
+
+<Accordion title="Heatmaps" id="heatmaps">
+  <TypeTable
+    type={{
+      bestFor: {
+        description: "Showing patterns across two dimensions",
+        type: "Use Case",
+      },
+      largeDatasets: {
+        description: "Use for large datasets with patterns",
+        type: "Variation",
+      },
+      correlation: {
+        description: "Great for correlation matrices or calendar heatmaps",
+        type: "Examples",
+      },
+      dataRequirements: {
+        description: "Two dimensions and one measure representing intensity",
+        type: "Data",
+      },
+      example: {
+        description:
+          "Website activity by hour/day, Geographic intensity maps, User activity patterns",
+        type: "Examples",
+      },
+    }}
+  />
+</Accordion>
+
+  <Accordion title="Gauge Charts" id="gauge-charts">
+    <TypeTable
+      type={{
+        bestFor: {
+          description: "Showing progress toward a goal",
+          type: "Use Case",
+        },
+        kpi: {
+          description: "Use for KPIs with target values",
+          type: "Variation",
+        },
+        singleValue: {
+          description: "Limited to a single value display",
+          type: "Limitation",
+        },
+        dataRequirements: {
+          description: "One measure and typically a target or reference value",
+          type: "Data",
+        },
+        example: {
+          description: "Sales targets, System utilization, Project completion",
+          type: "Examples",
+        },
+      }}
+    />
+  </Accordion>
+</Accordions>
+
+## Customizing Your Charts
+
+<Tabs
+  items={[
+    "Basic Customization",
+    "Advanced Styling",
+    "Reference Lines",
+    "Interactivity",
+  ]}
+>
+  <Tab value="Basic Customization">
+    <Steps>
+      <Step>With your chart open, click **Edit**</Step>
+      <Step>
+        Customize: - Chart title and description - Axis labels and formatting -
+        Legend position and labels - Colors and themes
+      </Step>
+    </Steps>
+  </Tab>
+
+{" "}
+
+<Tab value="Advanced Styling">
+  <Steps>
+    <Step>From the edit screen, go to the **Style** tab</Step>
+    <Step>
+      Adjust: - Font sizes and styles - Grid lines and backgrounds - Custom
+      color palettes - Tooltip content and format
+    </Step>
+  </Steps>
+</Tab>
+
+{" "}
+
+<Tab value="Reference Lines">
+  <Steps>
+    <Step>In the chart editor, go to the **Reference Lines** section</Step>
+    <Step>
+      Add lines for: - Averages, medians, targets - Thresholds or benchmarks -
+      Forecasts or projections
+    </Step>
+  </Steps>
+</Tab>
+
+  <Tab value="Interactivity">
+    <Steps>
+      <Step>In the advanced settings, configure:</Step>
+      <Step>
+        - Tooltips with custom information - Drill-down actions when clicking
+        data points - Highlighting and filtering behaviors
+      </Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Interpreting Charts
+
+### Reading Common Chart Types
+
+<Tabs items={["Bar Charts", "Line Charts", "Scatter Plots"]}>
+  <Tab value="Bar Charts">
+    - Height/length represents the value - Space between bars helps compare
+    individual categories - Grouped bars compare subcategories within main
+    categories
+  </Tab>
+
+{" "}
+
+<Tab value="Line Charts">
+  - Slope indicates rate of change - Intersections show when values cross -
+  Peaks and valleys show maximums and minimums
+</Tab>
+
+  <Tab value="Scatter Plots">
+    - Clustering indicates correlation - Outliers appear distant from the main
+    cluster - Trend lines show the overall relationship
+  </Tab>
+</Tabs>
+
+{/*
+### Spotting Trends and Patterns
+
+<TypeTable
+  type={{
+    upwardDownwardTrends: {
+      description: "Consistent movement in one direction",
+      type: "Pattern",
+    },
+    cyclicalPatterns: {
+      description: "Repeating ups and downs",
+      type: "Pattern",
+    },
+    outliers: {
+      description: "Data points that differ significantly from others",
+      type: "Pattern",
+    },
+    clusters: {
+      description: "Groups of similar data points",
+      type: "Pattern",
+    },
+  }}
+/>
+*/}
+
+## Saving and Sharing Charts
+
+<Tabs items={["Saving", "Adding to Dashboards"]}>
+  <Tab value="Saving">
+    <Steps>
+      <Step>After creating or editing a chart, click **Save**</Step>
+      <Step>
+        Enter or update: - Chart name - Description - Tags for organization
+      </Step>
+      <Step>Choose to save as a new chart or update existing</Step>
+    </Steps>
+  </Tab>
+
+{" "}
+
+<Tab value="Adding to Dashboards">
+  <Steps>
+    <Step>With your chart open, click **Add to Dashboard**</Step>
+    <Step>Select an existing dashboard or create a new one</Step>
+    <Step>Click **Add** to place your chart on the selected dashboard</Step>
+  </Steps>
+</Tab>
+
+{" "}
+{/*
+<Tab value="Exporting">
+  <Steps>
+    <Step>Open the chart you want to export</Step>
+    <Step>Click the **Export** button</Step>
+    <Step>
+      Choose your preferred format: - Image (PNG, JPEG) - PDF - CSV/Excel (for
+      raw data)
+    </Step>
+  </Steps>
+</Tab>
+
+  <Tab value="Sharing">
+    <Steps>
+      <Step>Open the chart you want to share</Step>
+      <Step>Click **Share**</Step>
+      <Step>Set permissions and copy the share link</Step>
+      <Step>
+        Recipients can view the chart without needing to create their own
+      </Step>
+    </Steps>
+  </Tab>
+  */}
+</Tabs>
+
+{/*
+## Troubleshooting
+
+<Accordions>
+  <Accordion title="Chart Not Displaying Correctly" id="display-issues">
+    - Check that your data types are appropriate for the selected chart
+    - Ensure your query is returning the expected results
+    - Try simplifying the visualization or using a different chart type
+  </Accordion>
+
+{" "}
+
+<Accordion title="Missing Data" id="missing-data">
+  - Verify your query doesn't have WHERE clauses excluding relevant data - Check
+  for NULL values in your dataset - Consider adding a "show missing values"
+  option in line charts
+</Accordion>
+
+  <Accordion title="Performance Issues" id="performance-issues">
+    - Limit the amount of data displayed (use aggregation or filtering)
+    - Simplify complex visualizations
+    - Consider using sample data for very large datasets
+  </Accordion>
+</Accordions>
+*/}
