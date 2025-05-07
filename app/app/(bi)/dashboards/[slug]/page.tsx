@@ -1,5 +1,6 @@
 "use client";
 import React, { useState, useCallback } from "react";
+import { useParams } from "next/navigation";
 import { useDashboard } from "./hooks/useDashboard";
 import { HeaderControls } from "./components/HeaderControls";
 import { DashboardContent } from "./components/DashboardContent";
@@ -9,14 +10,9 @@ import { ManageChartsModal } from "./components/ManageChartsModal";
 import { ShareDialog } from "./components/ShareDialog";
 import { PermissionBadgeDisplay } from "./components/PermissionBadgeDisplay";
 
-export default function Page({
-  params,
-}: {
-  params: Promise<{ slug: string }> | { slug: string };
-}) {
-  // Unwrap params promise
-  const resolvedParams = React.use(params as Promise<{ slug: string }>);
-  const { slug } = resolvedParams;
+export default function Page() {
+  const params = useParams<{ slug: string }>();
+  const { slug } = params;
 
   // Modal states
   const [isManageChartsOpen, setIsManageChartsOpen] = useState(false);

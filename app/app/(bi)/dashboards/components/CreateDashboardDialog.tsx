@@ -51,7 +51,7 @@ export function CreateDashboardDialog({
   const [isCreating, setIsCreating] = useState(false);
   const [isLoadingCharts, setIsLoadingCharts] = useState(false);
   const [availableCharts, setAvailableCharts] = useState<
-    Pick<ChartDocument, "title" | "_id" | "updatedAt" | "data">[]
+    Pick<ChartDocument, "title" | "_id" | "updatedAt">[]
   >([]);
   const [searchQuery, setSearchQuery] = useState("");
   const [isDropdownOpen, setIsDropdownOpen] = useState(false);
@@ -105,6 +105,11 @@ export function CreateDashboardDialog({
         description: description.trim() || undefined,
         charts: selectedCharts,
         layout: [],
+        permissions: {
+          publicView: false,
+          viewers: [],
+          editors: [],
+        },
       });
 
       if (newDashboard) {
@@ -296,11 +301,7 @@ export function CreateDashboardDialog({
                             />
                             <div className="flex flex-col">
                               <span>{chart.title}</span>
-                              {/* {chart.data?.chartType && (
-                                <span className="text-xs text-muted-foreground">
-                                  {chart.data.chartType} chart
-                                </span>
-                              )} */}
+                              {/* Chart type is not available in list view */}
                             </div>
                           </div>
                         ))}

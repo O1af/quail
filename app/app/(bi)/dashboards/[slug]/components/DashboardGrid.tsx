@@ -21,7 +21,7 @@ import { Badge } from "@/components/ui/badge";
 // Define date range type
 interface DateRange {
   from: Date | undefined;
-  to: Date | undefined;
+  to?: Date | undefined;
 }
 
 interface DashboardGridProps {
@@ -500,7 +500,7 @@ export const DashboardGrid = memo(
               resizeHandles={isEditing ? ["se"] : []}
               resizeHandle={
                 <span className="absolute right-2 bottom-2 cursor-pointer">
-                  <Expand className="w-4 w-4" />
+                  <Expand className="w-4 h-4" />
                 </span>
               }
               margin={[10, 10]}

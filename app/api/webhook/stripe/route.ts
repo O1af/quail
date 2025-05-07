@@ -26,7 +26,7 @@ export async function POST(req: any) {
         const result = event.data.object;
         const supabase = await supabaseAdmin();
         const end_at = new Date(
-          result.lines.data[0].period.end * 1000,
+          result.lines.data[0].period.end * 1000
         ).toISOString();
         const customer_id = result.customer as string;
         const subscription_id = result.subscription as string;
@@ -81,7 +81,12 @@ export async function POST(req: any) {
             subscription_id: null,
             inCancellationPeriod: null,
           })
-          .eq("customer_id", deleteSubscription.customer);
+          .eq(
+            "customer_id",
+            typeof deleteSubscription.customer === "string"
+              ? deleteSubscription.customer
+              : deleteSubscription.customer.id
+          );
 
         if (delError) {
           // console.log(delError);
