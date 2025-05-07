@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import { loadDashboard, Dashboard } from "@/components/stores/dashboard_store";
-import { loadChart } from "@/components/stores/chartActions";
+import { loadChart } from "@/components/stores/chart_store";
 
 export function useDashboard(slug: string, userId: string) {
   const [dashboard, setDashboard] = useState<Dashboard | null>(null);
@@ -14,7 +14,7 @@ export function useDashboard(slug: string, userId: string) {
 
       try {
         setLoading(true);
-        const dashboardData = await loadDashboard(slug, userId);
+        const dashboardData = await loadDashboard(slug);
         setDashboard(dashboardData);
 
         if (!dashboardData) {

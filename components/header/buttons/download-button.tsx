@@ -18,6 +18,8 @@ import { downloadSQL } from "../../stores/utils/downloads/downloadSQL";
 import { downloadCSV } from "../../stores/utils/downloads/downloadCSV";
 import { downloadPDF } from "../../stores/utils/downloads/downloadPDF";
 import { downloadExcel } from "../../stores/utils/downloads/downloadExcel";
+import { useEditorStore } from "../../stores/editor_store";
+import { useTableData } from "@/lib/hooks/use-table-data";
 import React from "react";
 
 export const DownloadButton = React.memo(function DownloadButton() {
@@ -25,23 +27,38 @@ export const DownloadButton = React.memo(function DownloadButton() {
   const [selectedType, setSelectedType] = useState<"sql" | "data">("sql");
   const [isOpen, setIsOpen] = useState(false);
 
-  const handleDownload = useCallback(async (format: string) => {
-    setIsDownloading(true);
-    setIsOpen(false);
-    try {
-      if (format === "SQL") {
-        await downloadSQL("query");
-      } else if (format === "CSV") {
-        await downloadCSV();
-      } else if (format === "PDF") {
-        await downloadPDF();
-      } else if (format === "Excel") {
-        await downloadExcel();
+  // Get the executed query from the editor store
+  const executedQuery = useEditorStore((state) => state.executedQuery);
+
+  // Get table data and columns from the query result
+  const { data: tableQueryResult } = useTableData(executedQuery || null);
+
+  const handleDownload = useCallback(
+    async (format: string) => {
+      setIsDownloading(true);
+      setIsOpen(false);
+      try {
+        if (format === "SQL") {
+          await downloadSQL("query");
+        } else if (tableQueryResult) {
+          // Safely extract data and columns from query result
+          const data = tableQueryResult?.data || [];
+          const columns = tableQueryResult?.columns || [];
+
+          if (format === "CSV") {
+            await downloadCSV(data, columns);
+          } else if (format === "PDF") {
+            await downloadPDF(data, columns);
+          } else if (format === "Excel") {
+            await downloadExcel(data, columns);
+          }
+        }
+      } finally {
+        setIsDownloading(false);
       }
-    } finally {
-      setIsDownloading(false);
-    }
-  }, []);
+    },
+    [tableQueryResult]
+  );
 
   const handleTypeChange = useCallback((v: string) => {
     setSelectedType(v as "sql" | "data");

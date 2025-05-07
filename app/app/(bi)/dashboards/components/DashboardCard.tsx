@@ -98,6 +98,11 @@ export function DashboardCard({
         charts: dashboard.charts || [],
         layout: dashboard.layout || [],
         description: dashboard.description,
+        permissions: {
+          publicView: false,
+          viewers: [],
+          editors: [],
+        },
       });
 
       if (newDashboard) {

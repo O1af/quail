@@ -17,15 +17,15 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { createClient } from "@/utils/supabase/client";
-import { Chart, loadUserCharts } from "../stores/dashboard_store";
+import { loadUserCharts, createDashboard } from "../stores/dashboard_store";
+import { ChartDocument } from "@/lib/types/stores/chart";
 import Select from "react-select";
-import { createDashboard } from "../stores/dashboard_store";
 import { useTheme } from "next-themes";
 
 export function CreateDashboard() {
   const [open, setOpen] = useState(false);
   const [selectedCharts, setSelectedCharts] = useState<string[]>([]);
-  const [availableCharts, setAvailableCharts] = useState<Chart[]>([]);
+  const [availableCharts, setAvailableCharts] = useState<ChartDocument[]>([]);
   const supabase = createClient();
   const [user, setUser] = useState<any>(null);
   const { theme } = useTheme();
@@ -136,6 +136,11 @@ export function CreateDashboard() {
                 title,
                 userId: user.id,
                 layout,
+                permissions: {
+                  publicView: false,
+                  viewers: [],
+                  editors: [],
+                },
               });
 
               console.log(newDashboard);

@@ -1,5 +1,5 @@
 import React from "react";
-import { ActivityItem } from "@/lib/utils/activity";
+import { ActivityItem } from "@/app/app/page";
 import Link from "next/link";
 import {
   BarChart3,
