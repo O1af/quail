@@ -127,6 +127,9 @@ export function useDashboard(slug: string): UseDashboardReturn {
   const supabase = createClient();
   const queryClient = useQueryClient();
 
+  // Add a ref to track if we're currently processing chart changes
+  const isProcessingChartChanges = useRef(false);
+
   // --- Data Fetching with React Query ---
   const dashboardQueryKey = ["dashboard", slug, userId];
 
@@ -344,6 +347,11 @@ export function useDashboard(slug: string): UseDashboardReturn {
       JSON.stringify(tempChartsRef.current) !==
       JSON.stringify(currentDashboard.charts || []); // Ensure comparison with default empty array
 
+    console.log("TempLayouts:", tempLayoutsRef.current);
+    console.log("CurrentLayouts:", currentDashboard.layout);
+    console.log("TempCharts:", tempChartsRef.current);
+    console.log("CurrentCharts:", currentDashboard.charts);
+
     if (
       didTitleChange ||
       didDescriptionChange ||
@@ -365,6 +373,7 @@ export function useDashboard(slug: string): UseDashboardReturn {
         duration: 2000,
       });
     }
+    isProcessingChartChanges.current = false;
   }, [
     queryResult,
     userId, // Use userId from hook scope
@@ -396,71 +405,119 @@ export function useDashboard(slug: string): UseDashboardReturn {
       description: "Editing cancelled.",
       duration: 3000,
     });
+    isProcessingChartChanges.current = false;
   }, [queryResult, toast]); // Depend on queryResult
 
   const handleLayoutChange = useCallback(
     (layout: LayoutItem[]) => {
-      if (isEditing) {
+      // Skip layout updates if we're currently processing chart changes
+      if (isEditing && !isProcessingChartChanges.current) {
         if (JSON.stringify(layout) !== JSON.stringify(tempLayoutsRef.current)) {
+          console.log("handleLayoutChange: Updating layout", {
+            oldLayoutLength: tempLayoutsRef.current.length,
+            newLayoutLength: layout.length,
+            isProcessingCharts: isProcessingChartChanges.current,
+          });
           tempLayoutsRef.current = layout;
           setHasUnsavedChanges(true);
         }
+      } else if (isProcessingChartChanges.current) {
+        console.log("Skipping layout update during chart changes");
       }
     },
     [isEditing]
   );
 
   const handleChartsChange = useCallback(
-    // ... existing handleChartsChange logic ...
-    // Ensure it uses tempLayoutsRef.current and tempChartsRef.current correctly
-    // and updates local chartData state as before.
     (newCharts: string[], apply: boolean) => {
       if (apply && isEditing) {
-        const currentChartsSet = new Set(tempChartsRef.current);
-        const newChartsSet = new Set(newCharts);
+        try {
+          // Set flag to prevent handleLayoutChange from interfering
+          isProcessingChartChanges.current = true;
 
-        const addedCharts = newCharts.filter((id) => !currentChartsSet.has(id));
-        const removedCharts = tempChartsRef.current.filter(
-          (id) => !newChartsSet.has(id)
-        );
+          const currentChartsSet = new Set(tempChartsRef.current);
+          const newChartsSet = new Set(newCharts);
 
-        if (addedCharts.length === 0 && removedCharts.length === 0) {
-          // No actual change in charts
-          return;
-        }
+          const addedCharts = newCharts.filter(
+            (id) => !currentChartsSet.has(id)
+          );
+          const removedCharts = tempChartsRef.current.filter(
+            (id) => !newChartsSet.has(id)
+          );
 
-        // Update charts reference
-        tempChartsRef.current = newCharts;
+          console.log("Charts change detected:", {
+            current: [...tempChartsRef.current],
+            new: newCharts,
+            added: addedCharts,
+            removed: removedCharts,
+            layoutBefore: tempLayoutsRef.current.length,
+          });
 
-        // Clean up layouts: Remove layouts for removed charts
-        tempLayoutsRef.current = tempLayoutsRef.current.filter((item) =>
-          newChartsSet.has(item.i)
-        );
+          if (addedCharts.length === 0 && removedCharts.length === 0) {
+            // No actual change in charts
+            return;
+          }
 
-        // Add default layout items for new charts
-        if (addedCharts.length > 0) {
-          const maxY =
-            tempLayoutsRef.current.length > 0
-              ? Math.max(
-                  ...tempLayoutsRef.current.map((item) => item.y + item.h)
-                )
-              : 0;
+          // Update charts reference
+          tempChartsRef.current = [...newCharts]; // Create a new array to ensure reference change
 
-          const newLayoutItems = addedCharts.map((chartId, index) => ({
-            i: chartId,
-            x: (index * 6) % 12,
-            y: maxY + Math.floor((index * 6) / 12) * 9,
-            w: 6,
-            h: 9,
-            minW: 3,
-            minH: 3,
-          }));
+          // Clean up layouts: Remove layouts for removed charts
+          if (removedCharts.length > 0) {
+            console.log("Removing layouts for charts:", removedCharts);
+            tempLayoutsRef.current = tempLayoutsRef.current.filter((item) =>
+              newChartsSet.has(item.i)
+            );
+          }
 
-          tempLayoutsRef.current = [
-            ...tempLayoutsRef.current,
-            ...newLayoutItems,
-          ];
+          // Add default layout items for new charts
+          if (addedCharts.length > 0) {
+            console.log("Adding layouts for new charts:", addedCharts);
+            const maxY =
+              tempLayoutsRef.current.length > 0
+                ? Math.max(
+                    ...tempLayoutsRef.current.map((item) => item.y + item.h)
+                  )
+                : 0;
 
+            const newLayoutItems = addedCharts.map((chartId, index) => {
+              // Increase default chart size dimensions
+              const item = {
+                i: chartId,
+                x: 0, // Start at x=0 to use full width
+                y: maxY + index * 12, // Space charts vertically with more room
+                w: 12, // Full width (12 columns)
+                h: 15, // Taller height for better visibility
+                minW: 6,
+                minH: 8,
+              };
+
+              console.log(`Adding new chart ${chartId} with dimensions:`, {
+                width: item.w,
+                height: item.h,
+                x: item.x,
+                y: item.y,
+              });
+
+              return item;
+            });
+
+            // Create a new array to ensure reference change
+            tempLayoutsRef.current = [
+              ...tempLayoutsRef.current,
+              ...newLayoutItems,
+            ];
+          }
+
+          console.log("Layout after chart changes:", {
+            layoutItems: tempLayoutsRef.current.length,
+            charts: tempChartsRef.current.length,
+          });
+
+          // Force chart update counter to trigger a re-render
+          setChartUpdateCounter((prev) => prev + 1);
+          setHasUnsavedChanges(true);
+
+          // Load data for new charts
           const loadNewChartData = async () => {
             const newChartDataMap = new Map(chartData);
             for (const chartId of addedCharts) {
@@ -476,38 +533,40 @@ export function useDashboard(slug: string): UseDashboardReturn {
             }
             setChartData(newChartDataMap);
           };
-          loadNewChartData(); // No need to check addedCharts.length > 0 here
-        }
 
-        // Remove chart data for removed charts from local state
-        if (removedCharts.length > 0) {
-          setChartData((prevMap) => {
-            const newMap = new Map(prevMap);
-            removedCharts.forEach((id) => newMap.delete(id));
-            return newMap;
+          if (addedCharts.length > 0) {
+            loadNewChartData();
+          }
+
+          // Remove chart data for removed charts from local state
+          if (removedCharts.length > 0) {
+            setChartData((prevMap) => {
+              const newMap = new Map(prevMap);
+              removedCharts.forEach((id) => newMap.delete(id));
+              return newMap;
+            });
+          }
+
+          let message = "";
+          if (addedCharts.length > 0)
+            message += `Added ${addedCharts.length} chart${
+              addedCharts.length !== 1 ? "s" : ""
+            }. `;
+          if (removedCharts.length > 0)
+            message += `Removed ${removedCharts.length} chart${
+              removedCharts.length !== 1 ? "s" : ""
+            }.`;
+          toast({
+            title: "Charts updated (unsaved)",
+            description: message.trim(),
+            duration: 3000,
           });
+        } finally {
+          // Make sure we always reset the flag, even if an error occurs
         }
-
-        setChartUpdateCounter((prev) => prev + 1);
-        setHasUnsavedChanges(true);
-
-        let message = "";
-        if (addedCharts.length > 0)
-          message += `Added ${addedCharts.length} chart${
-            addedCharts.length !== 1 ? "s" : ""
-          }. `;
-        if (removedCharts.length > 0)
-          message += `Removed ${removedCharts.length} chart${
-            removedCharts.length !== 1 ? "s" : ""
-          }.`;
-        toast({
-          title: "Charts updated (unsaved)",
-          description: message.trim(),
-          duration: 3000,
-        });
       }
     },
-    [isEditing, chartData, toast] // Keep chartData dependency
+    [isEditing, chartData, toast]
   );
 
   const handleUpdatePermissions = useCallback(
