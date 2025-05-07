@@ -47,6 +47,9 @@ import { DataDownloadButton } from "@/components/header/buttons/data-download-bu
 import { ColumnDef } from "@tanstack/react-table"; // For type safety
 import { SQLData } from "../../stores/table_store"; // For type safety
 
+// Maximum number of rows to display in the main view
+const MAX_VISIBLE_ROWS = 100;
+
 // Reusable SortIcon component
 const SortIcon = ({ sortDirection }: { sortDirection: string | false }) => {
   if (sortDirection === "desc") return <ArrowUp className="h-4 w-4" />;
@@ -108,12 +111,20 @@ export function DataTable() {
     [tableQueryResult?.columns]
   );
 
+  // Create a limited view of data for rendering (max 100 rows)
+  const limitedData = React.useMemo(() => {
+    return data.slice(0, MAX_VISIBLE_ROWS);
+  }, [data]);
+
+  // Track if data is being limited
+  const isDataLimited = data.length > MAX_VISIBLE_ROWS;
+
   // The actual loading state combines both isLoading and isFetching
   const showLoading = isLoading || (isFetching && !hasData);
 
-  // Always call useReactTable
+  // Always call useReactTable with the limited data
   const table = useReactTable({
-    data: data,
+    data: limitedData,
     columns: columns,
     getCoreRowModel: getCoreRowModel(),
     getSortedRowModel: getSortedRowModel(),
@@ -226,7 +237,7 @@ export function DataTable() {
                     </TableCell>
                   </TableRow>
                 ) : (
-                  // Render actual data rows
+                  // Render actual data rows (limited to MAX_VISIBLE_ROWS)
                   table.getRowModel().rows.map((row, index) => (
                     <TableRow
                       key={row.id}
@@ -253,18 +264,31 @@ export function DataTable() {
                     </TableRow>
                   ))
                 )}
+
+                {/* Add a message row when data is limited */}
+                {isDataLimited && !showLoading && !isError && (
+                  <TableRow>
+                    <TableCell
+                      colSpan={columns.length}
+                      className="text-center text-xs text-muted-foreground italic py-2 border-t"
+                    >
+                      Showing {MAX_VISIBLE_ROWS} of {data.length} rows. Use Advanced View to see all data.
+                    </TableCell>
+                  </TableRow>
+                )}
               </TableBody>
             </Table>
           </div>
         </div>
       </div>
-      {/* Footer remains the same */}
+      {/* Footer with row count info and Advanced View button */}
       <div className="px-2 py-1 text-xs text-muted-foreground border-t bg-muted/10 flex justify-between items-center">
         <div>
           {/* Show row count only if not loading/error and data exists */}
           {!showLoading && !isError && data.length > 0 && (
             <>
-              {table.getRowModel().rows.length} rows
+              {data.length} rows
+              {isDataLimited && <> (showing {MAX_VISIBLE_ROWS})</>}
               {table.getSelectedRowModel?.()?.rows?.length > 0 &&
                 ` (${table.getSelectedRowModel().rows.length} selected)`}
             </>
@@ -291,20 +315,19 @@ export function DataTable() {
                   View, sort, filter, and download your query results.
                 </DialogDescription>
               </DialogHeader>
-              {/* Pass data and columns to DataHeader */}
+              {/* Pass FULL data and columns to DataHeader */}
               <div className="mt-3">
                 <DataHeader data={data} columns={columns} />
               </div>
             </div>
             <div className="flex-grow overflow-hidden p-2">
-              {/* Pass data, columns, and loading state to BetterDataTable */}
+              {/* Pass FULL data, columns, and loading state to BetterDataTable */}
               <BetterDataTable
                 data={data}
                 columns={columns}
                 isLoading={showLoading}
               />
             </div>
-            {/* Footer removed since the download button is now in the header */}
           </DialogContent>
         </Dialog>
       </div>
