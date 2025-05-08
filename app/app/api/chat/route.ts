@@ -131,16 +131,10 @@ export async function POST(req: Request) {
           supabase,
           user.user.id,
           getCurrentUsageColumn(),
-          usage.totalTokens,
-          userTier
+          usage.totalTokens
         );
 
-        await updateUsage(
-          supabase,
-          user.user.id,
-          getCurrentUsageColumn(),
-          userTier
-        );
+        await updateUsage(supabase, user.user.id, getCurrentUsageColumn());
       } catch (error) {
         console.error("Failed to update usage metrics:", error);
       }
