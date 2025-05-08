@@ -41,8 +41,7 @@ export async function updateTokenUsage(
   supabase: any,
   userId: string,
   columnName: string,
-  tokenCount: number,
-  tier: string
+  tokenCount: number
 ) {
   const { error } = await supabase.rpc("increment_token_count", {
     p_user_id: userId,
@@ -56,8 +55,7 @@ export async function updateTokenUsage(
 export async function updateUsage(
   supabase: any,
   userId: string,
-  columnName: string,
-  tier: string
+  columnName: string
 ) {
   const { error } = await supabase.rpc("increment_req_count", {
     p_user_id: userId,

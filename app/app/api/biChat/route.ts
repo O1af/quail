@@ -24,7 +24,6 @@ import {
   updateUsage,
   getCurrentUsageColumn,
 } from "@/utils/metrics/AI";
-import { get } from "http";
 
 const azure = createAzure({
   resourceName: process.env.NEXT_PUBLIC_AZURE_RESOURCE_NAME, // Azure resource name
@@ -38,17 +37,17 @@ const azure = createAzure({
  * - fast/medium: gpt-4.1-mini (faster but may be less accurate)
  */
 function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
-  if (speedMode === "slow") {
-    return azure("o4-mini");
-  } else {
+  if (speedMode === "fast") {
     return azure("gpt-4.1-mini");
+  } else {
+    return azure("o4-mini");
   }
 }
 
-function getOptionsBySpeedMode(speedMode: SpeedMode = "medium") {
+export function getOptionsBySpeedMode(speedMode: SpeedMode = "medium") {
   if (speedMode === "slow") {
     return {
-      openai: {
+      azure: {
         reasoningEffort: "low",
       },
     };
@@ -226,56 +225,68 @@ export async function POST(req: Request) {
             dbSchema: databaseStructure,
             provider: azure,
             stream: dataStream,
+            speedMode,
           }),
         },
         async onFinish({ response, usage }) {
-          // Added usage parameter
-          // Update token usage and general usage
-          try {
-            await updateTokenUsage(
-              supabase,
-              user.user.id,
-              getCurrentUsageColumn(),
-              usage.totalTokens,
-              userTier
-            );
-
-            await updateUsage(
-              supabase,
-              user.user.id,
-              getCurrentUsageColumn(),
-              userTier
-            );
-          } catch (error) {
-            console.error("Failed to update usage metrics:", error);
-            // Optionally inform the client about the usage update failure
-            dataStream.writeData({
-              status: "Failed to update usage metrics",
-            });
-          }
-
-          // Save the chat, potentially updating the title if generated
+          // Run all post-completion tasks in parallel
           const finalMessages = appendResponseMessages({
             messages,
             responseMessages: response.messages,
           });
+          const [tokenUsageResult, generalUsageResult, saveChatResult] =
+            await Promise.all([
+              // Update token usage
+              tryCatch(
+                updateTokenUsage(
+                  supabase,
+                  user.user.id,
+                  getCurrentUsageColumn(),
+                  usage.totalTokens
+                )
+              ),
 
-          const { error: saveError } = await tryCatch(
-            saveChat(
-              id, // Use the ID passed from the client
-              finalMessages,
-              user.user.id,
-              title ?? undefined
-            )
-          );
+              // Update general usage
+              tryCatch(
+                updateUsage(supabase, user.user.id, getCurrentUsageColumn())
+              ),
 
-          if (saveError) {
-            console.error("Failed to save chat:", saveError);
+              // Save the chat
+              tryCatch(
+                saveChat(id, finalMessages, user.user.id, title ?? undefined)
+              ),
+            ]);
+
+          // Handle errors for token usage
+          if (tokenUsageResult.error) {
+            console.error(
+              "Failed to update token usage:",
+              tokenUsageResult.error
+            );
+            dataStream.writeData({
+              status: "Failed to update token usage metrics",
+            });
+          }
+
+          // Handle errors for general usage
+          if (generalUsageResult.error) {
+            console.error(
+              "Failed to update general usage:",
+              generalUsageResult.error
+            );
+            dataStream.writeData({
+              status: "Failed to update general usage metrics",
+            });
+          }
+
+          // Handle errors for chat saving
+          if (saveChatResult.error) {
+            console.error("Failed to save chat:", saveChatResult.error);
             dataStream.writeData({
               status: "Failed to save chat",
             });
           } else {
-            // Optionally send final status
+            // Chat saved successfully
             dataStream.writeData({ status: "Chat saved successfully" });
           }
         },
