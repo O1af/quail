@@ -6,7 +6,6 @@ import { DatabaseStructure } from "@/components/stores/table_store";
 import { tryCatch } from "@/lib/trycatch";
 import { executeQueryWithErrorHandling, updateStatus } from "./utils/workflow";
 import { ObjectId } from "mongodb";
-import { getOptionsBySpeedMode } from "./route";
 import { type SpeedMode } from "@/components/stores/table_store";
 import { AzureOpenAIProvider } from "@ai-sdk/azure";
 interface DataVisAgentParams {
@@ -33,6 +32,17 @@ function getDataVisAgentModel(
     return provider("o4-mini");
   } else {
     return provider("gpt-4.1-mini");
+  }
+}
+function getOptionsBySpeedMode(speedMode: SpeedMode = "medium") {
+  if (speedMode !== "fast") {
+    return {
+      azure: {
+        reasoningEffort: "low",
+      },
+    };
+  } else {
+    return undefined;
   }
 }
 

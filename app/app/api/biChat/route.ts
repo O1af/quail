@@ -44,8 +44,8 @@ function getModelBySpeedMode(speedMode: SpeedMode = "medium") {
   }
 }
 
-export function getOptionsBySpeedMode(speedMode: SpeedMode = "medium") {
-  if (speedMode === "slow") {
+function getOptionsBySpeedMode(speedMode: SpeedMode = "medium") {
+  if (speedMode !== "fast") {
     return {
       azure: {
         reasoningEffort: "low",
