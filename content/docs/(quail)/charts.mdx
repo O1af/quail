@@ -290,107 +290,30 @@ You can create charts in Quail through multiple methods:
 
 ## Customizing Your Charts
 
-<Tabs
-  items={[
-    "Basic Customization",
-    "Advanced Styling",
-    "Reference Lines",
-    "Interactivity",
-  ]}
->
-  <Tab value="Basic Customization">
+<Accordions>
+  <Accordion title="Prompt Agent" id="customize-style">
     <Steps>
-      <Step>With your chart open, click **Edit**</Step>
+      <Step>Open the chart editor and navigate to the **Style** tab</Step>
       <Step>
-        Customize: - Chart title and description - Axis labels and formatting -
-        Legend position and labels - Colors and themes
+        Use the available options to adjust: 
+        - Colors and themes 
+        - Fonts and labels 
+        - Grid lines and backgrounds
+      </Step>
+      <Step>Save your changes to apply the new style</Step>
+    </Steps>
+  </Accordion>
+
+  <Accordion title="Save Chart for Manual Editing" id="save-chart-manual">
+    <Steps>
+      <Step>After creating or editing your chart, click **Save**</Step>
+      <Step>
+        Save the chart to enable manual editing of the JSX components using 
+        Fumadocs components for further customization
       </Step>
     </Steps>
-  </Tab>
-
-{" "}
-
-<Tab value="Advanced Styling">
-  <Steps>
-    <Step>From the edit screen, go to the **Style** tab</Step>
-    <Step>
-      Adjust: - Font sizes and styles - Grid lines and backgrounds - Custom
-      color palettes - Tooltip content and format
-    </Step>
-  </Steps>
-</Tab>
-
-{" "}
-
-<Tab value="Reference Lines">
-  <Steps>
-    <Step>In the chart editor, go to the **Reference Lines** section</Step>
-    <Step>
-      Add lines for: - Averages, medians, targets - Thresholds or benchmarks -
-      Forecasts or projections
-    </Step>
-  </Steps>
-</Tab>
-
-  <Tab value="Interactivity">
-    <Steps>
-      <Step>In the advanced settings, configure:</Step>
-      <Step>
-        - Tooltips with custom information - Drill-down actions when clicking
-        data points - Highlighting and filtering behaviors
-      </Step>
-    </Steps>
-  </Tab>
-</Tabs>
-
-## Interpreting Charts
-
-### Reading Common Chart Types
-
-<Tabs items={["Bar Charts", "Line Charts", "Scatter Plots"]}>
-  <Tab value="Bar Charts">
-    - Height/length represents the value - Space between bars helps compare
-    individual categories - Grouped bars compare subcategories within main
-    categories
-  </Tab>
-
-{" "}
-
-<Tab value="Line Charts">
-  - Slope indicates rate of change - Intersections show when values cross -
-  Peaks and valleys show maximums and minimums
-</Tab>
-
-  <Tab value="Scatter Plots">
-    - Clustering indicates correlation - Outliers appear distant from the main
-    cluster - Trend lines show the overall relationship
-  </Tab>
-</Tabs>
-
-{/*
-### Spotting Trends and Patterns
-
-<TypeTable
-  type={{
-    upwardDownwardTrends: {
-      description: "Consistent movement in one direction",
-      type: "Pattern",
-    },
-    cyclicalPatterns: {
-      description: "Repeating ups and downs",
-      type: "Pattern",
-    },
-    outliers: {
-      description: "Data points that differ significantly from others",
-      type: "Pattern",
-    },
-    clusters: {
-      description: "Groups of similar data points",
-      type: "Pattern",
-    },
-  }}
-/>
-*/}
+  </Accordion>
+</Accordions>
 
 ## Saving and Sharing Charts
 

@@ -66,7 +66,7 @@ ${data.message}`;
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pt-12">
       <div className="container mx-auto py-10 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-10">
