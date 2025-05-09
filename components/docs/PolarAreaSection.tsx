@@ -5,7 +5,7 @@ import dynamic from "next/dynamic";
 
 // Import PolarAreaChart dynamically to avoid SSR issues
 const PolarAreaChart = dynamic(
-  () => import("@/components/example-charts/PolarAreaChart"),
+  () => import("@/components/docs/charts/PolarAreaChart"),
   {
     ssr: false,
     loading: () => (

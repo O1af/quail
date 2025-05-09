@@ -4,7 +4,7 @@ import { TypeTable } from "fumadocs-ui/components/type-table";
 import dynamic from "next/dynamic";
 
 // Import BarChart dynamically to avoid SSR issues
-const BarChart = dynamic(() => import("@/components/charts/BarChart"), {
+const BarChart = dynamic(() => import("@/components/docs/charts/BarChart"), {
   ssr: false,
   loading: () => (
     <div className="h-64 w-full bg-muted/20 animate-pulse rounded-md" />

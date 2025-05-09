@@ -4,12 +4,15 @@ import { TypeTable } from "fumadocs-ui/components/type-table";
 import dynamic from "next/dynamic";
 
 // Import RadarChart dynamically to avoid SSR issues
-const RadarChart = dynamic(() => import("@/components/charts/RadarChart"), {
-  ssr: false,
-  loading: () => (
-    <div className="h-64 w-full bg-muted/20 animate-pulse rounded-md" />
-  ),
-});
+const RadarChart = dynamic(
+  () => import("@/components/docs/charts/RadarChart"),
+  {
+    ssr: false,
+    loading: () => (
+      <div className="h-64 w-full bg-muted/20 animate-pulse rounded-md" />
+    ),
+  }
+);
 
 // Sample data for the radar chart
 const radarChartData = {
