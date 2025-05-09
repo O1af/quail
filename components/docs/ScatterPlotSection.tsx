@@ -4,7 +4,7 @@ import { TypeTable } from "fumadocs-ui/components/type-table";
 import dynamic from "next/dynamic";
 
 // Import ScatterChart dynamically to avoid SSR issues
-const ScatterChart = dynamic(() => import("@/components/charts/ScatterChart"), {
+const ScatterChart = dynamic(() => import("@/components/docs/ScatterChart"), {
   ssr: false,
   loading: () => (
     <div className="h-64 w-full bg-muted/20 animate-pulse rounded-md" />

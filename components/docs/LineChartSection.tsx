@@ -4,7 +4,7 @@ import { TypeTable } from "fumadocs-ui/components/type-table";
 import dynamic from "next/dynamic";
 
 // Import LineChart dynamically to avoid SSR issues
-const LineChart = dynamic(() => import("@/components/charts/LineChart"), {
+const LineChart = dynamic(() => import("@/components/docs/LineChart"), {
   ssr: false,
   loading: () => (
     <div className="h-64 w-full bg-muted/20 animate-pulse rounded-md" />
