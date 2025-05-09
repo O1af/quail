@@ -34,13 +34,13 @@ export function SaveChartAsPng({ title, disabled }: SaveChartAsPngProps) {
 
       // Try different ways to get the chart instance
       // Method 1: Chart.js standard way
-      // @ts-ignore - Chart.js attaches the chart instance to the canvas
+      // @ts-expect-error - Chart.js attaches the chart instance to the canvas
       let chartInstance = canvasElement.__chartjs__?.chart;
 
       // Method 2: Alternative property sometimes used
-      // @ts-ignore
+      // @ts-expect-error - Accessing non-standard _chart property
       if (!chartInstance && canvasElement._chart) {
-        // @ts-ignore
+        // @ts-expect-error - Using non-standard _chart property
         chartInstance = canvasElement._chart;
       }
 
