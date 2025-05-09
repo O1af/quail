@@ -4,7 +4,7 @@ import { TypeTable } from "fumadocs-ui/components/type-table";
 import dynamic from "next/dynamic";
 
 // Import PieChart dynamically to avoid SSR issues
-const PieChart = dynamic(() => import("@/components/docs/PieChart"), {
+const PieChart = dynamic(() => import("@/components/docs/charts/PieChart"), {
   ssr: false,
   loading: () => (
     <div className="h-64 w-full bg-muted/20 animate-pulse rounded-md" />
