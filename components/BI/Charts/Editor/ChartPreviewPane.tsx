@@ -188,7 +188,7 @@ export default function ChartPreviewPane({
         )}
 
         {/* Content */}
-        <div className="w-full h-full max-w-full max-h-full">
+        <div className="w-full h-full max-w-full max-h-full chart-preview-container">
           {hasRenderError ? (
             <Alert variant="destructive" className="overflow-auto max-h-full">
               <AlertTriangle className="h-4 w-4" />

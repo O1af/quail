@@ -13,6 +13,7 @@ import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { Input } from "@/components/ui/input";
 import { useToast } from "@/lib/hooks/use-toast"; // Import useToast
+import { SaveChartAsPng } from "@/components/header/buttons/save-chart-png"; // Import the new component
 
 export default function ChartPage() {
   const params = useParams<{ chart_id: string }>();
@@ -229,7 +230,7 @@ export default function ChartPage() {
     setHeaderContent,
   ]);
 
-  // Update Header Buttons (Back, Save)
+  // Update Header Buttons (Back, Save, Save as PNG)
   useEffect(() => {
     setHeaderButtons(
       <div className="flex gap-2">
@@ -241,23 +242,28 @@ export default function ChartPage() {
         </Button>
 
         {params.chart_id !== "new" && ( // Only show save for existing charts
-          <Button
-            size="sm"
-            className="gap-2 w-[130px]" // Fixed width to prevent layout shifts
-            disabled={isSaving || !hasUnsavedChanges || isLoading}
-            onClick={handleSave} // Now defined above
-          >
-            {isSaving ? (
-              <Loader2 className="h-4 w-4 animate-spin" />
-            ) : (
-              <Save className="h-4 w-4" />
-            )}
-            {isSaving
-              ? "Saving..."
-              : hasUnsavedChanges
-              ? "Save Changes"
-              : "Saved"}
-          </Button>
+          <>
+            <Button
+              size="sm"
+              className="gap-2 w-[130px]" // Fixed width to prevent layout shifts
+              disabled={isSaving || !hasUnsavedChanges || isLoading}
+              onClick={handleSave} // Now defined above
+            >
+              {isSaving ? (
+                <Loader2 className="h-4 w-4 animate-spin" />
+              ) : (
+                <Save className="h-4 w-4" />
+              )}
+              {isSaving
+                ? "Saving..."
+                : hasUnsavedChanges
+                ? "Save Changes"
+                : "Saved"}
+            </Button>
+
+            {/* Add Save as PNG button */}
+            <SaveChartAsPng title={title} disabled={isLoading || isSaving} />
+          </>
         )}
       </div>
     );
@@ -266,7 +272,8 @@ export default function ChartPage() {
     isSaving,
     hasUnsavedChanges,
     isLoading,
-    handleSave, // Dependency remains
+    handleSave,
+    title, // Added title as dependency
     setHeaderButtons,
   ]);
 

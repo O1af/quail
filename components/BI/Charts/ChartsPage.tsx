@@ -7,7 +7,6 @@ import Link from "next/link";
 import { formatDistanceToNow } from "date-fns";
 // Removed createClient import as it's handled by useIsAuthenticated
 import Routes from "@/components/routes";
-import { ChartDocument } from "@/lib/types/stores/chart";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query"; // Import React Query hooks
 import { useIsAuthenticated } from "@/lib/hooks/use-authenticated-query"; // Import only auth hook
 import { chartQueryKeys } from "@/lib/hooks/use-chart-data"; // Import query keys from use-chart-data
