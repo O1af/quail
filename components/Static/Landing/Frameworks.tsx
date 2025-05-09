@@ -5,6 +5,7 @@ import { useTheme } from "next-themes";
 import { cn } from "@/lib/utils";
 import { motion } from "framer-motion";
 import Image from "next/image";
+import Link from "next/link";
 
 // Use img tags to render SVGs
 const NeonLogo = () => {
@@ -95,43 +96,43 @@ const AWSLogo = () => {
 const frameworks = [
   {
     name: "PostgreSQL",
-    href: "#",
+    href: "/docs",
     icon: PostgresLogo,
     color: "#336791",
   },
   {
     name: "MySQL",
-    href: "#",
+    href: "/docs",
     icon: MySQLLogo,
     color: "#00758F",
   },
   {
     name: "Supabase",
-    href: "#",
+    href: "/docs",
     icon: SiSupabase,
     color: "#3ECF8E",
   },
   {
     name: "Neon.tech",
-    href: "#",
+    href: "/docs",
     icon: NeonLogo,
     color: "#00E699",
   },
   {
     name: "AWS RDS",
-    href: "#",
+    href: "/docs",
     icon: AWSLogo,
     color: "#FF9900",
   },
   {
     name: "Azure",
-    href: "#",
+    href: "/docs",
     icon: AzureLogo,
     color: "#0078D4",
   },
   {
     name: "Cloud SQL",
-    href: "#",
+    href: "/docs",
     icon: GCPCloudSQLLogo,
     color: "#4285F4",
   },
@@ -225,29 +226,38 @@ function FrameworksSection() {
             variants={containerVariants}
           >
             {frameworks.map(({ name, href, icon: Icon, color }) => (
-              <motion.a
+              <Link
                 key={name}
-                variants={itemVariants}
-                whileHover={{ scale: 1.05 }}
-                className="transition-all duration-300 group"
-                onMouseEnter={() => handleMouseEnter(name)}
+                href={href}
+                aria-label={`Learn about Quail with ${name}`}
+                title={`Documentation for using Quail with ${name}`}
+                passHref
               >
-                <div
-                  className="flex h-14 w-14 items-center justify-center rounded-lg border bg-background/50 p-3 group-hover:border-primary group-hover:bg-background/80 transition-all duration-300 hover:shadow-lg"
-                  style={
-                    {
-                      "--hover-color": color,
-                    } as React.CSSProperties
-                  }
+                <motion.div
+                  variants={itemVariants}
+                  whileHover={{ scale: 1.05 }}
+                  className="transition-all duration-300 group cursor-pointer"
+                  onMouseEnter={() => handleMouseEnter(name)}
                 >
-                  <Icon
-                    className="w-full h-full text-muted-foreground transition-colors duration-300"
-                    style={{
-                      color: hoveredFramework === name ? color : "currentColor",
-                    }}
-                  />
-                </div>
-              </motion.a>
+                  <div
+                    className="flex h-14 w-14 items-center justify-center rounded-lg border bg-background/50 p-3 group-hover:border-primary group-hover:bg-background/80 transition-all duration-300 hover:shadow-lg"
+                    style={
+                      {
+                        "--hover-color": color,
+                      } as React.CSSProperties
+                    }
+                  >
+                    <Icon
+                      className="w-full h-full text-muted-foreground transition-colors duration-300"
+                      style={{
+                        color:
+                          hoveredFramework === name ? color : "currentColor",
+                      }}
+                      aria-hidden="true"
+                    />
+                  </div>
+                </motion.div>
+              </Link>
             ))}
           </motion.div>
         </motion.div>

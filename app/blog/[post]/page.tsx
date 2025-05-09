@@ -103,7 +103,7 @@ const components = {
 
     if (typeof code === "string" && language) {
       return (
-        <div className="code-block-wrapper relative group my-8 rounded-lg border bg-gray-50 dark:bg-zinc-900 dark:border-zinc-800">
+        <div className="code-block-wrapper not-prose relative group my-8 rounded-lg border dark:border-zinc-800">
           <div className="flex justify-between items-center px-4 py-2 border-b bg-gray-100 dark:bg-zinc-800 dark:border-zinc-700 rounded-t-lg">
             <span className="text-xs font-mono text-muted-foreground">
               {language}

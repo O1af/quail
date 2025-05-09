@@ -55,7 +55,7 @@ export function CTA() {
             className="text-4xl md:text-5xl font-bold tracking-tight mb-4 text-center"
             variants={itemVariants}
           >
-            Supercharge Your Analysis With Quail
+            Supercharge Your Analysis
           </motion.h2>
 
           <motion.p
@@ -105,6 +105,7 @@ export function CTA() {
               <Link
                 href="/privacy"
                 className="text-emerald-500 hover:underline"
+                aria-label="Learn more about our security and privacy practices"
               >
                 Learn More
               </Link>

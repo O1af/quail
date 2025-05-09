@@ -1,93 +1,122 @@
 import { motion } from "framer-motion";
-import {
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Container } from "@/components/ui/container";
-import { ChatCard } from "./ChatCard";
 import { DBCard } from "./DBCard";
 import { ChartCard } from "./ChartCard";
-import { Bot, BarChartBig, Database, Sparkles } from "lucide-react";
-import { MagicCard } from "@/components/magicui/magic-card";
+import { APP_URL } from "@/lib/constants";
+import {
+  Bot,
+  BarChartBig,
+  Database,
+  Sparkles,
+  LayoutDashboard,
+} from "lucide-react";
+import { BentoCard, BentoGrid } from "@/components/magicui/bento-grid";
 import { cn } from "@/lib/utils";
+import Image from "next/image";
 import { useTheme } from "next-themes";
 
-interface Feature {
-  title: string;
-  description: string;
-  component?: React.FC;
-  icon: React.ElementType;
-  iconColor: string;
-  gradientFrom: string;
-  gradientTo: string;
-}
+// Image Card component for displaying background images
+const ImageCard = ({ imagePath, alt }: { imagePath: string; alt: string }) => {
+  return (
+    <div className="relative h-full w-full overflow-hidden rounded-md shadow-sm">
+      <div className="h-full w-full relative">
+        <Image
+          src={imagePath}
+          alt={alt}
+          fill
+          className="object-contain"
+          sizes="(max-width: 768px) 100vw, 50vw"
+        />
+      </div>
+    </div>
+  );
+};
 
-const features: Feature[] = [
+// Theme-aware image component that switches based on dark/light mode
+const ThemeAwareImage = ({
+  lightSrc,
+  darkSrc,
+  alt,
+}: {
+  lightSrc: string;
+  darkSrc: string;
+  alt: string;
+}) => {
+  const { resolvedTheme } = useTheme();
+  const imagePath = resolvedTheme === "dark" ? darkSrc : lightSrc;
+
+  return <ImageCard imagePath={imagePath} alt={alt} />;
+};
+
+const features = [
   {
-    title: "AI SQL Query Editor",
-    description:
-      "Create and optimize SQL queries effortlessly with our intelligent, schema-aware assistant",
-    component: ChatCard,
-    icon: Bot,
-    iconColor: "text-blue-500",
-    gradientFrom: "#3b82f6",
-    gradientTo: "#06b6d4",
+    name: "AI SQL Query Editor",
+    description: "", // Empty description
+    contentComponent: () => (
+      <ThemeAwareImage
+        lightSrc="/landing/editor-light.png"
+        darkSrc="/landing/editor-dark.png"
+        alt="AI SQL Query Editor preview"
+      />
+    ),
+    Icon: Bot,
+    href: `${APP_URL}/signup`,
+    cta: "Explore",
+    className: "md:col-span-1",
+    gradientFrom: "#3b82f6", // blue-500
+    gradientTo: "#06b6d4", // cyan-500
   },
   {
-    title: "Natural Language Data Analysis",
-    description:
-      "Ask questions about your data in plain English and get visualized insights instantly",
-    component: ChartCard,
-    icon: BarChartBig,
-    iconColor: "text-emerald-500",
-    gradientFrom: "#10b981",
-    gradientTo: "#22c55e",
+    name: "Data Visualization",
+    description: "", // Empty description
+    contentComponent: ChartCard,
+    Icon: BarChartBig,
+    href: `${APP_URL}/signup`,
+    cta: "Visualize",
+    className: "md:col-span-1",
+    gradientFrom: "#10b981", // emerald-500
+    gradientTo: "#22c55e", // green-500
   },
   {
-    title: "Simple and Secure Integration",
-    description:
-      "Link your databases in seconds with our secure, zero-configuration setup process",
-    component: DBCard,
-    icon: Database,
-    iconColor: "text-violet-500",
-    gradientFrom: "#8b5cf6",
-    gradientTo: "#a855f7",
+    name: "Secure DB Integration",
+    description: "", // Empty description
+    contentComponent: DBCard,
+    Icon: Database,
+    href: `${APP_URL}/signup`,
+    cta: "Connect",
+    className: "md:col-span-1",
+    gradientFrom: "#8b5cf6", // violet-500
+    gradientTo: "#a855f7", // purple-500
+  },
+  {
+    name: "Interactive Dashboards",
+    description: "", // Empty description
+    contentComponent: () => (
+      <ThemeAwareImage
+        lightSrc="/landing/dash-light.png"
+        darkSrc="/landing/dash-dark.png"
+        alt="Interactive Dashboards preview"
+      />
+    ),
+    Icon: LayoutDashboard,
+    href: `${APP_URL}/signup`,
+    cta: "Discover",
+    className: "md:col-span-1",
+    gradientFrom: "#f59e0b", // amber-500
+    gradientTo: "#f97316", // orange-500
   },
 ];
 
-const containerVariants = {
-  hidden: { opacity: 0 },
-  visible: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.15,
-      delayChildren: 0.3,
-    },
-  },
-};
-
-const cardVariants = {
-  hidden: { opacity: 0, y: 20 },
-  visible: {
-    opacity: 1,
-    y: 0,
-    transition: { duration: 0.5, ease: "easeOut" },
-  },
-};
-
 export default function FeatureCards() {
-  const { resolvedTheme } = useTheme();
   return (
-    <section id="features" className="py-12 md:py-16 relative overflow-hidden">
+    <section id="features" className="py-10 md:py-16 relative overflow-hidden">
       {/* Background decorations */}
       <div className="absolute top-0 left-1/4 w-72 h-72 bg-primary/5 rounded-full blur-3xl -z-10" />
       <div className="absolute bottom-0 right-1/4 w-80 h-80 bg-secondary/5 rounded-full blur-3xl -z-10" />
 
       <Container>
         <motion.div
-          className="text-center mb-10"
+          className="text-center mb-8"
           initial={{ opacity: 0, y: 20 }}
           whileInView={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.6 }}
@@ -98,60 +127,36 @@ export default function FeatureCards() {
             <span>Powerful Features</span>
           </div>
 
-          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-6 leading-tight">
-            <span className="bg-linear-to-r from-foreground to-foreground/80 bg-clip-text text-transparent inline-block pb-1">
-              Everything You Need to Work With Data
+          <h2 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl mb-4 leading-tight">
+            <span className="bg-gradient-to-r from-foreground to-foreground/80 bg-clip-text text-transparent inline-block pb-1">
+              Everything You Need for Data
             </span>
           </h2>
           <p className="text-lg text-muted-foreground max-w-2xl mx-auto">
-            Transform how you interact with your data using our advanced
-            AI-powered tools designed for everyone on your team
+            Transform how you interact with your data using our AI-powered tools
           </p>
         </motion.div>
 
-        <motion.div
-          className="grid grid-cols-1 gap-10 sm:grid-cols-2 lg:grid-cols-3"
-          initial="hidden"
-          whileInView="visible"
-          viewport={{ once: true }}
-          variants={containerVariants}
-        >
-          {features.map((feature) => (
-            <motion.div
-              key={feature.title}
-              variants={cardVariants}
-              whileHover={{ y: -8, transition: { duration: 0.2 } }}
-            >
-              <MagicCard
-                className="flex flex-col overflow-hidden rounded-xl h-full border-[1.5px] border-border/40"
-                gradientFrom={feature.gradientFrom}
-                gradientTo={feature.gradientTo}
-                gradientColor={
-                  resolvedTheme === "dark" ? "#262626" : "#D9D9D955"
-                }
-                gradientSize={180}
-              >
-                <CardHeader className="relative z-10 pt-6">
-                  <div
-                    className={`mb-3 flex h-12 w-12 items-center justify-center rounded-lg ${feature.iconColor} bg-linear-to-br from-muted/80 to-muted group-hover:from-muted/60 group-hover:to-background transition-colors duration-300`}
-                  >
-                    <feature.icon className="h-6 w-6" />
-                  </div>
-                  <CardTitle className="text-lg font-semibold bg-clip-text text-transparent bg-linear-to-r from-foreground to-foreground/80">
-                    {feature.title}
-                  </CardTitle>
-                  <CardDescription className="text-sm leading-relaxed">
-                    {feature.description}
-                  </CardDescription>
-                </CardHeader>
-
-                <CardContent className="p-4 pt-0 grow flex flex-col relative z-10">
-                  {feature.component && <feature.component />}
-                </CardContent>
-              </MagicCard>
-            </motion.div>
+        <BentoGrid className="grid grid-cols-1 md:grid-cols-2 gap-4 lg:gap-6">
+          {features.map((feature, idx) => (
+            <BentoCard
+              key={idx}
+              name={feature.name}
+              description={feature.description}
+              Icon={feature.Icon}
+              href={feature.href}
+              cta={feature.cta}
+              className={cn("flex flex-col", feature.className)}
+              gradientFrom={feature.gradientFrom}
+              gradientTo={feature.gradientTo}
+              background={
+                <div className="w-full h-full">
+                  {feature.contentComponent && <feature.contentComponent />}
+                </div>
+              }
+            />
           ))}
-        </motion.div>
+        </BentoGrid>
       </Container>
     </section>
   );
