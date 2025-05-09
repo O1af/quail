@@ -1,8 +1,24 @@
 import { Container } from "@/components/ui/container";
 import { motion } from "framer-motion";
 import HeroVideoDialog from "@/components/magicui/hero-video-dialog";
+import { useTheme } from "next-themes";
+import { useEffect, useState } from "react";
 
 export function Demo() {
+  const { resolvedTheme } = useTheme();
+  const [currentTheme, setCurrentTheme] = useState<string>("light");
+
+  // Update theme after mount to prevent hydration mismatch
+  useEffect(() => {
+    setCurrentTheme(resolvedTheme || "light");
+  }, [resolvedTheme]);
+
+  // Choose thumbnail based on theme
+  const thumbnailSrc =
+    currentTheme === "dark"
+      ? "/landing/dash-dark.png"
+      : "/landing/dash-light.png";
+
   return (
     <section
       id="demo"
@@ -38,8 +54,8 @@ export function Demo() {
           <HeroVideoDialog
             animationStyle="top-in-bottom-out"
             videoSrc="https://www.youtube.com/embed/Ic3Ql7ZX9Ds?si=8qwc8NxI0_g-rJeZ&controls=0&autoplay=1"
-            thumbnailSrc="/demo_thumbnail.png"
-            thumbnailAlt="Quail Demo Video"
+            thumbnailSrc={thumbnailSrc}
+            thumbnailAlt={`Quail Demo Video (${currentTheme} mode)`}
             className="w-full rounded-xl overflow-hidden shadow-2xl border border-white/10"
           />
         </motion.div>
