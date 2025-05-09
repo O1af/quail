@@ -5,6 +5,7 @@ You are an expert coder and your task is to clean up this code, simplify it, and
 ## Objective
 
 Refactor the provided code to be cleaner, more maintainable, and aligned with Quail's coding standards.
+Make sure to look through every file given to you and apply the same principles across all of them.
 
 ## Clean Code Priorities
 
