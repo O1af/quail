@@ -1,19 +1,10 @@
 import fs from "fs";
 import path from "path";
 import matter from "gray-matter";
-import Link from "next/link";
-import Image from "next/image";
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardFooter,
-  CardHeader,
-  CardTitle,
-} from "@/components/ui/card";
 import { Header } from "@/components/Static/Landing/header";
 import dynamic from "next/dynamic";
 import { Metadata } from "next";
+import { BlogPostCard } from "@/components/Static/blog/BlogPostCard"; // Import the new card component
 
 const Footer = dynamic(() => import("@/components/Static/Footer"));
 
@@ -62,62 +53,59 @@ export default function BlogPage() {
     const fileContent = fs.readFileSync(filePath, "utf8");
     const { data } = matter(fileContent);
 
+    // Validate required frontmatter properties
+    if (!data.title || !data.date) {
+      console.warn(
+        `Post ${file} is missing required frontmatter properties (title or date)`
+      );
+    }
+
     return {
       slug: file.replace(".mdx", ""),
-      frontmatter: data,
+      frontmatter: {
+        ...data,
+        title: data.title || "Untitled Post",
+        date: data.date || new Date().toISOString(),
+      },
     };
   });
 
+  // Sort posts by date, newest first
+  const sortedPosts = posts.sort(
+    (a, b) =>
+      new Date(b.frontmatter.date).getTime() -
+      new Date(a.frontmatter.date).getTime()
+  );
+
   return (
-    <div className="flex min-h-screen flex-col overflow-hidden">
+    <div className="flex min-h-screen flex-col overflow-hidden bg-background">
       <Header />
-      <main className="flex-1 pt-20">
-        <div className="container mx-auto py-10">
-          <h1 className="text-4xl font-bold mb-8 text-center">
-            Engineering Blog
-          </h1>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {posts.map((post) => (
-              <Link href={`/blog/${post.slug}`} key={post.slug}>
-                <Card className="h-full overflow-hidden hover:shadow-lg transition-shadow">
-                  {post.frontmatter.image && (
-                    <div className="relative w-full h-48">
-                      <Image
-                        src={post.frontmatter.image}
-                        alt={post.frontmatter.title}
-                        fill
-                        className="object-cover"
-                      />
-                    </div>
-                  )}
-                  <CardHeader>
-                    <CardTitle>{post.frontmatter.title}</CardTitle>
-                    <CardDescription>
-                      {new Date(post.frontmatter.date).toLocaleDateString(
-                        "en-US",
-                        {
-                          year: "numeric",
-                          month: "long",
-                          day: "numeric",
-                        }
-                      )}
-                    </CardDescription>
-                  </CardHeader>
-                  <CardContent>
-                    <p className="line-clamp-3">
-                      {post.frontmatter.description}
-                    </p>
-                  </CardContent>
-                  <CardFooter>
-                    <div className="flex items-center text-sm text-muted-foreground">
-                      Read more →
-                    </div>
-                  </CardFooter>
-                </Card>
-              </Link>
-            ))}
+      <main className="flex-1 pt-16">
+        {/* Minimal Title Section */}
+        <section className="py-6 md:py-8 border-b">
+          <div className="container mx-auto px-4">
+            <div className="max-w-2xl mx-auto">
+              <h1 className="text-2xl md:text-3xl font-medium mb-2 tracking-tight text-center">
+                Engineering Blog
+              </h1>
+              <p className="text-sm md:text-base text-muted-foreground text-center">
+                Insights and updates from the Quail team
+              </p>
+            </div>
           </div>
-        </div>
+        </section>
+
+        {/* Blog Post Grid */}
+        <section className="py-10 md:py-12">
+          <div className="container mx-auto px-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+              {/* Use sortedPosts and the BlogPostCard component */}
+              {sortedPosts.map((post) => (
+                <BlogPostCard key={post.slug} post={post} />
+              ))}
+            </div>
+          </div>
+        </section>
       </main>
       <Footer />
     </div>

@@ -1,6 +1,6 @@
 "use client";
 import Loading from "@/components/Dev/Loading/Loading";
-import { useAuth } from "@/context/AuthContext";
+import { useAuth } from "@/lib/providers/AuthContext";
 
 export default function DashboardLayout({
   children,

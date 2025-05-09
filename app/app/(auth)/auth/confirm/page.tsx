@@ -44,8 +44,7 @@ export default function ConfirmEmail() {
     }
   };
 
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
+  const { resolvedTheme } = useTheme();
 
   return (
     <div className="flex min-h-screen items-center justify-center">
@@ -54,12 +53,14 @@ export default function ConfirmEmail() {
           href={Routes.Home}
           className="flex items-center gap-2 self-center font-medium"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <div className="relative h-full w-full">
               <Image
-                src={avatarSrc}
+                src="/quail_logo.svg"
                 fill
-                className="object-contain"
+                className={`object-contain ${
+                  resolvedTheme === "dark" ? "brightness-0 invert" : ""
+                }`}
                 alt="Avatar"
               />
             </div>
@@ -92,7 +93,7 @@ export default function ConfirmEmail() {
                 numInputs={6}
                 shouldAutoFocus
                 containerStyle="flex justify-center gap-4"
-                inputStyle="text-3xl text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-none"
+                inputStyle="text-3xl text-center border border-gray-300 rounded-lg focus:border-blue-500 focus:outline-hidden"
                 renderInput={(props) => <input {...props} />}
               />
             </div>

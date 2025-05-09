@@ -6,12 +6,13 @@ import { ForgotPasswordForm } from "./components/ForgotPasswordForm";
 import { createClient } from "@/utils/supabase/client";
 import { useRouter } from "next/navigation"; // For client-side navigation
 import { useTheme } from "next-themes";
-import botIconDark from "@/assets/boticondark.png";
 
 const ForgotPasswordPage = () => {
   const [user, setUser] = useState<any>(null);
   const supabase = createClient();
   const router = useRouter();
+  const { resolvedTheme } = useTheme();
+
   useEffect(() => {
     const fetchUser = async () => {
       const {
@@ -24,8 +25,6 @@ const ForgotPasswordPage = () => {
     };
     fetchUser();
   }, [router, supabase]);
-  const { theme } = useTheme();
-  const avatarSrc = theme === "dark" ? "/boticondark.png" : "/boticonlight.png";
 
   return (
     <div className="flex min-h-svh flex-col items-center justify-center gap-6 p-6 md:p-10">
@@ -34,12 +33,14 @@ const ForgotPasswordPage = () => {
           href={Routes.Home}
           className="flex items-center gap-2 self-center font-medium"
         >
-          <div className="flex h-8 w-8 items-center justify-center rounded-md bg-primary text-primary-foreground">
+          <div className="flex h-12 w-12 items-center justify-center rounded-md bg-primary text-primary-foreground">
             <div className="relative h-full w-full">
               <Image
-                src={avatarSrc}
+                src="/quail_logo.svg"
                 fill
-                className="object-contain"
+                className={`object-contain ${
+                  resolvedTheme === "dark" ? "brightness-0 invert" : ""
+                }`}
                 alt="Avatar"
               />
             </div>

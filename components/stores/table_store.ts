@@ -54,30 +54,26 @@ export interface DatabaseStructure {
   schemas: Schema[];
 }
 
+// DatabaseStructure is now managed by React Query hooks in lib/hooks/use-table-data.ts
+
+export type SpeedMode = "fast" | "medium" | "slow";
+
+// TableStore now only contains UI state, not server state
 interface TableStore {
-  // Query result related state
-  data: SQLData[];
-  columns: ColumnDef<SQLData, any>[];
+  // Table UI state
   sorting: SortingState;
   columnVisibility: VisibilityState;
   rowSelection: Record<string, boolean>;
-  isLoading: boolean;
 
-  // Database structure related state
-  databaseStructure: DatabaseStructure;
+  // Speed mode state
+  speedMode: SpeedMode;
+  setSpeedMode: (mode: SpeedMode) => void;
 
-  // Query result related actions
+  // UI state actions
   setSorting: (sorting: SortingState | null) => void;
   setColumnVisibility: (visibility: VisibilityState) => void;
   setRowSelection: (selection: Record<string, boolean>) => void;
-  setData: (data: SQLData[]) => void;
-  setColumns: (columns: ColumnDef<SQLData, any>[]) => void;
-
-  // Database structure related actions
-  setDatabaseStructure: (structure: DatabaseStructure) => void;
-
-  // Clear table data
-  clearTableData: () => void;
+  resetColumnVisibility: () => void;
 
   // Pagination state
   pagination: {
@@ -93,74 +89,55 @@ interface TableStore {
   // Row size preference
   rowSizePreference: number;
   setRowSizePreference: (size: number) => void;
-
-  // Reset column visibility
-  resetColumnVisibility: () => void;
 }
-
-export const useDatabaseStructure = () =>
-  useTableStore((state) => state.databaseStructure);
 
 export const useTableStore = create<TableStore>()(
   persist(
     (set) => ({
-      // Query result related state
-      data: [],
-      columns: [],
+      // UI state
       sorting: [],
       columnVisibility: {},
       rowSelection: {},
-      isLoading: false,
 
-      // Database structure state
-      databaseStructure: { schemas: [] },
+      // Speed mode state
+      speedMode: "medium" as SpeedMode,
+      setSpeedMode: (mode: SpeedMode) => set({ speedMode: mode }),
 
-      // Query result related actions
+      // UI state actions
       setSorting: (sorting: SortingState | null) =>
         set(() => ({
           sorting: sorting || [],
         })),
-      setColumnVisibility: (columnVisibility) => set({ columnVisibility }),
-      setRowSelection: (rowSelection) => set({ rowSelection }),
-      setData: (data) =>
-        set((state) => ({
-          data,
-          columnVisibility: {}, // Reset visibility when new data is loaded
-        })),
-      setColumns: (columns) => set({ columns }),
-
-      // Database structure related actions
-      setDatabaseStructure: (databaseStructure) => set({ databaseStructure }),
-
-      // Clear table data
-      clearTableData: () => set({ data: [], columns: [] }),
+      setColumnVisibility: (columnVisibility: VisibilityState) =>
+        set({ columnVisibility }),
+      setRowSelection: (rowSelection: Record<string, boolean>) =>
+        set({ rowSelection }),
+      resetColumnVisibility: () => set({ columnVisibility: {} }),
 
       // Pagination state
       pagination: {
         pageIndex: 0,
         pageSize: 10,
       },
-      setPagination: (pagination) => set({ pagination }),
+      setPagination: (pagination: { pageIndex: number; pageSize: number }) =>
+        set({ pagination }),
 
       // Global filter state
       globalFilter: "",
-      setGlobalFilter: (filter) => set({ globalFilter: filter }),
+      setGlobalFilter: (filter: string) => set({ globalFilter: filter }),
 
       // Row size preference
       rowSizePreference: 25,
-      setRowSizePreference: (size) =>
+      setRowSizePreference: (size: number) =>
         set({
           rowSizePreference: size,
           pagination: { pageIndex: 0, pageSize: size },
         }),
-
-      // Reset column visibility
-      resetColumnVisibility: () => set({ columnVisibility: {} }),
     }),
     {
       name: "table-storage",
       storage: createJSONStorage(() => encryptedStorage),
-      // Add state migration to handle undefined values
+      // Only store UI state preferences
       partialize: (state) => ({
         ...state,
         rowSizePreference: state.rowSizePreference ?? 25,
@@ -169,16 +146,22 @@ export const useTableStore = create<TableStore>()(
           pageSize: state.rowSizePreference ?? 25,
         },
         globalFilter: state.globalFilter ?? "",
+        speedMode: state.speedMode ?? "medium",
       }),
     }
   )
 );
 
-// Add selector functions
-export const useTableData = () => useTableStore((state) => state.data);
-export const useTableColumns = () => useTableStore((state) => state.columns);
+// Add selector functions for UI state
 export const useTableSorting = () => useTableStore((state) => state.sorting);
 export const useTableVisibility = () =>
   useTableStore((state) => state.columnVisibility);
 export const useTableSelection = () =>
   useTableStore((state) => state.rowSelection);
+export const useTablePagination = () =>
+  useTableStore((state) => state.pagination);
+export const useTableGlobalFilter = () =>
+  useTableStore((state) => state.globalFilter);
+export const useTableRowSizePreference = () =>
+  useTableStore((state) => state.rowSizePreference);
+export const useSpeedMode = () => useTableStore((state) => state.speedMode);

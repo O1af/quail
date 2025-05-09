@@ -66,7 +66,7 @@ ${data.message}`;
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground">
+    <div className="min-h-screen bg-background text-foreground pt-12">
       <div className="container mx-auto py-10 px-4">
         <div className="max-w-2xl mx-auto">
           <div className="text-center mb-10">
@@ -81,7 +81,7 @@ ${data.message}`;
           <Form {...form}>
             <form
               onSubmit={form.handleSubmit(onSubmit)}
-              className="space-y-6 bg-card p-6 rounded-lg shadow-sm"
+              className="space-y-6 bg-card p-6 rounded-lg shadow-xs"
             >
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <FormField

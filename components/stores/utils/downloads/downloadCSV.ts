@@ -2,10 +2,11 @@ import { useTableStore } from "../../table_store";
 import { SQLData } from "../../table_store";
 import { ColumnDef } from "@tanstack/react-table";
 
-export const downloadCSV = (customFilename?: string) => {
-  const store = useTableStore.getState();
-  const { data, columns } = store;
-
+export const downloadCSV = (
+  data: SQLData[],
+  columns: ColumnDef<SQLData, any>[],
+  customFilename?: string
+) => {
   if (!data.length || !columns.length) return;
 
   // Create header row
@@ -58,11 +59,14 @@ export const downloadCSV = (customFilename?: string) => {
   URL.revokeObjectURL(url);
 };
 
-export const downloadSelectedCSV = (customFilename?: string) => {
+export const downloadSelectedCSV = (
+  data: SQLData[],
+  columns: ColumnDef<SQLData, any>[],
+  customFilename?: string
+) => {
   const store = useTableStore.getState();
-  const { data, columns } = store;
-  const selectedRows = useTableStore.getState().rowSelection;
-  const columnVisibility = useTableStore.getState().columnVisibility;
+  const selectedRows = store.rowSelection; // Keep store for rowSelection
+  const columnVisibility = store.columnVisibility; // Keep store for columnVisibility
 
   // If no rows are selected, select all rows
   const hasSelectedRows = Object.values(selectedRows).some((v) => v);

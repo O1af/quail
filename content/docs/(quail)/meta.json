@@ -1,0 +1,15 @@
+{
+  "title": "Quail",
+  "icon": "Bird",
+  "pages": [
+    "index",
+    "connections",
+    "dashboards",
+    "charts",
+    "chat",
+    "sql-editor",
+    "integration",
+    "fumadocs-components"
+  ],
+  "defaultOpen": true
+}

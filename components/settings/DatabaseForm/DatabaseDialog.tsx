@@ -6,10 +6,12 @@ import {
   DialogTitle,
   DialogDescription,
   DialogTrigger,
+  DialogFooter,
 } from "@/components/ui/dialog";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Alert, AlertDescription } from "@/components/ui/alert";
 import {
   Select,
   SelectContent,
@@ -17,32 +19,44 @@ import {
   SelectTrigger,
   SelectValue,
 } from "@/components/ui/select";
-import { Plus, Loader2 } from "lucide-react";
+import { Loader2, ShieldCheck } from "lucide-react";
 import { useForm } from "react-hook-form";
 import { zodResolver } from "@hookform/resolvers/zod";
 import * as z from "zod";
 import { useState, useEffect, useCallback, memo } from "react";
-import { DatabaseConfig } from "../../stores/db_store";
-import { testConnection } from "../../stores/utils/query";
+import { DatabaseConfig } from "@/lib/hooks/use-database";
+import { testConnection } from "@/lib/hooks/query-helpers";
 import { getAzureIP } from "@/utils/actions/getIP";
+import { SiPostgresql, SiMysql } from "react-icons/si";
 
-const SSL_MODES = {
-  postgres: [
-    "disable", // No SSL
-    "allow", // Try non-SSL first, then SSL
-    "prefer", // Try SSL first, then non-SSL
-    "require", // Always use SSL
-    "verify-ca", // Verify server certificate
-    "verify-full", // Verify server certificate and hostname
-  ],
-  mysql: [
-    "true", // Enable SSL
-    "false", // Disable SSL
-    "preferred", // Use SSL if available
-    "required", // Require SSL
-    "verify_ca", // Verify server certificate
-    "verify_identity", // Verify server certificate and hostname
-  ],
+const DB_TYPES = {
+  postgres: {
+    name: "PostgreSQL",
+    icon: <SiPostgresql className="h-4 w-4 text-[#336791]" />,
+    formatExample:
+      "postgresql://[username]:[password]@[host]:[port]/[database]",
+    sslModes: [
+      "disable",
+      "allow",
+      "prefer",
+      "require",
+      "verify-ca",
+      "verify-full",
+    ],
+  },
+  mysql: {
+    name: "MySQL",
+    icon: <SiMysql className="h-4 w-4 text-[#00758F]" />,
+    formatExample: "mysql://[username]:[password]@[host]:[port]/[database]",
+    sslModes: [
+      "true",
+      "false",
+      "preferred",
+      "required",
+      "verify_ca",
+      "verify_identity",
+    ],
+  },
 } as const;
 
 const formSchema = z.object({
@@ -51,11 +65,6 @@ const formSchema = z.object({
   connectionString: z.string().min(1, "Connection string is required"),
   sslMode: z.string().optional(),
 });
-
-const CONNECTION_FORMATS = {
-  postgres: "postgresql://[username]:[password]@[host]:[port]/[database]",
-  mysql: "mysql://[username]:[password]@[host]:[port]/[database]",
-} as const;
 
 function parseConnectionString(connString: string) {
   try {
@@ -101,26 +110,30 @@ function buildConnectionString(
 
 type FormValues = z.infer<typeof formSchema>;
 
-interface Props {
+interface DatabaseDialogProps {
   trigger?: React.ReactNode;
   defaultValues?: Partial<DatabaseConfig>;
   onSubmit: (data: FormValues) => void;
+  children?: React.ReactNode; // Add children prop to fix TypeScript error
 }
 
 export const DatabaseDialog = memo(function DatabaseDialog({
   trigger,
   defaultValues,
   onSubmit,
-}: Props) {
+  children,
+}: DatabaseDialogProps) {
   const [open, setOpen] = useState(false);
-  const [testing, setTesting] = useState(false);
-  const [error, setError] = useState<string | null>(null);
+  const [isSaving, setIsSaving] = useState(false);
+  const [connectionError, setConnectionError] = useState<string | null>(null);
   const [hasSSLInString, setHasSSLInString] = useState(false);
   const [ip, setIp] = useState<string>("");
 
   useEffect(() => {
     if (open) {
-      getAzureIP().then(setIp);
+      getAzureIP()
+        .then(setIp)
+        .catch(() => {});
     }
   }, [open]);
 
@@ -134,7 +147,15 @@ export const DatabaseDialog = memo(function DatabaseDialog({
     },
   });
 
-  // Add effect to check for SSL in connection string
+  // Reset error when form changes
+  useEffect(() => {
+    const subscription = form.watch(() => {
+      if (connectionError) setConnectionError(null);
+    });
+    return () => subscription.unsubscribe();
+  }, [form, connectionError]);
+
+  // Check for SSL in connection string
   useEffect(() => {
     const connString = form.watch("connectionString");
     if (!connString) {
@@ -153,8 +174,8 @@ export const DatabaseDialog = memo(function DatabaseDialog({
   const handleSubmit = useCallback(
     async (values: FormValues) => {
       try {
-        setTesting(true);
-        setError(null);
+        setIsSaving(true);
+        setConnectionError(null);
 
         const { base, sslMode: existingSSL } = parseConnectionString(
           values.connectionString
@@ -166,30 +187,39 @@ export const DatabaseDialog = memo(function DatabaseDialog({
           values.type
         );
 
+        // Still test connection before submitting
         await testConnection(finalConnString, values.type);
         onSubmit({ ...values, connectionString: finalConnString });
-        setOpen(false);
         form.reset();
+        setOpen(false);
       } catch (err) {
-        setError(err instanceof Error ? err.message : String(err));
+        setConnectionError(err instanceof Error ? err.message : String(err));
       } finally {
-        setTesting(false);
+        setIsSaving(false);
       }
     },
-    [onSubmit]
+    [onSubmit, form]
   );
 
+  const dbType = form.watch("type");
+  const dbTypeInfo = DB_TYPES[dbType];
+
   return (
-    <Dialog open={open} onOpenChange={setOpen}>
+    <Dialog
+      open={open}
+      onOpenChange={(value) => {
+        setOpen(value);
+        if (!value) {
+          // Reset form state when dialog closes
+          setConnectionError(null);
+          setIsSaving(false);
+        }
+      }}
+    >
       <DialogTrigger asChild>
-        {trigger || (
-          <Button size="sm">
-            <Plus className="w-4 h-4 mr-1" />
-            Add Database
-          </Button>
-        )}
+        {children || trigger || <Button size="sm">Add Database</Button>}
       </DialogTrigger>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
           <DialogTitle>
             {defaultValues ? "Edit Database" : "New Database"}
@@ -199,77 +229,129 @@ export const DatabaseDialog = memo(function DatabaseDialog({
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={form.handleSubmit(handleSubmit)} className="space-y-4">
-          <div className="grid gap-2">
-            <Label htmlFor="name">Name</Label>
-            <Input id="name" {...form.register("name")} />
-          </div>
-          <div className="grid gap-2">
-            <Label>Type</Label>
-            <Select
-              value={form.watch("type")}
-              onValueChange={(value) => form.setValue("type", value as any)}
-            >
-              <SelectTrigger>
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="postgres">PostgreSQL</SelectItem>
-                <SelectItem value="mysql">MySQL</SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
-          <div className="grid gap-2">
-            <Label htmlFor="connection">Connection string</Label>
-            <Input
-              id="connection"
-              placeholder={CONNECTION_FORMATS[form.watch("type")]}
-              {...form.register("connectionString")}
-            />
-          </div>
-          {!hasSSLInString && (
-            <div className="grid gap-2">
-              <Label>SSL Mode</Label>
-              <Select
-                value={form.watch("sslMode")}
-                onValueChange={(value) => form.setValue("sslMode", value)}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  {SSL_MODES[form.watch("type")].map((mode) => (
-                    <SelectItem key={mode} value={mode}>
-                      {mode}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          )}
-          {error && <div className="text-sm text-destructive">{error}</div>}
-          {ip && (
-            <div className="text-sm text-muted-foreground border rounded-md p-2 bg-muted/50">
-              ⚠️ Make sure to add this IP to your database allow list:{" "}
-              <span className="font-mono">{ip}</span>
-            </div>
-          )}
-          <div className="flex justify-end gap-2">
-            <Button variant="outline" onClick={() => setOpen(false)}>
-              Cancel
-            </Button>
-            <Button type="submit" disabled={testing}>
-              {testing ? (
-                <>
-                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  Testing connection...
-                </>
-              ) : defaultValues ? (
-                "Save Changes"
-              ) : (
-                "Add Database"
+          <div className="grid gap-3">
+            <div className="grid gap-1.5">
+              <Label htmlFor="name">Name</Label>
+              <Input
+                id="name"
+                {...form.register("name")}
+                placeholder="My Database"
+                autoFocus
+              />
+              {form.formState.errors.name && (
+                <span className="text-xs text-destructive">
+                  {form.formState.errors.name.message}
+                </span>
               )}
-            </Button>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label>Database Type</Label>
+              <div className="flex gap-2">
+                {(Object.keys(DB_TYPES) as Array<keyof typeof DB_TYPES>).map(
+                  (type) => (
+                    <Button
+                      key={type}
+                      type="button"
+                      variant={
+                        form.watch("type") === type ? "default" : "outline"
+                      }
+                      className="flex-1 gap-1.5 text-sm"
+                      onClick={() => form.setValue("type", type)}
+                    >
+                      {DB_TYPES[type].icon}
+                      {DB_TYPES[type].name}
+                    </Button>
+                  )
+                )}
+              </div>
+            </div>
+
+            <div className="grid gap-1.5">
+              <Label htmlFor="connection">Connection String</Label>
+              <Input
+                id="connection"
+                placeholder={dbTypeInfo.formatExample}
+                {...form.register("connectionString")}
+                className="font-mono text-xs"
+              />
+              {form.formState.errors.connectionString && (
+                <span className="text-xs text-destructive">
+                  {form.formState.errors.connectionString.message}
+                </span>
+              )}
+              <p className="text-xs text-muted-foreground">
+                Format: {dbTypeInfo.formatExample}
+              </p>
+            </div>
+
+            {!hasSSLInString && (
+              <div className="grid gap-1.5">
+                <Label>SSL Mode</Label>
+                <Select
+                  value={form.watch("sslMode")}
+                  onValueChange={(value) => form.setValue("sslMode", value)}
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {dbTypeInfo.sslModes.map((mode) => (
+                      <SelectItem key={mode} value={mode}>
+                        {mode}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
+
+            {connectionError && (
+              <Alert variant="destructive" className="py-2 text-xs">
+                <AlertDescription>{connectionError}</AlertDescription>
+              </Alert>
+            )}
+
+            {ip && (
+              <Alert className="py-2 text-xs bg-amber-50 border-amber-200 dark:bg-amber-900/20 dark:border-amber-700">
+                <div className="flex items-center gap-2">
+                  <ShieldCheck className="h-3 w-3 text-amber-600 dark:text-amber-400 shrink-0" />
+                  <AlertDescription className="text-amber-800 dark:text-amber-400">
+                    Add IP to your database allowlist:&nbsp;
+                    <code className="bg-amber-100 dark:bg-amber-900/50 px-1 py-0.5 rounded">
+                      {ip}
+                    </code>
+                  </AlertDescription>
+                </div>
+              </Alert>
+            )}
           </div>
+
+          <DialogFooter className="sm:justify-end">
+            <div className="flex gap-2">
+              <Button
+                type="button"
+                variant="outline"
+                size="sm"
+                onClick={() => setOpen(false)}
+                disabled={isSaving}
+              >
+                Cancel
+              </Button>
+              <Button type="submit" size="sm" disabled={isSaving}>
+                {isSaving ? (
+                  <>
+                    <Loader2 className="h-3.5 w-3.5 mr-1.5 animate-spin" />
+                    {defaultValues ? "Saving..." : "Adding..."}
+                  </>
+                ) : defaultValues ? (
+                  "Save Changes"
+                ) : (
+                  "Add Database"
+                )}
+              </Button>
+            </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

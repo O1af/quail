@@ -1,0 +1,133 @@
+---
+title: "SQL Editor"
+description: "How to write, run, and visualize SQL queries in Quail"
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Card, Cards } from "fumadocs-ui/components/card";
+
+## Getting Started with the SQL Editor
+
+<Steps>
+  <Step>
+    Navigate to the **SQL Editor** option in the main navigation
+  </Step>
+  <Step>
+    Select a database connection from the dropdown menu
+  </Step>
+  <Step>
+    The editor will load with your connection's schema information
+  </Step>
+</Steps>
+
+## Writing SQL Queries
+
+### Basic Query Structure
+
+Start with a simple query to explore your data:
+
+```sql
+SELECT * FROM customers LIMIT 10;
+```
+
+This returns the first 10 rows from your customers table.
+
+<Callout type="info">
+  Start simple with SELECT queries before moving on to more complex operations.
+</Callout>
+
+### Using Schema Explorer
+
+<Card title="Schema Explorer Features">
+  The SQL Editor includes a schema explorer to help you navigate your database:
+
+- View available tables in the left sidebar
+- Click on a table to see its columns and data types
+- Click the **+** icon next to a column to add it to your query
+- Right-click a table for quick options (**SELECT**, **COUNT**, etc.)
+</Card>
+
+### Auto-Completion
+
+<Tabs items={["Table Completion", "Column Completion", "Keyword Completion"]}>
+  <Tab>Start typing a table name and press **Tab** to complete it</Tab>
+  <Tab>
+    After typing a table name and a dot (e.g., `customers.`), you'll see column
+    suggestions
+  </Tab>
+  <Tab>SQL keywords are also auto-completed</Tab>
+</Tabs>
+
+## Running Queries
+
+<Steps>
+  <Step>
+    Write your SQL query in the editor
+  </Step>
+  <Step>
+    Click the **Run** button or press **Ctrl+Enter** 
+    (**Cmd+Enter** on Mac)
+  </Step>
+  <Step>
+    Results will appear in the results panel below the editor
+  </Step>
+</Steps>
+
+<Callout type="tip">
+  Use keyboard shortcuts for faster workflow. Press **Ctrl+Enter**
+  (**Cmd+Enter** on Mac) to run queries quickly.
+</Callout>
+
+## Visualizing Query Results
+
+<Cards>
+  <Card title="Creating a Visualization" href="#creating-a-visualization">
+    Turn your query results into visual charts
+  </Card>
+  <Card title="Saving Charts" href="#saving-charts-from-sql-queries">
+    Save visualizations for future use
+  </Card>
+</Cards>
+
+### Creating a Visualization
+
+Turn your query results into visual charts:
+
+<Steps>
+  <Step>
+    Run your query
+  </Step>
+  <Step>
+    Click the **Visualize** tab in the results panel
+  </Step>
+  <Step>
+    Choose a chart type that suits your data
+  </Step>
+  <Step>
+    Configure axes, measures, and dimensions
+  </Step>
+  <Step>
+    Apply formatting and styling options
+  </Step>
+</Steps>
+
+### Saving Charts from SQL Queries
+
+Save your visualizations for future use:
+
+<Steps>
+  <Step>
+    After creating a visualization, click **Save Chart**
+  </Step>
+  <Step>
+    Give your chart a name and description
+  </Step>
+  <Step>
+    Choose to save as a standalone chart or add to a dashboard
+  </Step>
+  <Step>
+    Click **Save**
+  </Step>
+</Steps>

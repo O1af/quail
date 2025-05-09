@@ -1,0 +1,179 @@
+---
+title: "Working Across Quail Features"
+description: "How to combine Quail's features for maximum insight"
+---
+
+import { Callout } from "fumadocs-ui/components/callout";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Cards, Card } from "fumadocs-ui/components/card";
+
+### From Data Connection to Dashboard
+
+Follow this end-to-end workflow to go from raw data to actionable insights:
+
+<Steps>
+  <Step title="Connect to Your Data">
+    - Set up a database connection (remember to whitelist Quail's IP address) -
+    Explore your schema to understand available tables and relationships
+  </Step>
+
+{" "}
+
+<Step title="Explore Data with Chat">
+  - Ask initial questions to understand your data - Refine your questions to
+  focus on key metrics and trends
+</Step>
+
+{" "}
+
+<Step title="Refine with SQL Editor">
+  - Take generated SQL from Chat and customize it - Add complex calculations or
+  conditions - Test and optimize your queries
+</Step>
+
+{" "}
+
+<Step title="Create and Save Charts">
+  - Visualize your query results - Save the most valuable visualizations as
+  charts
+</Step>
+
+{" "}
+
+<Step title="Build a Dashboard">
+  - Combine your saved charts into a dashboard - Arrange them logically to tell
+  a data story - Add filters for interactive analysis
+</Step>
+
+  <Step title="Share and Iterate">
+    - Share your dashboard with stakeholders - Gather feedback and refine your
+    analysis
+  </Step>
+</Steps>
+
+## Using Features Together
+
+<Tabs items={["Chat to SQL Editor", "SQL Editor to Dashboard", "Chat to Dashboard"]}>
+  <Tab value="Chat to SQL Editor">
+    When Chat generates a query that's close but needs refinement:
+
+    1. In the Chat interface, after receiving a response with a SQL query
+    2. Click **Open in SQL Editor**
+    3. The query will open in the SQL Editor with all context preserved
+    4. Modify the query as needed
+    5. Run the updated query and visualize the results
+
+  </Tab>
+  
+  <Tab value="SQL Editor to Dashboard">
+    When you've crafted the perfect query and visualization:
+
+    1. In the SQL Editor, after creating a visualization
+    2. Click **Save Chart**
+    3. Give your chart a name and description
+    4. Select **Add to Dashboard**
+    5. Choose an existing dashboard or create a new one
+
+  </Tab>
+  
+  <Tab value="Chat to Dashboard">
+    Directly add insights from Chat to your dashboards:
+
+    1. Ask a question in Chat that generates a useful visualization
+    2. Click **Save Chart** below the visualization
+    3. Give it a name and description
+    4. Select **Add to Dashboard**
+    5. Choose which dashboard to add it to
+
+  </Tab>
+</Tabs>
+
+## Practical Examples
+
+<Cards>
+  <Card
+    title="Executive Dashboard Creation"
+    href="#executive-dashboard-creation"
+  >
+    Learn how to build comprehensive executive dashboards with key metrics,
+    trends, and filters.
+  </Card>
+  <Card title="Customer Analysis Project" href="#customer-analysis-project">
+    Discover techniques for analyzing customer profiles, purchase patterns, and
+    churn risk.
+  </Card>
+</Cards>
+
+### Executive Dashboard Creation
+
+How to create a comprehensive executive dashboard:
+
+<Steps>
+  <Step title="Identify Key Metrics">
+    - Use Chat to ask: "What are our key performance indicators for this
+    quarter?" - Save the resulting charts for revenue, customer growth, and
+    margins
+  </Step>
+
+{" "}
+
+<Step title="Add Trend Analysis">
+  - In SQL Editor, write queries that show year-over-year trends - Create line
+  charts showing long-term patterns - Add to your dashboard alongside the KPI
+  charts
+</Step>
+
+{" "}
+
+<Step title="Include Geographic Data">
+  - Use Chat to ask about regional performance - Save the generated map
+  visualization to your dashboard
+</Step>
+
+  <Step title="Add Filters">
+    - Set up dashboard filters for date ranges and business units - Ensure all
+    charts respond to these filters
+  </Step>
+</Steps>
+
+### Customer Analysis Project
+
+How to analyze customer behavior:
+
+<Steps>
+  <Step title="Profile Your Customers">
+    - Use Chat to ask: "Show me customer demographics breakdown" - Save these
+    charts to start your customer dashboard
+  </Step>
+
+{" "}
+
+<Step title="Analyze Purchase Patterns">
+  - In SQL Editor, create queries for purchase frequency and basket size -
+  Visualize these metrics and add to your dashboard
+</Step>
+
+{" "}
+
+<Step title="Identify Churn Risk">
+  - Use Chat to ask: "Which customers are at risk of churning?" - Refine the
+  generated SQL in the SQL Editor - Create and save charts showing churn
+  probability
+</Step>
+
+  <Step title="Track Customer Journey">
+    - Create funnel visualizations showing conversion rates - Add these to your
+    customer dashboard
+  </Step>
+</Steps>
+
+## Tips for Seamless Integration
+
+<Callout type="tip">
+  Maintain clarity across all Quail features by using consistent naming
+  conventions: 
+  - Use clear, consistent names for saved queries, charts, and dashboards 
+  - Include the data source and key metrics in the names 
+  - Add detailed descriptions to help others understand your analysis
+</Callout>

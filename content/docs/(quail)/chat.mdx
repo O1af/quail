@@ -1,0 +1,97 @@
+---
+title: "Chat Interface"
+description: "How to use Quail's natural language interface to explore your data"
+---
+
+import { Steps, Step } from "fumadocs-ui/components/steps";
+import { Tabs, Tab } from "fumadocs-ui/components/tabs";
+import { Card, Cards } from "fumadocs-ui/components/card";
+import { Callout } from "fumadocs-ui/components/callout";
+
+The Chat interface in Quail allows you to analyze your data using natural language. Simply ask questions in plain English, and Quail will generate SQL queries, execute them, and visualize the results for you.
+
+## Getting Started with Chat
+
+<Steps>
+  <Step>
+    Click on the **Chat** section in the main navigation
+  </Step>
+  <Step>
+    Make sure you have at least one database connection set up
+  </Step>
+  <Step>
+    Type your question in the input field at the bottom
+  </Step>
+  <Step>
+    Press Enter or click the Send button
+  </Step>
+</Steps>
+
+## Asking Effective Questions
+
+<Tabs items={["Simple Queries", "Complex Analysis", "Time-Based Analysis", "Filtering and Grouping"]}>
+  <Tab value="Simple Queries">
+    Start with straightforward questions to explore your data:
+
+    <Card>
+      - **"How many customers do we have?"**
+      - **"Show me sales for the last 30 days"**
+      - **"What's our average order value?"**
+    </Card>
+
+  </Tab>
+  <Tab value="Complex Analysis">
+    Progress to more sophisticated analysis:
+
+    <Card>
+      - **"What's the trend of monthly sales over the past year?"**
+      - **"Show me the top 10 products by revenue and their profit margin"**
+      - **"Compare customer acquisition cost by marketing channel"**
+    </Card>
+
+  </Tab>
+  <Tab value="Time-Based Analysis">
+    Ask questions with specific time frames:
+
+    <Card>
+      - **"Show me daily signups for February 2025"**
+      - **"Compare this month's sales to last month"**
+      - **"What was our year-over-year growth for each quarter?"**
+    </Card>
+
+  </Tab>
+  <Tab value="Filtering and Grouping">
+    Include filters and grouping in your questions:
+
+    <Card>
+      - **"Show me sales by region for premium customers only"**
+      - **"What are our top-selling products in the North region?"**
+      - **"Show customer retention rate grouped by signup source"**
+    </Card>
+
+  </Tab>
+</Tabs>
+
+## Understanding Chat Responses
+
+<Callout type="info">
+  Quail helps you understand both the SQL it generates and the results it
+  displays.
+</Callout>
+
+### Query Explanation
+
+Quail shows you:
+
+<Card>
+  1. The SQL query it generated from your question 2. An explanation of what the
+  query does in plain English 3. Any assumptions it made to generate the query
+</Card>
+
+### Results Display
+
+<div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+  <Card>For detailed data exploration</Card>
+  <Card>When data can be visualized effectively</Card>
+  <Card>For aggregated information</Card>
+</div>

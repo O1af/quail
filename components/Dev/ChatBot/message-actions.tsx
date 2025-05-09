@@ -10,7 +10,7 @@ import {
   TooltipTrigger,
 } from "@/components/ui/tooltip";
 import { memo } from "react";
-import { useToast } from "@/hooks/use-toast";
+import { useToast } from "@/lib/hooks/use-toast";
 
 export function PureMessageActions({
   message,
@@ -24,8 +24,6 @@ export function PureMessageActions({
 
   if (isLoading) return null;
   if (message.role === "user") return null;
-  if (message.toolInvocations && message.toolInvocations.length > 0)
-    return null;
 
   return (
     <TooltipProvider>
@@ -57,7 +55,6 @@ export const MessageActions = memo(
   PureMessageActions,
   (prevProps, nextProps) => {
     if (prevProps.isLoading !== nextProps.isLoading) return false;
-
     return true;
-  },
+  }
 );

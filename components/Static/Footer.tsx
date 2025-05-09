@@ -19,7 +19,10 @@ const footerData = {
   sections: [
     {
       title: "Product",
-      links: [{ name: "SQL Editor", href: "https://app.quailbi.com/" }],
+      links: [
+        { name: "SQL Editor", href: "https://app.quailbi.com/editor" },
+        { name: "BI Dashboard", href: "https://app.quailbi.com/" },
+      ],
     },
     {
       title: "Resources",
@@ -27,6 +30,7 @@ const footerData = {
         { name: "Terms of Service", href: "/terms" },
         { name: "Privacy Policy", href: "/privacy" },
         { name: "Blog", href: "/blog" },
+        { name: "Documentation", href: "/docs" },
       ],
     },
     {

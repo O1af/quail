@@ -1,0 +1,175 @@
+---
+title: "Database Connections"
+description: "How to set up and manage your database connections in Quail"
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { Card, Cards } from "fumadocs-ui/components/card";
+
+## Setting Up Your First Connection
+
+<Steps>
+  <Step>
+    From the main navigation, click on **Connections**
+  </Step>
+  <Step>
+    Click the **Add Connection** button in the top right
+  </Step>
+  <Step>
+    Select your database type (PostgreSQL, MySQL, SQL Server, etc.)
+  </Step>
+  <Step>
+    Enter your connection details:
+    - **Connection Name**: A friendly name you'll recognize
+    - **Connection String**: Format: `postgresql://[username]:[password]@[host]:[port]/[database]`
+    - **SSL requirements**: If applicable
+  </Step>
+</Steps>
+
+## Important: Whitelist Quail's IP Address
+
+<Callout type="warning">
+  For security reasons, most database providers require whitelisting of IP addresses that can access your database. **You must whitelist Quail's IP address** in your database security settings before your connection will work.
+
+**Quail's IP address:** `57.152.52.59`
+
+</Callout>
+
+### How to Whitelist Quail's IP Address
+
+<Tabs items={["AWS RDS", "Azure SQL", "GCP Cloud SQL", "MongoDB Atlas"]}>
+  <Tab value="AWS RDS">
+    1. Go to your RDS console 2. Select your database instance 3. Click on the
+    "Security Group" associated with your instance 4. Add an inbound rule for
+    Quail's IP address (`57.152.52.59`) on your database port
+  </Tab>
+  <Tab value="Azure SQL">
+    1. Navigate to your Azure SQL server 2. Select "Networking" from the left
+    menu 3. Under "Firewall rules", add a new rule 4. Enter "Quail" as the name
+    and `57.152.52.59` as both the start and end IP
+  </Tab>
+  <Tab value="GCP Cloud SQL">
+    1. Open your Cloud SQL instance 2. Go to "Connections" > "Networking" 3. Add
+    `57.152.52.59` to "Authorized networks"
+  </Tab>
+  <Tab value="MongoDB Atlas">
+    1. Go to Network Access in your MongoDB Atlas dashboard 2. Click "Add IP
+    Address" 3. Enter `57.152.52.59` in both fields and add "Quail" as the
+    description
+  </Tab>
+</Tabs>
+
+## Testing Your Connection
+
+<Steps>
+  <Step>
+    Click the **Test Connection** button
+  </Step>
+  <Step>
+    Quail will attempt to connect to your database
+  </Step>
+  <Step>
+    If successful, you'll see a green success message
+  </Step>
+  <Step>
+    If unsuccessful, you'll see an error message with details on what went wrong
+  </Step>
+</Steps>
+
+## Managing Connections
+
+<Cards>
+  <Card title="Viewing Connection Details" href="#viewing-connection-details">
+    View status, last connection time, and available tables
+  </Card>
+  <Card title="Editing a Connection" href="#editing-a-connection">
+    Update your existing connection settings
+  </Card>
+  <Card title="Deleting a Connection" href="#deleting-a-connection">
+    Remove connections you no longer need
+  </Card>
+</Cards>
+
+### Viewing Connection Details
+
+Click on any connection in your list to view its details, including:
+
+- Connection status (active/inactive)
+- Last connection time
+- Available tables and schema
+
+### Editing a Connection
+
+<Steps>
+  <Step>
+    Select the connection you want to edit
+  </Step>
+  <Step>
+    Click the **Edit** button (pencil icon)
+  </Step>
+  <Step>
+    Make your changes
+  </Step>
+  <Step>
+    Click **Save Changes**
+  </Step>
+</Steps>
+
+### Deleting a Connection
+
+<Steps>
+  <Step>
+    Select the connection you want to delete
+  </Step>
+  <Step>
+    Click the **Delete** button (trash icon)
+  </Step>
+  <Step>
+    Confirm the deletion
+  </Step>
+</Steps>
+
+## Exploring Your Database Schema
+
+Once connected, you can explore your database structure:
+
+<Steps>
+  <Step>
+    Click on a connection to open the Schema Explorer
+  </Step>
+  <Step>
+    Browse through tables and views in the left sidebar
+  </Step>
+  <Step>
+    Click on a table to see its columns, data types, and relationships
+  </Step>
+  <Step>
+    Use the search bar to quickly find specific tables or columns
+  </Step>
+</Steps>
+
+## Troubleshooting Connection Issues
+
+### Common Connection Problems
+
+<Cards>
+  <Card title="Connection Timeout">
+    - Verify that your database server is running - Check that Quail's IP
+    address is properly whitelisted - Confirm your firewall settings allow
+    connections on the database port
+  </Card>
+  <Card title="Authentication Failed">
+    - Double-check your username and password - Ensure the user has permission
+    to access the database
+  </Card>
+  <Card title="SSL Issues">
+    - Verify SSL settings match your database configuration - Check if your
+    database requires SSL connections
+  </Card>
+  <Card title="Database Not Found">
+    - Confirm the database name is spelled correctly - Ensure the database
+    exists on the server
+  </Card>
+</Cards>

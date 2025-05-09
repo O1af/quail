@@ -1,18 +1,22 @@
 import type { Metadata } from "next";
-import { Geist, Geist_Mono } from "next/font/google";
+import { Inter, Roboto_Mono } from "next/font/google";
+import { RootProvider } from "fumadocs-ui/provider";
+import type { ReactNode } from "react";
 import "./globals.css";
 import { ThemeProvider } from "@/components/theme-provider";
-import { AuthProvider } from "@/context/AuthContext";
+import { AuthProvider } from "@/lib/providers/AuthContext";
+import { ReactQueryProvider } from "@/lib/providers/react-query-provider";
 import { Toaster } from "@/components/ui/toaster";
 import Script from "next/script";
+import { Banner } from "fumadocs-ui/components/banner";
 
-const geistSans = Geist({
-  variable: "--font-geist-sans",
+const inter = Inter({
+  variable: "--font-inter",
   subsets: ["latin"],
 });
 
-const geistMono = Geist_Mono({
-  variable: "--font-geist-mono",
+const robotoMono = Roboto_Mono({
+  variable: "--font-roboto-mono",
   subsets: ["latin"],
 });
 
@@ -65,13 +69,19 @@ export const metadata: Metadata = {
 export default function RootLayout({
   children,
 }: Readonly<{
-  children: React.ReactNode;
+  children: ReactNode;
 }>) {
   return (
-    <html lang="en">
+    <html lang="en" suppressHydrationWarning>
       <head>
+        {process.env.NODE_ENV !== "production" && (
+          <Script
+            crossOrigin="anonymous"
+            src="//unpkg.com/react-scan/dist/auto.global.js"
+          />
+        )}
         {/* Preconnect hints tell the browser to establish early connections to critical domains,
-            reducing latency when resources are needed. DNS-prefetch is a fallback for older browsers */}
+        reducing latency when resources are needed. DNS-prefetch is a fallback for older browsers */}
         <link
           rel="preconnect"
           href="https://ds-cdn.prod-east.frontend.public.atl-paas.net"
@@ -86,24 +96,37 @@ export default function RootLayout({
         />
       </head>
       <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
+        className={`${inter.variable} ${robotoMono.variable} antialiased`}
+        style={{
+          display: "flex",
+          flexDirection: "column",
+          minHeight: "100vh",
+        }}
+        suppressHydrationWarning
       >
-        <ThemeProvider
-          attribute="class"
-          defaultTheme="light"
-          enableSystem
-          disableTransitionOnChange
-        >
-          <AuthProvider>{children}</AuthProvider>
-        </ThemeProvider>
-        <Toaster />
-        {process.env.NODE_ENV === "production" && (
-          <Script
-            defer
-            src="https://olaf-metrics.vercel.app/script.js"
-            data-website-id="242c6f31-19a3-470d-a9fc-bbe0334217bf"
-          />
-        )}
+        {/* <Banner id="quail-release" variant="rainbow" changeLayout={false}>
+          Quail V0 has released
+        </Banner> */}
+        <RootProvider>
+          <ThemeProvider
+            attribute="class"
+            defaultTheme="light"
+            enableSystem
+            disableTransitionOnChange
+          >
+            <ReactQueryProvider>
+              <AuthProvider>{children}</AuthProvider>
+            </ReactQueryProvider>
+          </ThemeProvider>
+          <Toaster />
+          {process.env.NODE_ENV === "production" && (
+            <Script
+              defer
+              src="https://olaf-metrics.vercel.app/script.js"
+              data-website-id="242c6f31-19a3-470d-a9fc-bbe0334217bf"
+            />
+          )}
+        </RootProvider>
       </body>
     </html>
   );

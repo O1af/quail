@@ -14,19 +14,15 @@ import {
   CardHeader,
   CardTitle,
 } from "@/components/ui/card";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
 import Checkout from "./checkout";
+import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
+import { AnimatePresence, motion } from "framer-motion";
 
 const plans = [
   {
     name: "Free",
     price: 0,
-    priceId: "",
+    billing: "forever",
     description: "Perfect for learning and small projects",
     features: [
       {
@@ -37,7 +33,7 @@ const plans = [
       {
         name: "100 AI-Assisted Queries/month",
         included: true,
-        tooltip: "AI-assisted queries powered by GPT 4o Mini",
+        tooltip: "AI-assisted queries for Charts,SQL, and more",
       },
       {
         name: "10s Query Execution Limit",
@@ -50,22 +46,26 @@ const plans = [
         tooltip: "Maximum query size of 10MB",
       },
       {
-        name: "VSCode-based Editor",
+        name: "VSCode-based SQL Editor",
         included: true,
         tooltip: "Professional VSCode-based SQL editor with data display",
       },
       {
-        name: "OpenAI GPT 4o Mini",
+        name: "Natural Language Charts and SQL",
         included: true,
-        tooltip: "AI assistance powered by OpenAI GPT 4o Mini",
+        tooltip: "Generate charts and SQL queries using natural language",
       },
     ],
+    cta: "Get Started Free",
+    ctaLink: `${process.env.NEXT_PUBLIC_BASE_URL}/signup`,
   },
   {
     name: "Pro",
     price: 20,
     priceId: "price_1QnBW9LTqurwLvRFgrda5plk",
-    description: "For professional developers and small teams",
+    billing: "monthly",
+    description: "For professionals and small teams",
+    highlight: "Best Value",
     features: [
       {
         name: "Everything in Free",
@@ -102,7 +102,9 @@ const plans = [
   {
     name: "Enterprise",
     price: null,
-    description: "Custom solutions for large teams",
+    billing: "custom",
+    description: "Enterprise-grade solutions with dedicated support",
+    highlight: "Custom",
     features: [
       {
         name: "Everything in Pro",
@@ -135,6 +137,8 @@ const plans = [
         tooltip: "Priority support with dedicated team",
       },
     ],
+    cta: "Contact Us",
+    ctaLink: "/contact",
   },
 ];
 
@@ -144,6 +148,11 @@ export function BillingForm() {
   const [loading, setLoading] = useState(true);
   const [tier, setTier] = useState<string>("Free");
   const [end_at, setEnd_at] = useState<Date | null>(null);
+  const [selectedPlan, setSelectedPlan] = useState<string>("Free");
+
+  useEffect(() => {
+    if (!loading) setSelectedPlan(tier);
+  }, [loading, tier]);
 
   useEffect(() => {
     const fetchUserAndTier = async () => {
@@ -180,99 +189,117 @@ export function BillingForm() {
     );
   }
 
+  const activePlan = plans.find((p) => p.name === selectedPlan)!;
+
   return (
-    <div className="w-full max-w-6xl mx-auto p-4">
-      <div className="text-center mb-6">
-        <h2 className="text-3xl font-bold tracking-tight">Choose Your Plan</h2>
-        <p className="text-muted-foreground text-sm">
-          Select the perfect plan for your needs
+    <div className="w-full max-w-md mx-auto p-4">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold">Choose Your Plan</h2>
+        <p className="text-gray-500 text-sm">
+          Select the best plan for your needs
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        {plans.map((plan) => (
-          <Card
-            key={plan.name}
-            className={`flex flex-col h-full ${
-              tier === plan.name
-                ? "border-primary bg-primary/5 shadow-md"
-                : "hover:border-primary/50 hover:shadow-sm"
-            }`}
-          >
-            <CardHeader className="pb-4 pt-6 px-4">
-              <div className="flex items-baseline justify-between mb-2">
-                <CardTitle className="text-xl font-bold">{plan.name}</CardTitle>
-                <div className="flex items-baseline gap-1">
-                  {plan.price !== null ? (
+      {/* Tabs */}
+      <Tabs
+        value={selectedPlan}
+        onValueChange={setSelectedPlan}
+        className="mt-4"
+      >
+        <TabsList className="mx-auto w-fit">
+          {plans.map((plan) => (
+            <TabsTrigger
+              key={plan.name}
+              value={plan.name}
+              className="px-3 py-1 text-sm"
+            >
+              {plan.name}
+            </TabsTrigger>
+          ))}
+        </TabsList>
+      </Tabs>
+
+      {/* Animated Card */}
+      <AnimatePresence initial={false} mode="wait">
+        <motion.div
+          key={selectedPlan}
+          layout
+          initial={{ opacity: 0, y: -10 }}
+          animate={{ opacity: 1, y: 0 }}
+          exit={{ opacity: 0, y: 10 }}
+          className="mt-6"
+        >
+          <Card className="p-4 rounded-lg shadow h-[380px]">
+            <CardHeader className="pb-2">
+              <div className="flex justify-between items-center">
+                <div className="flex items-center space-x-2">
+                  <CardTitle className="text-lg font-semibold">
+                    {activePlan.name}
+                  </CardTitle>
+                  {activePlan.highlight && (
+                    <span className="px-2 py-0.5 bg-blue-100 text-blue-600 text-xs rounded-full">
+                      {activePlan.highlight}
+                    </span>
+                  )}
+                </div>
+                <div className="text-right">
+                  {activePlan.price !== null ? (
                     <>
-                      <span className="text-2xl font-bold">${plan.price}</span>
-                      <span className="text-xs text-muted-foreground">/mo</span>
+                      <p className="text-2xl font-bold">${activePlan.price}</p>
+                      <p className="text-xs text-gray-500">
+                        {activePlan.billing === "monthly"
+                          ? "/mo"
+                          : activePlan.billing === "forever"
+                          ? "Forever"
+                          : "Custom"}
+                      </p>
                     </>
                   ) : (
-                    <span className="text-sm font-medium">Custom</span>
+                    <p className="text-lg font-semibold">Custom</p>
                   )}
                 </div>
               </div>
-              <CardDescription className="text-xs">
-                {plan.description}
+              <CardDescription className="text-sm">
+                {activePlan.description}
               </CardDescription>
             </CardHeader>
-
-            <CardContent className="flex-grow px-4 pb-4">
-              <ul className="space-y-2">
-                {plan.features.map((feature) => (
-                  <TooltipProvider key={feature.name}>
-                    <Tooltip delayDuration={300}>
-                      <TooltipTrigger asChild>
-                        <li
-                          className={`flex items-center text-sm ${
-                            !feature.included && "text-muted-foreground"
-                          }`}
-                        >
-                          {feature.included ? (
-                            <Check className="h-4 w-4 text-primary mr-2 flex-shrink-0" />
-                          ) : (
-                            <X className="h-4 w-4 text-muted-foreground mr-2 flex-shrink-0" />
-                          )}
-                          <span>{feature.name}</span>
-                        </li>
-                      </TooltipTrigger>
-                      <TooltipContent
-                        side="top"
-                        align="center"
-                        className="max-w-[200px] text-center"
-                      >
-                        <p className="text-sm">{feature.tooltip}</p>
-                      </TooltipContent>
-                    </Tooltip>
-                  </TooltipProvider>
+            <CardContent className="pt-2 overflow-auto">
+              <ul className="space-y-1 text-sm">
+                {activePlan.features.map((feature) => (
+                  <li key={feature.name} className="flex items-center">
+                    {feature.included ? (
+                      <Check className="mr-2 text-green-500 w-4 h-4" />
+                    ) : (
+                      <X className="mr-2 text-gray-400 w-4 h-4" />
+                    )}
+                    <span>{feature.name}</span>
+                  </li>
                 ))}
               </ul>
             </CardContent>
-
-            <CardFooter className="px-4 pb-6 mt-auto">
-              {plan.name === "Enterprise" ? (
-                <Button
-                  className="w-full"
-                  disabled={plan.name === tier}
-                  onClick={() =>
-                    (window.location.href = `${process.env.NEXT_PUBLIC_BASE_URL}/contact`)
-                  }
-                >
-                  {tier === plan.name ? "Current Plan" : "Contact Us"}
-                </Button>
-              ) : (
+            <CardFooter className="pt-4">
+              {selectedPlan === "Pro" ? (
                 <Checkout
-                  priceId={plan.priceId!}
-                  plan={plan.name}
+                  priceId={activePlan.priceId!}
+                  plan={activePlan.name}
                   current={tier}
                   end_at={end_at}
                 />
+              ) : (
+                <Button
+                  asChild
+                  className="w-full text-sm font-medium py-2 rounded bg-blue-600 text-white hover:bg-blue-700"
+                  disabled={selectedPlan === tier}
+                >
+                  <a href={activePlan.ctaLink}>
+                    {selectedPlan === tier ? "Current Plan" : activePlan.cta}
+                  </a>
+                </Button>
               )}
             </CardFooter>
           </Card>
-        ))}
-      </div>
+        </motion.div>
+      </AnimatePresence>
     </div>
   );
 }

@@ -1,0 +1,121 @@
+---
+title: "Charts"
+description: "How to create, customize, and interpret charts in Quail"
+---
+
+import { Accordion, Accordions } from "fumadocs-ui/components/accordion";
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import { TypeTable } from "fumadocs-ui/components/type-table";
+import { PolarAreaSection } from "@/components/docs/PolarAreaSection";
+import { RadarChartSection } from "@/components/docs/RadarChartSection";
+import { BarChartSection } from "@/components/docs/BarChartSection";
+import { LineChartSection } from "@/components/docs/LineChartSection";
+import { PieChartSection } from "@/components/docs/PieChartSection";
+import { ScatterPlotSection } from "@/components/docs/ScatterPlotSection";
+
+## Creating Charts
+
+You can create charts in Quail through multiple methods:
+
+<Tabs items={["Charts Page", "Chat Interface"]}>
+  <Tab value="Charts Page">
+    <Steps>
+      <Step>Navigate to the **Charts** section in the main menu</Step>
+      <Step>Click **Create New Chart**</Step>
+      <Step>Select your data source (connection and table/query)</Step>
+      <Step>Choose a chart type</Step>
+      <Step>Configure your chart settings</Step>
+      <Step>Save your chart</Step>
+    </Steps>
+  </Tab>
+  <Tab value="Chat Interface">
+    <Steps>
+      <Step>
+        In the Chat interface, ask a question that would benefit from
+        visualization - Example: "Show me monthly sales for the last year" -
+        Example: "What's the distribution of customer ages?"
+      </Step>
+      <Step>
+        When Quail generates a chart in response, click **Save Chart**
+      </Step>
+      <Step>Enter a name and description for your chart</Step>
+      <Step>Select where to save the chart (standalone or to a dashboard)</Step>
+    </Steps>
+  </Tab>
+</Tabs>
+
+## Chart Types and When to Use Them
+
+<Accordions>
+  <Accordion title="Bar Charts" id="bar-charts">
+    <BarChartSection />
+  </Accordion>
+
+{" "}
+<Accordion title="Line Charts" id="line-charts">
+  <LineChartSection />
+</Accordion>
+
+{" "}
+<Accordion title="Pie/Donut Charts" id="pie-charts">
+  <PieChartSection />
+</Accordion>
+
+{" "}
+<Accordion title="Scatter Plots" id="scatter-plots">
+  <ScatterPlotSection />
+</Accordion>
+
+{" "}
+<Accordion title="Radar Charts" id="radar-charts">
+  <RadarChartSection />
+</Accordion>
+
+  <Accordion title="Polar Area Charts" id="polar-area-charts">
+    <PolarAreaSection />
+  </Accordion>
+</Accordions>
+
+## Customizing Your Charts
+
+<Accordions>
+  <Accordion title="Prompt Agent" id="customize-style">
+    Ask the agent to modify the chart by providing specific instructions or requests for changes.
+  </Accordion>
+
+  <Accordion title="Save Chart for Manual Editing" id="save-chart-manual">
+    <Steps>
+      <Step>After creating or editing your chart, click **Save**</Step>
+      <Step>
+        Save the chart to enable manual editing of the JSX components using 
+        Fumadocs components for further customization
+      </Step>
+    </Steps>
+  </Accordion>
+</Accordions>
+
+## Saving and Sharing Charts
+
+<Tabs items={["Saving", "Adding to Dashboards"]}>
+  <Tab value="Saving">
+    <Steps>
+      <Step>After creating or editing a chart, click **Save**</Step>
+      <Step>
+        Enter or update: 
+        - Chart name 
+        - Description 
+        - Tags for organization
+      </Step>
+      <Step>Choose to save as a new chart or update existing</Step>
+    </Steps>
+  </Tab>
+
+  <Tab value="Adding to Dashboards">
+    <Steps>
+      <Step>With your chart open, click **Add to Dashboard**</Step>
+      <Step>Select an existing dashboard or create a new one</Step>
+      <Step>Click **Add** to place your chart on the selected dashboard</Step>
+    </Steps>
+  </Tab>
+</Tabs>

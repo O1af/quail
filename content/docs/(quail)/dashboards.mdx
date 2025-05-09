@@ -1,0 +1,126 @@
+---
+title: "Dashboards"
+description: "How to create, customize, and share interactive dashboards in Quail"
+---
+
+import { Step, Steps } from "fumadocs-ui/components/steps";
+import { Callout } from "fumadocs-ui/components/callout";
+import { Tab, Tabs } from "fumadocs-ui/components/tabs";
+import {
+  FileIcon,
+  SettingsIcon,
+  ShareIcon,
+  ChartArea,
+  FilterIcon,
+} from "lucide-react";
+
+<Callout type="info">
+  Dashboards help you track important metrics at a glance and share insights
+  with your team.
+</Callout>
+
+## Creating Your First Dashboard
+
+<Steps>
+  <Step>
+    Navigate to the **Dashboards** section from the main menu
+  </Step>
+  <Step>
+    Click the **+ Create Dashboard** button
+  </Step>
+  <Step>
+    Enter a name and optional description for your dashboard
+  </Step>
+  <Step>
+    Click **Create Dashboard**
+  </Step>
+</Steps>
+
+Your new dashboard will open in edit mode, ready for you to add charts and customize the layout.
+
+## Adding Charts to Your Dashboard
+<Steps>
+  <Step>
+    In dashboard edit mode, click the **Add Chart** button
+  </Step>
+  <Step>
+    Browse or search for charts you've previously created
+  </Step>
+  <Step>
+    Select the charts you want to add
+  </Step>
+  <Step>
+    Click **Apply Changes**
+  </Step>
+</Steps>
+
+## Arranging Your Dashboard Layout
+
+Quail provides a flexible drag-and-drop interface for arranging your dashboard layout:
+
+1. In dashboard edit mode, you can:
+
+   - **Drag** charts to reposition them
+   - **Resize** charts by dragging their corners or edges
+   - **Remove** charts by clicking the X button in the top-right corner
+
+2. All changes in edit mode are previewed immediately but not saved until you click **Save Dashboard**
+
+## Dashboard Filters
+
+<Callout type="tip" icon={<FilterIcon className="h-4 w-4" />}>
+  Dashboard filters let you interact with multiple charts simultaneously for
+  dynamic data exploration.
+</Callout>
+
+<Steps>
+  <Step>
+    In edit mode, click the **Add Filter** button
+  </Step>
+  <Step>
+    Select the field you want to filter on
+  </Step>
+  <Step>
+    Choose the filter type (dropdown, date range, text search, etc.)
+  </Step>
+  <Step>
+    Select which charts this filter should apply to
+  </Step>
+  <Step>
+    Click **Add Filter**
+  </Step>
+</Steps>
+
+After adding filters, users viewing your dashboard can:
+
+- Select filter values to update all connected charts
+- Reset filters to their default state
+- Save specific filter combinations as bookmarks
+
+## Sharing Your Dashboard
+
+<Callout type="info" icon={<ShareIcon className="h-4 w-4" />}>
+  Control who can view or edit your dashboards with flexible sharing options.
+</Callout>
+
+<Steps>
+  <Step>
+    Open the dashboard you want to share
+  </Step>
+  <Step>
+    Click the **Share** button
+  </Step>
+  <Step>
+    Choose your sharing options:
+    - **Private** (only accessible to you)
+    - **Public Link** (view accessibility to anyone with the link)
+  </Step>
+  <Step>
+    Set permission levels:
+    - **View Only**
+    - **Edit**
+  </Step>
+  <Step>
+    Invite specific people via email
+  </Step>
+</Steps>
