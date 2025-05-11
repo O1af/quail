@@ -11,7 +11,7 @@ import { useTheme } from "next-themes";
 import { Meteors } from "@/components/magicui/meteors";
 import { motion } from "framer-motion";
 
-export default function ErrorPage() {
+export default function NotFound() {
   const { resolvedTheme } = useTheme();
 
   return (
@@ -41,7 +41,7 @@ export default function ErrorPage() {
             </div>
 
             <motion.h1
-              className="mt-4 text-7xl font-bold tracking-tight bg-linear-to-r from-red-400 via-rose-500 to-red-500 bg-clip-text text-transparent sm:text-8xl"
+              className="mt-4 text-7xl font-bold tracking-tight bg-gradient-to-r from-red-400 via-rose-500 to-red-500 bg-clip-text text-transparent sm:text-8xl"
               initial={{ opacity: 0, y: -20 }}
               animate={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
@@ -55,7 +55,7 @@ export default function ErrorPage() {
               animate={{ opacity: 1 }}
               transition={{ duration: 0.5, delay: 0.2 }}
             >
-              Oops! The page you're looking for doesn't exist.
+              Could not find requested resource
             </motion.p>
 
             <motion.div
@@ -71,7 +71,7 @@ export default function ErrorPage() {
               >
                 <Link href={Routes.Home} prefetch={false}>
                   <ArrowLeft className="mr-2 h-4 w-4" />
-                  Back to Homepage
+                  Return Home
                 </Link>
               </Button>
 
