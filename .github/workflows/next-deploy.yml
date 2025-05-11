@@ -30,7 +30,7 @@ jobs:
       # 1️⃣  Install pnpm + Node (with built‑in cache)
       - uses: pnpm/action-setup@v4
         with:
-          version: 9 # pin to the version you use locally
+          version: 10.10.0 # pin to the version you use locally
           run_install: false
 
       - uses: actions/setup-node@v4
