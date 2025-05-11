@@ -35,7 +35,7 @@ const keywords = [
 const baseUrl = process.env.NEXT_PUBLIC_BASE_URL || "https://quailbi.com";
 
 export const metadata: Metadata = {
-  title: "Quail",
+  title: "Quail AI",
   description:
     "The Simpler, Smarter AI Data Query & Analysis tool for everyone",
   keywords: keywords,
@@ -43,7 +43,7 @@ export const metadata: Metadata = {
     type: "website",
     locale: "en_US",
     url: baseUrl,
-    siteName: "Quail",
+    siteName: "Quail AI",
     title: "Quail - AI Data Query & Analysis Tool",
     description:
       "The Simpler, Smarter AI Data Query & Analysis tool for everyone",
@@ -73,28 +73,6 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <head>
-        {process.env.NODE_ENV !== "production" && (
-          <Script
-            crossOrigin="anonymous"
-            src="//unpkg.com/react-scan/dist/auto.global.js"
-          />
-        )}
-        {/* Preconnect hints tell the browser to establish early connections to critical domains,
-        reducing latency when resources are needed. DNS-prefetch is a fallback for older browsers */}
-        <link
-          rel="preconnect"
-          href="https://ds-cdn.prod-east.frontend.public.atl-paas.net"
-          crossOrigin="anonymous"
-        />
-
-        <link rel="preconnect" href="https://fonts.googleapis.com" />
-        <link
-          rel="preconnect"
-          href="https://fonts.gstatic.com"
-          crossOrigin="anonymous"
-        />
-      </head>
       <body
         className={`${inter.variable} ${robotoMono.variable} antialiased`}
         style={{
@@ -104,9 +82,6 @@ export default function RootLayout({
         }}
         suppressHydrationWarning
       >
-        {/* <Banner id="quail-release" variant="rainbow" changeLayout={false}>
-          Quail V0 has released
-        </Banner> */}
         <RootProvider>
           <ThemeProvider
             attribute="class"
@@ -119,6 +94,15 @@ export default function RootLayout({
             </ReactQueryProvider>
           </ThemeProvider>
           <Toaster />
+
+          {/* Move scripts to the end of body with appropriate strategy */}
+          {process.env.NODE_ENV !== "production" && (
+            <Script
+              crossOrigin="anonymous"
+              src="//unpkg.com/react-scan/dist/auto.global.js"
+              strategy="afterInteractive"
+            />
+          )}
           {process.env.NODE_ENV === "production" && (
             <Script
               defer
