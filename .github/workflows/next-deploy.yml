@@ -1,15 +1,16 @@
-name: Build & Deploy Next.js (pnpm) to Azure App Service
+name: Build and deploy Next.js app to Azure Web App
 
 on:
   push:
-    branches: [main]
+    branches:
+      - main
   workflow_dispatch:
 
-env: # keep your existing secrets / public‑env
-  WEBAPP_NAME: "Quail-Next"
-  AZURE_PUBLISH_PROFILE: ${{ secrets.APP_PUBLISH_PROFILE }}
+env:
+  APPLICATION_PUBLISH_PROFILE: ${{ secrets.APP_PUBLISH_PROFILE }}
   STRIPE_SK: ${{ secrets.STRIPE_SK }}
   STRIPE_ENDPOINT_SECRET: ${{ secrets.STRIPE_ENDPOINT_SECRET }}
+  WEBAPP_NAME: "Quail-Next"
   NEXT_PUBLIC_SUPABASE_URL: ${{ secrets.NEXT_PUBLIC_SUPABASE_URL }}
   NEXT_PUBLIC_SUPABASE_ANON_KEY: ${{ secrets.NEXT_PUBLIC_SUPABASE_ANON_KEY }}
   SUPABASE_ADMIN: ${{ secrets.SUPABASE_ADMIN }}
@@ -21,41 +22,37 @@ env: # keep your existing secrets / public‑env
   NEXT_PUBLIC_BASE_URL: ${{ secrets.NEXT_PUBLIC_BASE_URL }}
 
 jobs:
-  deploy:
+  build:
     runs-on: ubuntu-latest
 
     steps:
       - uses: actions/checkout@v4
 
-      # 1️⃣  Install pnpm + Node (with built‑in cache)
-      - uses: pnpm/action-setup@v4
+      - name: Set up Node.js version
+        uses: actions/setup-node@v4
         with:
-          version: 10.10.0 # pin to the version you use locally
-          run_install: false
+          node-version: "20.x"
 
-      - uses: actions/setup-node@v4
+      - name: Cache Next.js build
+        uses: actions/cache@v4
         with:
-          node-version: 20
-          cache: pnpm # node‑modules cache keyed on pnpm‑lock.yaml
-
-      # 2️⃣  Production install & build
-      - name: Install deps & build
+          path: |
+            ~/.npm
+            ${{ github.workspace }}/.next/cache
+          key: ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-${{ hashFiles('**/*.js', '**/*.jsx', '**/*.ts', '**/*.tsx') }}
+          restore-keys: |
+            ${{ runner.os }}-nextjs-${{ hashFiles('**/package-lock.json') }}-
+      - name: npm install and build
         run: |
-          pnpm install --frozen-lockfile
-          pnpm run build
-          pnpm prune --prod      # remove devDependencies
-
-      # 3️⃣  Zip only the runtime artefacts
-      - name: Package site
-        run: |
-          zip -r build.zip \
-            .next public package.json pnpm-lock.yaml node_modules \
-            next.config.* 2>/dev/null || true
-
-      # 4️⃣  Deploy to App Service
-      - uses: azure/webapps-deploy@v3
+          npm install --legacy-peer-deps
+          npm run build
+          cp -r .next/static .next/standalone/.next/
+          cp -r public .next/standalone/
+      - name: "Deploy to Azure Web App"
+        id: deploy-to-webapp
+        uses: azure/webapps-deploy@v3
         with:
           app-name: ${{ env.WEBAPP_NAME }}
-          slot-name: Production
-          publish-profile: ${{ env.AZURE_PUBLISH_PROFILE }}
-          package: build.zip
+          slot-name: "Production"
+          publish-profile: ${{ env.APPLICATION_PUBLISH_PROFILE }}
+          package: ./.next/standalone
