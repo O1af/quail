@@ -49,6 +49,7 @@ jobs:
           npm run build
           cp -r .next/static .next/standalone/.next/
           cp -r public .next/standalone/
+          cp tsconfig.json .next/standalone/
       - name: "Deploy to Azure Web App"
         id: deploy-to-webapp
         uses: azure/webapps-deploy@v3
