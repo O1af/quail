@@ -18,9 +18,9 @@ import {
   createHash,
 } from "crypto";
 
-// Define the default connection string as a constant
+// Define the default connection string as a constant from environment variable
 const DEFAULT_CONNECTION_STRING =
-  "postgresql://neondb_owner:npg_4LjT9XmwAqPH@ep-black-lab-a8zi1wg9-pooler.eastus2.azure.neon.tech/neondb?sslmode=require";
+  process.env.NEXT_PUBLIC_DEFAULT_DB_CONNECTION_STRING || "";
 
 // Default database configuration
 const defaultDatabase: DatabaseConfig = {
@@ -62,9 +62,10 @@ async function getUserId(): Promise<string> {
  * Generate a user-specific encryption key
  */
 function getUserSpecificKey(userId: string): Buffer {
-  const defaultKey =
-    process.env.NEXT_PUBLIC_ENCRYPTION_KEY ||
-    "default-key-32-chars-security123";
+  const defaultKey = process.env.NEXT_PUBLIC_ENCRYPTION_KEY;
+  if (!defaultKey) {
+    throw new Error("NEXT_PUBLIC_ENCRYPTION_KEY environment variable is required");
+  }
   return createHash("sha256")
     .update(userId + defaultKey)
     .digest();

@@ -21,8 +21,9 @@ cat .env.production | while IFS='=' read -r key value; do
     
     # Set GitHub secret
     echo "Setting secret: $key"
-    echo "Value: $value"
+    # Do not echo the value to avoid leaking secrets in logs
     echo "$value" | gh secret set "$key" --repo "$(git remote get-url origin)"
+    echo "Secret set successfully"
     echo "----------------------------------------"
 done
 
