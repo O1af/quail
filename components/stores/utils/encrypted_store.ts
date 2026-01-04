@@ -3,8 +3,11 @@ import { StateStorage } from "zustand/middleware";
 import { createCipheriv, createDecipheriv, randomBytes } from "crypto";
 
 const ALGORITHM = "aes-256-gcm";
-const KEY =
-  process.env.NEXT_PUBLIC_ENCRYPTION_KEY || "default-key-32-chars-security123";
+const KEY = process.env.NEXT_PUBLIC_ENCRYPTION_KEY;
+
+if (!KEY) {
+  throw new Error("NEXT_PUBLIC_ENCRYPTION_KEY environment variable is required");
+}
 
 // Encryption/decryption helpers
 export function encrypt(text: string): string {

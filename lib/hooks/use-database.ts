@@ -26,9 +26,9 @@ export const dbQueryKeys = {
   current: () => [...dbQueryKeys.all, "current"] as const,
 };
 
-// Default connection string
+// Default connection string from environment variable
 const DEFAULT_CONNECTION_STRING =
-  "postgresql://neondb_owner:npg_4LjT9XmwAqPH@ep-black-lab-a8zi1wg9-pooler.eastus2.azure.neon.tech/neondb?sslmode=require";
+  process.env.NEXT_PUBLIC_DEFAULT_DB_CONNECTION_STRING || "";
 
 // Default state when not authenticated or loading
 const defaultState: DbState = {

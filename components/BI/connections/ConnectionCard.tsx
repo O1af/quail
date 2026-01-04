@@ -315,12 +315,21 @@ function formatConnectionString(
 ): string {
   if (!connectionString) return "No connection string";
 
-  // Special case for test database
-  if (connectionString.includes("neondb_owner:npg_4LjT9XmwAqPH")) {
-    return truncateString(
-      "postgresql://neondb_owner:******@ep-black-lab-a8zi1wg9-pooler.eastus2.azure.neon.tech/neondb",
-      maxLength
-    );
+  // Special case for default test database - mask password
+  if (connectionString === process.env.NEXT_PUBLIC_DEFAULT_DB_CONNECTION_STRING) {
+    try {
+      const url = new URL(connectionString);
+      return truncateString(
+        `${url.protocol}//${url.username}:******@${url.host}${url.pathname}`,
+        maxLength
+      );
+    } catch {
+      // Fallback if URL parsing fails
+      return truncateString(
+        connectionString.replace(/:[^:\/]+@/, ":******@"),
+        maxLength
+      );
+    }
   }
 
   try {

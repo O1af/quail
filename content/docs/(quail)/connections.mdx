@@ -33,7 +33,7 @@ import { Card, Cards } from "fumadocs-ui/components/card";
 <Callout type="warning">
   For security reasons, most database providers require whitelisting of IP addresses that can access your database. **You must whitelist Quail's IP address** in your database security settings before your connection will work.
 
-**Quail's IP address:** `57.152.52.59`
+**Quail's IP address:** Contact your administrator for the current IP address to whitelist
 
 </Callout>
 
@@ -43,20 +43,20 @@ import { Card, Cards } from "fumadocs-ui/components/card";
   <Tab value="AWS RDS">
     1. Go to your RDS console 2. Select your database instance 3. Click on the
     "Security Group" associated with your instance 4. Add an inbound rule for
-    Quail's IP address (`57.152.52.59`) on your database port
+    Quail's IP address on your database port
   </Tab>
   <Tab value="Azure SQL">
     1. Navigate to your Azure SQL server 2. Select "Networking" from the left
     menu 3. Under "Firewall rules", add a new rule 4. Enter "Quail" as the name
-    and `57.152.52.59` as both the start and end IP
+    and the IP address as both the start and end IP
   </Tab>
   <Tab value="GCP Cloud SQL">
     1. Open your Cloud SQL instance 2. Go to "Connections" > "Networking" 3. Add
-    `57.152.52.59` to "Authorized networks"
+    the IP address to "Authorized networks"
   </Tab>
   <Tab value="MongoDB Atlas">
     1. Go to Network Access in your MongoDB Atlas dashboard 2. Click "Add IP
-    Address" 3. Enter `57.152.52.59` in both fields and add "Quail" as the
+    Address" 3. Enter the IP address in both fields and add "Quail" as the
     description
   </Tab>
 </Tabs>
