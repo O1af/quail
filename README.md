@@ -1,5 +1,5 @@
 <p align="center">
-  <img src="public/quail_logo.png" alt="Quail Logo" width="200"/>
+  <img src="public/quail_logo_white.png" alt="Quail Logo" width="200"/>
 </p>
 
 # Quail
